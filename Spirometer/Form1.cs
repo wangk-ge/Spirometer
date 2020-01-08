@@ -19,6 +19,7 @@ namespace Spirometer
     {
         private const double m_sampleRate = 330; // 采样率,单位HZ
         private const double m_presureFlowRatio = 1200; // 压差转流量系数
+        private KalmanFilter m_kalmanFilter = new KalmanFilter(0.01f/*Q*/, 0.01f/*R*/, 10.0f/*P*/, 0);
         private PlotModel m_plotModelFV; // 流量(Flow)-容积(Volume)图Model
         private PlotModel m_plotModelVT; // 容积(Volume)-时间(Time)图Model
         private PlotModel m_plotModelFT; // 流量(Flow)-时间(Time)图Model
@@ -368,7 +369,11 @@ namespace Spirometer
                         }
 
                         double presure = Convert.ToDouble(strVal); // 压差
+                        presure = m_kalmanFilter.Input((float)presure); // 执行滤波
                         double flow = PresureToFlow(presure); // 流量
+                        //double filterFlow = m_kalmanFilter.Input((float)flow); // 执行滤波
+                        //flow = filterFlow; // 使用滤波结果
+
                         volume += flow; // 流量积分得容积
 
                         AddTimeFlow(time, flow);
