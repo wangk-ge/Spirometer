@@ -31,9 +31,9 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
-            this.plotViewCV = new OxyPlot.WindowsForms.PlotView();
-            this.plotViewCT = new OxyPlot.WindowsForms.PlotView();
+            this.plotViewFV = new OxyPlot.WindowsForms.PlotView();
             this.plotViewVT = new OxyPlot.WindowsForms.PlotView();
+            this.plotViewFT = new OxyPlot.WindowsForms.PlotView();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.toolStripComboBoxCom = new System.Windows.Forms.ToolStripComboBox();
             this.toolStripButtonConnect = new System.Windows.Forms.ToolStripButton();
@@ -69,7 +69,7 @@
             // 
             // splitContainer1.Panel2
             // 
-            this.splitContainer1.Panel2.Controls.Add(this.plotViewVT);
+            this.splitContainer1.Panel2.Controls.Add(this.plotViewFT);
             this.splitContainer1.Size = new System.Drawing.Size(1372, 587);
             this.splitContainer1.SplitterDistance = 377;
             this.splitContainer1.SplitterWidth = 2;
@@ -84,11 +84,11 @@
             // 
             // splitContainer2.Panel1
             // 
-            this.splitContainer2.Panel1.Controls.Add(this.plotViewCV);
+            this.splitContainer2.Panel1.Controls.Add(this.plotViewFV);
             // 
             // splitContainer2.Panel2
             // 
-            this.splitContainer2.Panel2.Controls.Add(this.plotViewCT);
+            this.splitContainer2.Panel2.Controls.Add(this.plotViewVT);
             this.splitContainer2.Size = new System.Drawing.Size(1372, 377);
             this.splitContainer2.SplitterDistance = 667;
             this.splitContainer2.SplitterWidth = 2;
@@ -96,42 +96,42 @@
             // 
             // plotViewCV
             // 
-            this.plotViewCV.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.plotViewCV.Location = new System.Drawing.Point(0, 0);
-            this.plotViewCV.Name = "plotViewCV";
-            this.plotViewCV.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewCV.Size = new System.Drawing.Size(663, 373);
-            this.plotViewCV.TabIndex = 0;
-            this.plotViewCV.Text = "plotView1";
-            this.plotViewCV.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
-            this.plotViewCV.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
-            this.plotViewCV.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
+            this.plotViewFV.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.plotViewFV.Location = new System.Drawing.Point(0, 0);
+            this.plotViewFV.Name = "plotViewCV";
+            this.plotViewFV.PanCursor = System.Windows.Forms.Cursors.Hand;
+            this.plotViewFV.Size = new System.Drawing.Size(663, 373);
+            this.plotViewFV.TabIndex = 0;
+            this.plotViewFV.Text = "plotView1";
+            this.plotViewFV.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
+            this.plotViewFV.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
+            this.plotViewFV.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
             // 
             // plotViewCT
             // 
-            this.plotViewCT.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.plotViewCT.Location = new System.Drawing.Point(0, 0);
-            this.plotViewCT.Name = "plotViewCT";
-            this.plotViewCT.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewCT.Size = new System.Drawing.Size(699, 373);
-            this.plotViewCT.TabIndex = 0;
-            this.plotViewCT.Text = "plotView1";
-            this.plotViewCT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
-            this.plotViewCT.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
-            this.plotViewCT.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
-            // 
-            // plotViewVT
-            // 
             this.plotViewVT.Dock = System.Windows.Forms.DockStyle.Fill;
             this.plotViewVT.Location = new System.Drawing.Point(0, 0);
-            this.plotViewVT.Name = "plotViewVT";
+            this.plotViewVT.Name = "plotViewCT";
             this.plotViewVT.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewVT.Size = new System.Drawing.Size(1368, 204);
+            this.plotViewVT.Size = new System.Drawing.Size(699, 373);
             this.plotViewVT.TabIndex = 0;
             this.plotViewVT.Text = "plotView1";
             this.plotViewVT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
             this.plotViewVT.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
             this.plotViewVT.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
+            // 
+            // plotViewVT
+            // 
+            this.plotViewFT.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.plotViewFT.Location = new System.Drawing.Point(0, 0);
+            this.plotViewFT.Name = "plotViewVT";
+            this.plotViewFT.PanCursor = System.Windows.Forms.Cursors.Hand;
+            this.plotViewFT.Size = new System.Drawing.Size(1368, 204);
+            this.plotViewFT.TabIndex = 0;
+            this.plotViewFT.Text = "plotView1";
+            this.plotViewFT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
+            this.plotViewFT.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
+            this.plotViewFT.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
             // 
             // toolStrip1
             // 
@@ -255,9 +255,9 @@
 
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.SplitContainer splitContainer2;
-        private OxyPlot.WindowsForms.PlotView plotViewCV;
-        private OxyPlot.WindowsForms.PlotView plotViewCT;
+        private OxyPlot.WindowsForms.PlotView plotViewFV;
         private OxyPlot.WindowsForms.PlotView plotViewVT;
+        private OxyPlot.WindowsForms.PlotView plotViewFT;
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.ToolStripComboBox toolStripComboBoxCom;
         private System.Windows.Forms.ToolStripButton toolStripButtonConnect;

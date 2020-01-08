@@ -19,9 +19,9 @@ namespace Spirometer
     {
         private const double m_sampleRate = 330; // 采样率,单位HZ
         private const double m_presureFlowRatio = 1200; // 压差转流量系数
-        private PlotModel m_plotModelCV; // 容积-流量图Model
-        private PlotModel m_plotModelCT; // 容积-时间图Model
-        private PlotModel m_plotModelVT; // 流量-时间图Model
+        private PlotModel m_plotModelFV; // 流量(Flow)-容积(Volume)图Model
+        private PlotModel m_plotModelVT; // 容积(Volume)-时间(Time)图Model
+        private PlotModel m_plotModelFT; // 流量(Flow)-时间(Time)图Model
 
         public Form1()
         {
@@ -68,155 +68,164 @@ namespace Spirometer
             /* 枚举可用串口并更新列表控件 */
             EnumSerialPorts();
 
-            /* 容积-流量图 */
-            m_plotModelCV = new PlotModel()
+            /* 流量(Flow)-容积(Volume)图 */
+            m_plotModelFV = new PlotModel()
             {
-                Title = "容积-流量图",
+                Title = "流量(Flow)-容积(Volume)",
                 LegendTitle = "图例",
                 LegendOrientation = LegendOrientation.Horizontal,
                 LegendPlacement = LegendPlacement.Inside,
                 LegendPosition = LegendPosition.TopRight,
                 LegendBackground = OxyColors.Beige,
-                LegendBorder = OxyColors.Black
+                LegendBorder = OxyColors.Black,
+                IsLegendVisible = false // 隐藏图例
             };
 
-            //X轴
-            var xAxisCV = new LinearAxis()
+            //X轴,Volume
+            var xAxisFV = new LinearAxis()
             {
-                MajorGridlineStyle = LineStyle.Solid,
-                MinorGridlineStyle = LineStyle.Dot,
+                //MajorGridlineStyle = LineStyle.Solid,
+                //MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Bottom,
                 Minimum = 0,
-                Maximum = 1000
+                Maximum = 1000,
+                Title = "Volume(L)"
             };
-            m_plotModelCV.Axes.Add(xAxisCV);
+            m_plotModelFV.Axes.Add(xAxisFV);
 
-            //Y轴
-            var yAxisCV = new LinearAxis()
+            //Y轴,Flow
+            var yAxisFV = new LinearAxis()
             {
-                MajorGridlineStyle = LineStyle.Solid,
-                MinorGridlineStyle = LineStyle.Dot,
+                //MajorGridlineStyle = LineStyle.Solid,
+                //MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
-                Position = AxisPosition.Left
+                Position = AxisPosition.Left,
+                Title = "Flow(L/S)"
             };
-            m_plotModelCV.Axes.Add(yAxisCV);
+            m_plotModelFV.Axes.Add(yAxisFV);
 
             // 数据
-            var seriesCV = new LineSeries()
+            var seriesFV = new LineSeries()
             {
-                Color = OxyColors.Green,
+                Color = OxyColors.Blue,
                 StrokeThickness = 1,
-                MarkerSize = 1,
-                MarkerStroke = OxyColors.DarkGreen,
-                MarkerType = MarkerType.Circle,
+                //MarkerSize = 1,
+                //MarkerStroke = OxyColors.DarkBlue,
+                //MarkerType = MarkerType.Circle,
                 Title = "Data"
             };
-            m_plotModelCV.Series.Add(seriesCV);
+            m_plotModelFV.Series.Add(seriesFV);
 
-            plotViewCV.Model = m_plotModelCV;
+            plotViewFV.Model = m_plotModelFV;
 
-            /* 容积-时间图 */
-            m_plotModelCT = new PlotModel()
-            {
-                Title = "容积-时间图",
-                LegendTitle = "图例",
-                LegendOrientation = LegendOrientation.Horizontal,
-                LegendPlacement = LegendPlacement.Inside,
-                LegendPosition = LegendPosition.TopRight,
-                LegendBackground = OxyColors.Beige,
-                LegendBorder = OxyColors.Black
-            };
-
-            //X轴
-            var xAxisCT = new LinearAxis()
-            {
-                MajorGridlineStyle = LineStyle.Solid,
-                MinorGridlineStyle = LineStyle.Dot,
-                IsZoomEnabled = true,
-                IsPanEnabled = true,
-                Position = AxisPosition.Bottom,
-                Minimum = 0,
-                Maximum = 60 * 1000 // 1分钟
-            };
-            m_plotModelCT.Axes.Add(xAxisCT);
-
-            //Y轴
-            var yAxisCT = new LinearAxis()
-            {
-                MajorGridlineStyle = LineStyle.Solid,
-                MinorGridlineStyle = LineStyle.Dot,
-                IsZoomEnabled = true,
-                IsPanEnabled = true,
-                Position = AxisPosition.Left
-            };
-            m_plotModelCT.Axes.Add(yAxisCT);
-
-            // 数据
-            var seriesCT = new LineSeries()
-            {
-                Color = OxyColors.Green,
-                StrokeThickness = 1,
-                MarkerSize = 1,
-                MarkerStroke = OxyColors.DarkGreen,
-                MarkerType = MarkerType.Circle,
-                Title = "Data"
-            };
-            m_plotModelCT.Series.Add(seriesCT);
-
-            plotViewCT.Model = m_plotModelCT;
-
-            /* 流量-时间图 */
+            /* 容积(Volume)-时间(Time)图 */
             m_plotModelVT = new PlotModel()
             {
-                Title = "流量-时间图",
+                Title = "容积(Volume)-时间(Time)",
                 LegendTitle = "图例",
                 LegendOrientation = LegendOrientation.Horizontal,
                 LegendPlacement = LegendPlacement.Inside,
                 LegendPosition = LegendPosition.TopRight,
                 LegendBackground = OxyColors.Beige,
-                LegendBorder = OxyColors.Black
+                LegendBorder = OxyColors.Black,
+                IsLegendVisible = false // 隐藏图例
             };
 
-            //X轴
+            //X轴,Time
             var xAxisVT = new LinearAxis()
             {
-                MajorGridlineStyle = LineStyle.Solid,
-                MinorGridlineStyle = LineStyle.Dot,
+                //MajorGridlineStyle = LineStyle.Solid,
+                //MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Bottom,
                 Minimum = 0,
-                Maximum = 60 * 1000 // 1分钟
+                Maximum = 60 * 1000, // 1分钟
+                Title = "Time(MS)"
             };
             m_plotModelVT.Axes.Add(xAxisVT);
 
-            //Y轴
+            //Y轴,Volume
             var yAxisVT = new LinearAxis()
             {
-                MajorGridlineStyle = LineStyle.Solid,
-                MinorGridlineStyle = LineStyle.Dot,
+                //MajorGridlineStyle = LineStyle.Solid,
+                //MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
-                Position = AxisPosition.Left
+                Position = AxisPosition.Left,
+                Title = "Volume(L)"
             };
             m_plotModelVT.Axes.Add(yAxisVT);
 
             // 数据
             var seriesVT = new LineSeries()
             {
-                Color = OxyColors.Green,
+                Color = OxyColors.Blue,
                 StrokeThickness = 1,
-                MarkerSize = 1,
-                MarkerStroke = OxyColors.DarkGreen,
-                MarkerType = MarkerType.Circle,
+                //MarkerSize = 1,
+                //MarkerStroke = OxyColors.DarkBlue,
+                //MarkerType = MarkerType.Circle,
                 Title = "Data"
             };
             m_plotModelVT.Series.Add(seriesVT);
 
             plotViewVT.Model = m_plotModelVT;
+
+            /* 流量(Flow)-时间(Time)图 */
+            m_plotModelFT = new PlotModel()
+            {
+                Title = "流量(Flow)-时间(Time)",
+                LegendTitle = "图例",
+                LegendOrientation = LegendOrientation.Horizontal,
+                LegendPlacement = LegendPlacement.Inside,
+                LegendPosition = LegendPosition.TopRight,
+                LegendBackground = OxyColors.Beige,
+                LegendBorder = OxyColors.Black,
+                IsLegendVisible = false // 隐藏图例
+            };
+
+            //X轴,Time
+            var xAxisFT = new LinearAxis()
+            {
+                //MajorGridlineStyle = LineStyle.Solid,
+                //MinorGridlineStyle = LineStyle.Dot,
+                IsZoomEnabled = true,
+                IsPanEnabled = true,
+                Position = AxisPosition.Bottom,
+                Minimum = 0,
+                Maximum = 60 * 1000, // 1分钟
+                Title = "Time(MS)"
+            };
+            m_plotModelFT.Axes.Add(xAxisFT);
+
+            //Y轴,Flow
+            var yAxisFT = new LinearAxis()
+            {
+                //MajorGridlineStyle = LineStyle.Solid,
+                //MinorGridlineStyle = LineStyle.Dot,
+                IsZoomEnabled = true,
+                IsPanEnabled = true,
+                Position = AxisPosition.Left,
+                Title = "Flow(L/S)"
+            };
+            m_plotModelFT.Axes.Add(yAxisFT);
+
+            // 数据
+            var seriesFT = new LineSeries()
+            {
+                Color = OxyColors.Blue,
+                StrokeThickness = 1,
+                //MarkerSize = 1,
+                //MarkerStroke = OxyColors.DarkBlue,
+                //MarkerType = MarkerType.Circle,
+                Title = "Data"
+            };
+            m_plotModelFT.Series.Add(seriesFT);
+
+            plotViewFT.Model = m_plotModelFT;
         }
 
         /* 压差转流量 */
@@ -227,29 +236,32 @@ namespace Spirometer
 
         private void AddFlowPoint(double time, double flow)
         {
-            var serieVT = plotViewVT.Model.Series[0] as LineSeries;
+            var serieVT = plotViewFT.Model.Series[0] as LineSeries;
             serieVT.Points.Add(new DataPoint(time, flow));
         }
 
         private void ClearAll()
         {
-            var serieCV = plotViewCV.Model.Series[0] as LineSeries;
-            serieCV.Points.Clear();
-            plotViewCV.InvalidatePlot(true);
-            var xAxisCV = m_plotModelCV.Axes[0];
-            xAxisCV.Reset();
+            /* Clear Flow-Volume Plot */
+            var serieFV = plotViewFV.Model.Series[0] as LineSeries;
+            serieFV.Points.Clear();
+            plotViewFV.InvalidatePlot(true);
+            var xAxisFV = m_plotModelFV.Axes[0];
+            xAxisFV.Reset();
 
-            var serieCT = plotViewCT.Model.Series[0] as LineSeries;
-            serieCT.Points.Clear();
-            plotViewCT.InvalidatePlot(true);
-            var xAxisCT = m_plotModelCT.Axes[0];
-            xAxisCT.Reset();
-
+            /* Clear Volume-Time Plot */
             var serieVT = plotViewVT.Model.Series[0] as LineSeries;
             serieVT.Points.Clear();
             plotViewVT.InvalidatePlot(true);
             var xAxisVT = m_plotModelVT.Axes[0];
             xAxisVT.Reset();
+
+            /* Clear Flow-Time Plot */
+            var serieFT = plotViewFT.Model.Series[0] as LineSeries;
+            serieFT.Points.Clear();
+            plotViewFT.InvalidatePlot(true);
+            var xAxisFT = m_plotModelFT.Axes[0];
+            xAxisFT.Reset();
         }
 
         private void toolStripButtonConnect_Click(object sender, EventArgs e)
@@ -285,7 +297,7 @@ namespace Spirometer
 
                 Task.Factory.StartNew(() =>
                 {
-                    var serieVT = plotViewVT.Model.Series[0] as LineSeries;
+                    var serieVT = plotViewFT.Model.Series[0] as LineSeries;
                     StringBuilder strData = new StringBuilder();
                     foreach (var point in serieVT.Points)
                     {
@@ -351,9 +363,9 @@ namespace Spirometer
 
                     this.BeginInvoke(new Action<Form1>((obj) => { toolStripButtonLoad.Enabled = true; }), this);
 
+                    plotViewFT.InvalidatePlot(true);
                     plotViewVT.InvalidatePlot(true);
-                    plotViewCT.InvalidatePlot(true);
-                    plotViewCV.InvalidatePlot(true);
+                    plotViewFV.InvalidatePlot(true);
                 });
             }
         }
