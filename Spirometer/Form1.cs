@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO.Ports;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,8 +25,46 @@ namespace Spirometer
             InitializeComponent();
         }
 
+        /* 枚举可用串口并更新列表控件 */
+        private void EnumSerialPorts()
+        {
+            toolStripComboBoxCom.Items.Clear();
+
+            SerialPort _tempPort;
+            String[] Portname = SerialPort.GetPortNames();
+
+            //create a loop for each string in SerialPort.GetPortNames
+            foreach (string str in Portname)
+            {
+                try
+                {
+                    _tempPort = new SerialPort(str);
+                    _tempPort.Open();
+
+                    //if the port exist and we can open it
+                    if (_tempPort.IsOpen)
+                    {
+                        toolStripComboBoxCom.Items.Add(str);
+                        _tempPort.Close();
+                    }
+                }
+                //else we have no ports or can't open them display the 
+                //precise error of why we either don't have ports or can't open them
+                catch (Exception ex)
+                {
+                    //MessageBox.Show(ex.ToString(), "Error - No Ports available", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Console.WriteLine(ex);
+                }
+            }
+
+            toolStripComboBoxCom.SelectedIndex = 0;
+        }
+
         private void Form1_Load(object sender, EventArgs e)
         {
+            /* 枚举可用串口并更新列表控件 */
+            EnumSerialPorts();
+
             /* 容积-流量图 */
             m_plotModelCV = new PlotModel()
             {
@@ -175,6 +214,17 @@ namespace Spirometer
             m_plotModelVT.Series.Add(seriesVT);
 
             plotViewVT.Model = m_plotModelVT;
+        }
+
+        private void toolStripButtonConnect_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void toolStripButtonScan_Click(object sender, EventArgs e)
+        {
+            /* 枚举可用串口并更新列表控件 */
+            EnumSerialPorts();
         }
     }
 }
