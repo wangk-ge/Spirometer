@@ -84,13 +84,13 @@ namespace Spirometer
             //X轴,Volume
             var xAxisFV = new LinearAxis()
             {
-                //MajorGridlineStyle = LineStyle.Solid,
-                //MinorGridlineStyle = LineStyle.Dot,
+                MajorGridlineStyle = LineStyle.Solid,
+                MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Bottom,
-                Minimum = 0,
-                Maximum = 1000,
+                //Minimum = 0,
+                //Maximum = 1000,
                 Title = "Volume(L)"
             };
             m_plotModelFV.Axes.Add(xAxisFV);
@@ -98,8 +98,8 @@ namespace Spirometer
             //Y轴,Flow
             var yAxisFV = new LinearAxis()
             {
-                //MajorGridlineStyle = LineStyle.Solid,
-                //MinorGridlineStyle = LineStyle.Dot,
+                MajorGridlineStyle = LineStyle.Solid,
+                MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Left,
@@ -137,13 +137,13 @@ namespace Spirometer
             //X轴,Time
             var xAxisVT = new LinearAxis()
             {
-                //MajorGridlineStyle = LineStyle.Solid,
-                //MinorGridlineStyle = LineStyle.Dot,
+                MajorGridlineStyle = LineStyle.Solid,
+                MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Bottom,
-                Minimum = 0,
-                Maximum = 60 * 1000, // 1分钟
+                //Minimum = 0,
+                //Maximum = 60 * 1000, // 1分钟
                 Title = "Time(MS)"
             };
             m_plotModelVT.Axes.Add(xAxisVT);
@@ -151,8 +151,8 @@ namespace Spirometer
             //Y轴,Volume
             var yAxisVT = new LinearAxis()
             {
-                //MajorGridlineStyle = LineStyle.Solid,
-                //MinorGridlineStyle = LineStyle.Dot,
+                MajorGridlineStyle = LineStyle.Solid,
+                MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Left,
@@ -190,13 +190,13 @@ namespace Spirometer
             //X轴,Time
             var xAxisFT = new LinearAxis()
             {
-                //MajorGridlineStyle = LineStyle.Solid,
-                //MinorGridlineStyle = LineStyle.Dot,
+                MajorGridlineStyle = LineStyle.Solid,
+                MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Bottom,
-                Minimum = 0,
-                Maximum = 60 * 1000, // 1分钟
+                //Minimum = 0,
+                //Maximum = 60 * 1000, // 1分钟
                 Title = "Time(MS)"
             };
             m_plotModelFT.Axes.Add(xAxisFT);
@@ -204,8 +204,8 @@ namespace Spirometer
             //Y轴,Flow
             var yAxisFT = new LinearAxis()
             {
-                //MajorGridlineStyle = LineStyle.Solid,
-                //MinorGridlineStyle = LineStyle.Dot,
+                MajorGridlineStyle = LineStyle.Solid,
+                MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Left,
@@ -231,13 +231,25 @@ namespace Spirometer
         /* 压差转流量 */
         private double PresureToFlow(double presure)
         {
-            return presure / m_presureFlowRatio;
+            return presure / (m_presureFlowRatio * 1000);
         }
 
-        private void AddFlowPoint(double time, double flow)
+        private void AddTimeFlow(double time, double flow)
         {
             var serieVT = plotViewFT.Model.Series[0] as LineSeries;
             serieVT.Points.Add(new DataPoint(time, flow));
+        }
+
+        private void AddVolumeFlow(double volume, double flow)
+        {
+            var serieFV = plotViewFV.Model.Series[0] as LineSeries;
+            serieFV.Points.Add(new DataPoint(volume, flow));
+        }
+
+        private void AddTimeVolume(double time, double volume)
+        {
+            var serieVT = plotViewVT.Model.Series[0] as LineSeries;
+            serieVT.Points.Add(new DataPoint(time, volume));
         }
 
         private void ClearAll()
@@ -345,6 +357,7 @@ namespace Spirometer
 
                     ClearAll();
 
+                    double volume = 923;
                     double time = 0;
                     string[] strDataArray = strData.Split(new char[] { ',' });
                     foreach (var strVal in strDataArray)
@@ -356,8 +369,13 @@ namespace Spirometer
 
                         double presure = Convert.ToDouble(strVal); // 压差
                         double flow = PresureToFlow(presure); // 流量
+                        volume += flow; // 流量积分得容积
 
-                        AddFlowPoint(time, flow);
+                        AddTimeFlow(time, flow);
+                        AddTimeVolume(time, volume);
+                        AddVolumeFlow(volume, flow);
+                        Console.WriteLine($"({volume},{flow})");
+
                         time += (1000 / m_sampleRate);
                     }
 

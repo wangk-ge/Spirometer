@@ -40,8 +40,8 @@
             this.toolStripButtonScan = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripButtonStart = new System.Windows.Forms.ToolStripButton();
-            this.toolStripButtonSave = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripButtonSave = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonLoad = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonClear = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -71,7 +71,7 @@
             // 
             this.splitContainer1.Panel2.Controls.Add(this.plotViewFT);
             this.splitContainer1.Size = new System.Drawing.Size(1372, 587);
-            this.splitContainer1.SplitterDistance = 377;
+            this.splitContainer1.SplitterDistance = 315;
             this.splitContainer1.SplitterWidth = 2;
             this.splitContainer1.TabIndex = 0;
             // 
@@ -89,44 +89,44 @@
             // splitContainer2.Panel2
             // 
             this.splitContainer2.Panel2.Controls.Add(this.plotViewVT);
-            this.splitContainer2.Size = new System.Drawing.Size(1372, 377);
+            this.splitContainer2.Size = new System.Drawing.Size(1372, 315);
             this.splitContainer2.SplitterDistance = 667;
             this.splitContainer2.SplitterWidth = 2;
             this.splitContainer2.TabIndex = 0;
             // 
-            // plotViewCV
+            // plotViewFV
             // 
             this.plotViewFV.Dock = System.Windows.Forms.DockStyle.Fill;
             this.plotViewFV.Location = new System.Drawing.Point(0, 0);
-            this.plotViewFV.Name = "plotViewCV";
+            this.plotViewFV.Name = "plotViewFV";
             this.plotViewFV.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewFV.Size = new System.Drawing.Size(663, 373);
+            this.plotViewFV.Size = new System.Drawing.Size(663, 311);
             this.plotViewFV.TabIndex = 0;
             this.plotViewFV.Text = "plotView1";
             this.plotViewFV.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
             this.plotViewFV.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
             this.plotViewFV.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
             // 
-            // plotViewCT
+            // plotViewVT
             // 
             this.plotViewVT.Dock = System.Windows.Forms.DockStyle.Fill;
             this.plotViewVT.Location = new System.Drawing.Point(0, 0);
-            this.plotViewVT.Name = "plotViewCT";
+            this.plotViewVT.Name = "plotViewVT";
             this.plotViewVT.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewVT.Size = new System.Drawing.Size(699, 373);
+            this.plotViewVT.Size = new System.Drawing.Size(699, 311);
             this.plotViewVT.TabIndex = 0;
             this.plotViewVT.Text = "plotView1";
             this.plotViewVT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
             this.plotViewVT.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
             this.plotViewVT.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
             // 
-            // plotViewVT
+            // plotViewFT
             // 
             this.plotViewFT.Dock = System.Windows.Forms.DockStyle.Fill;
             this.plotViewFT.Location = new System.Drawing.Point(0, 0);
-            this.plotViewFT.Name = "plotViewVT";
+            this.plotViewFT.Name = "plotViewFT";
             this.plotViewFT.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewFT.Size = new System.Drawing.Size(1368, 204);
+            this.plotViewFT.Size = new System.Drawing.Size(1368, 266);
             this.plotViewFT.TabIndex = 0;
             this.plotViewFT.Text = "plotView1";
             this.plotViewFT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
@@ -191,6 +191,11 @@
             this.toolStripButtonStart.Text = "开始";
             this.toolStripButtonStart.Click += new System.EventHandler(this.toolStripButtonStart_Click);
             // 
+            // toolStripSeparator2
+            // 
+            this.toolStripSeparator2.Name = "toolStripSeparator2";
+            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
+            // 
             // toolStripButtonSave
             // 
             this.toolStripButtonSave.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
@@ -200,11 +205,6 @@
             this.toolStripButtonSave.Size = new System.Drawing.Size(36, 22);
             this.toolStripButtonSave.Text = "保存";
             this.toolStripButtonSave.Click += new System.EventHandler(this.toolStripButtonSave_Click);
-            // 
-            // toolStripSeparator2
-            // 
-            this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
             // 
             // toolStripButtonLoad
             // 
