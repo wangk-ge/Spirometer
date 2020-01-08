@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Text;
@@ -16,6 +17,8 @@ namespace Spirometer
 {
     public partial class Form1 : Form
     {
+        private const double m_sampleRate = 330; // 采样率,单位HZ
+        private const double m_presureFlowRatio = 1200; // 压差转流量系数
         private PlotModel m_plotModelCV; // 容积-流量图Model
         private PlotModel m_plotModelCT; // 容积-时间图Model
         private PlotModel m_plotModelVT; // 流量-时间图Model
@@ -101,7 +104,7 @@ namespace Spirometer
             };
             m_plotModelCV.Axes.Add(yAxisCV);
 
-            // 原始数据
+            // 数据
             var seriesCV = new LineSeries()
             {
                 Color = OxyColors.Green,
@@ -136,7 +139,7 @@ namespace Spirometer
                 IsPanEnabled = true,
                 Position = AxisPosition.Bottom,
                 Minimum = 0,
-                Maximum = 1000
+                Maximum = 60 * 1000 // 1分钟
             };
             m_plotModelCT.Axes.Add(xAxisCT);
 
@@ -151,7 +154,7 @@ namespace Spirometer
             };
             m_plotModelCT.Axes.Add(yAxisCT);
 
-            // 原始数据
+            // 数据
             var seriesCT = new LineSeries()
             {
                 Color = OxyColors.Green,
@@ -186,7 +189,7 @@ namespace Spirometer
                 IsPanEnabled = true,
                 Position = AxisPosition.Bottom,
                 Minimum = 0,
-                Maximum = 1000
+                Maximum = 60 * 1000 // 1分钟
             };
             m_plotModelVT.Axes.Add(xAxisVT);
 
@@ -201,7 +204,7 @@ namespace Spirometer
             };
             m_plotModelVT.Axes.Add(yAxisVT);
 
-            // 原始数据
+            // 数据
             var seriesVT = new LineSeries()
             {
                 Color = OxyColors.Green,
@@ -216,6 +219,39 @@ namespace Spirometer
             plotViewVT.Model = m_plotModelVT;
         }
 
+        /* 压差转流量 */
+        private double PresureToFlow(double presure)
+        {
+            return presure / m_presureFlowRatio;
+        }
+
+        private void AddFlowPoint(double time, double flow)
+        {
+            var serieVT = plotViewVT.Model.Series[0] as LineSeries;
+            serieVT.Points.Add(new DataPoint(time, flow));
+        }
+
+        private void ClearAll()
+        {
+            var serieCV = plotViewCV.Model.Series[0] as LineSeries;
+            serieCV.Points.Clear();
+            plotViewCV.InvalidatePlot(true);
+            var xAxisCV = m_plotModelCV.Axes[0];
+            xAxisCV.Reset();
+
+            var serieCT = plotViewCT.Model.Series[0] as LineSeries;
+            serieCT.Points.Clear();
+            plotViewCT.InvalidatePlot(true);
+            var xAxisCT = m_plotModelCT.Axes[0];
+            xAxisCT.Reset();
+
+            var serieVT = plotViewVT.Model.Series[0] as LineSeries;
+            serieVT.Points.Clear();
+            plotViewVT.InvalidatePlot(true);
+            var xAxisVT = m_plotModelVT.Axes[0];
+            xAxisVT.Reset();
+        }
+
         private void toolStripButtonConnect_Click(object sender, EventArgs e)
         {
 
@@ -225,6 +261,106 @@ namespace Spirometer
         {
             /* 枚举可用串口并更新列表控件 */
             EnumSerialPorts();
+        }
+
+        private void toolStripButtonStart_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void toolStripButtonSave_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog saveCSVDialog = new SaveFileDialog();
+            saveCSVDialog.Filter = "CSV File (*.csv;)|*.csv";
+            //saveCSVDialog.Multiselect = false;
+
+            if (saveCSVDialog.ShowDialog() == DialogResult.OK)
+            {
+                if (String.IsNullOrEmpty(saveCSVDialog.FileName))
+                {
+                    return;
+                }
+
+                toolStripButtonSave.Enabled = false;
+
+                Task.Factory.StartNew(() =>
+                {
+                    var serieVT = plotViewVT.Model.Series[0] as LineSeries;
+                    StringBuilder strData = new StringBuilder();
+                    foreach (var point in serieVT.Points)
+                    {
+                        strData.Append(point.Y);
+                        strData.Append(",");
+                    }
+
+                    using (StreamWriter writer = new StreamWriter(saveCSVDialog.FileName, false, Encoding.UTF8))
+                    {
+                        writer.Write(strData);
+                        writer.Close();
+
+                        MessageBox.Show("保存成功.");
+                    }
+
+                    this.BeginInvoke(new Action<Form1>((obj) => { toolStripButtonSave.Enabled = true; }), this);
+                });
+            }
+        }
+
+        private void toolStripButtonLoad_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openCSVDialog = new OpenFileDialog();
+            openCSVDialog.Filter = "CSV File (*.csv;)|*.csv";
+            openCSVDialog.Multiselect = false;
+
+            if (openCSVDialog.ShowDialog() == DialogResult.OK)
+            {
+                if (String.IsNullOrEmpty(openCSVDialog.FileName))
+                {
+                    return;
+                }
+
+                toolStripButtonLoad.Enabled = false;
+
+                Task.Factory.StartNew(() =>
+                {
+                    string strData = String.Empty;
+
+                    using (StreamReader reader = new StreamReader(openCSVDialog.FileName, Encoding.UTF8))
+                    {
+                        strData = reader.ReadToEnd();
+                        reader.Close();
+                    }
+
+                    ClearAll();
+
+                    double time = 0;
+                    string[] strDataArray = strData.Split(new char[] { ',' });
+                    foreach (var strVal in strDataArray)
+                    {
+                        if (String.Empty == strVal)
+                        {
+                            continue;
+                        }
+
+                        double presure = Convert.ToDouble(strVal); // 压差
+                        double flow = PresureToFlow(presure); // 流量
+
+                        AddFlowPoint(time, flow);
+                        time += (1000 / m_sampleRate);
+                    }
+
+                    this.BeginInvoke(new Action<Form1>((obj) => { toolStripButtonLoad.Enabled = true; }), this);
+
+                    plotViewVT.InvalidatePlot(true);
+                    plotViewCT.InvalidatePlot(true);
+                    plotViewCV.InvalidatePlot(true);
+                });
+            }
+        }
+
+        private void toolStripButtonClear_Click(object sender, EventArgs e)
+        {
+            ClearAll();
         }
     }
 }
