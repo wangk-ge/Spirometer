@@ -2,6 +2,7 @@
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -19,10 +20,19 @@ namespace Spirometer
     {
         private const double m_sampleRate = 330; // 采样率,单位HZ
         private const double m_presureFlowRatio = 1200; // 压差转流量系数
+        private ConcurrentQueue<double> m_dataQueue = new ConcurrentQueue<double>();
+        private FlowSensor m_flowSensor = new FlowSensor();
         private KalmanFilter m_kalmanFilter = new KalmanFilter(0.01f/*Q*/, 0.01f/*R*/, 10.0f/*P*/, 0);
         private PlotModel m_plotModelFV; // 流量(Flow)-容积(Volume)图Model
         private PlotModel m_plotModelVT; // 容积(Volume)-时间(Time)图Model
         private PlotModel m_plotModelFT; // 流量(Flow)-时间(Time)图Model
+
+        private Timer m_refreshTimer = new Timer(); // 波形刷新定时器
+        private readonly int m_fps = 24; // 帧率
+
+        private List<DataPoint> m_pointsFV; // 流量(Flow)-容积(Volume)数据
+        private List<DataPoint> m_pointsVT; // 容积(Volume)-时间(Time)数据
+        private List<DataPoint> m_pointsFT; // 流量(Flow)-时间(Time)数据
 
         public Form1()
         {
@@ -121,6 +131,7 @@ namespace Spirometer
             m_plotModelFV.Series.Add(seriesFV);
 
             plotViewFV.Model = m_plotModelFV;
+            m_pointsFV = seriesFV.Points;
 
             /* 容积(Volume)-时间(Time)图 */
             m_plotModelVT = new PlotModel()
@@ -174,6 +185,7 @@ namespace Spirometer
             m_plotModelVT.Series.Add(seriesVT);
 
             plotViewVT.Model = m_plotModelVT;
+            m_pointsVT = seriesVT.Points;
 
             /* 流量(Flow)-时间(Time)图 */
             m_plotModelFT = new PlotModel()
@@ -227,6 +239,38 @@ namespace Spirometer
             m_plotModelFT.Series.Add(seriesFT);
 
             plotViewFT.Model = m_plotModelFT;
+            m_pointsFT = seriesFT.Points;
+
+            /* 通过传感器获取数据 */
+            m_flowSensor.m_frameDecoder.WaveDataRespRecved += new FrameDecoder.WaveDataRecvHandler((byte channel, double value) => {
+                //Console.WriteLine($"WaveDataRespRecved: {channel} {value}");
+
+                m_dataQueue.Enqueue(value);
+            });
+
+            m_refreshTimer.Interval = 1000 / m_fps;
+            m_refreshTimer.Tick += new EventHandler((timer, arg) => {
+
+                double xBegin = m_pointsVT.Count > 0 ? m_pointsVT.Last().X : 0;
+                while (m_dataQueue.Count > 0)
+                {
+                    bool bRet = m_dataQueue.TryDequeue(out double presure); // 压差
+                    if (!bRet)
+                    {
+                        break;
+                    }
+                    presure = m_kalmanFilter.Input((float)presure); // 执行滤波
+                    double flow = PresureToFlow(presure); // 流量
+                    AddFlow(flow);
+                }
+
+                double xEnd = m_pointsVT.Count > 0 ? m_pointsVT.Last().X : 0;
+                double xDelta = xEnd - xBegin;
+                if (xDelta > 0)
+                {
+                    InvalidatePlot(true);
+                }
+            });
         }
 
         /* 压差转流量 */
@@ -235,22 +279,21 @@ namespace Spirometer
             return presure / (m_presureFlowRatio * 1000);
         }
 
-        private void AddTimeFlow(double time, double flow)
+        /* 加入一个流量采集数据 */
+        private void AddFlow(double flow)
         {
-            var serieVT = plotViewFT.Model.Series[0] as LineSeries;
-            serieVT.Points.Add(new DataPoint(time, flow));
-        }
+            double time = 0;
+            double volume = flow; // 923
+            if (m_pointsVT.Count > 0)
+            {
+                DataPoint lastPoint = m_pointsVT.Last();
+                time = lastPoint.X + (1000 / m_sampleRate);
+                volume = lastPoint.Y + flow; // 流量积分得容积
+            }
 
-        private void AddVolumeFlow(double volume, double flow)
-        {
-            var serieFV = plotViewFV.Model.Series[0] as LineSeries;
-            serieFV.Points.Add(new DataPoint(volume, flow));
-        }
-
-        private void AddTimeVolume(double time, double volume)
-        {
-            var serieVT = plotViewVT.Model.Series[0] as LineSeries;
-            serieVT.Points.Add(new DataPoint(time, volume));
+            m_pointsFT.Add(new DataPoint(time, flow));
+            m_pointsVT.Add(new DataPoint(time, volume));
+            m_pointsFV.Add(new DataPoint(volume, flow));
         }
 
         private void ClearAll()
@@ -258,28 +301,70 @@ namespace Spirometer
             /* Clear Flow-Volume Plot */
             var serieFV = plotViewFV.Model.Series[0] as LineSeries;
             serieFV.Points.Clear();
-            plotViewFV.InvalidatePlot(true);
             var xAxisFV = m_plotModelFV.Axes[0];
             xAxisFV.Reset();
 
             /* Clear Volume-Time Plot */
             var serieVT = plotViewVT.Model.Series[0] as LineSeries;
             serieVT.Points.Clear();
-            plotViewVT.InvalidatePlot(true);
             var xAxisVT = m_plotModelVT.Axes[0];
             xAxisVT.Reset();
 
             /* Clear Flow-Time Plot */
             var serieFT = plotViewFT.Model.Series[0] as LineSeries;
             serieFT.Points.Clear();
-            plotViewFT.InvalidatePlot(true);
             var xAxisFT = m_plotModelFT.Axes[0];
             xAxisFT.Reset();
+
+            InvalidatePlot(true);
+        }
+
+        private void InvalidatePlot(bool updateData)
+        {
+            plotViewFT.InvalidatePlot(updateData);
+            plotViewVT.InvalidatePlot(updateData);
+            plotViewFV.InvalidatePlot(updateData);
+        }
+
+        private async void SendCmd(string cmd)
+        {
+            if (!m_flowSensor.IsOpen())
+            {
+                return;
+            }
+
+            Console.WriteLine($"Sned: {cmd} \r\n");
+            string cmdResp = await m_flowSensor.ExcuteCmdAsync(cmd, 2000);
+            Console.WriteLine($"Revc: {cmdResp} \r\n");
         }
 
         private void toolStripButtonConnect_Click(object sender, EventArgs e)
         {
-
+            if ("连接" == toolStripButtonConnect.Text)
+            {
+                bool bRet = m_flowSensor.Open(toolStripComboBoxCom.Text);
+                toolStripButtonStart.Enabled = bRet;
+                //toolStripButtonLoad.Enabled = !bRet;
+                //toolStripButtonSave.Enabled = !bRet;
+                //toolStripButtonClear.Enabled = !bRet;
+                toolStripButtonScan.Enabled = !bRet;
+                toolStripComboBoxCom.Enabled = !bRet;
+                toolStripButtonConnect.Text = bRet ? "断开" : "连接";
+            }
+            else
+            {
+                m_flowSensor.Close();
+                toolStripButtonStart.Enabled = false;
+                toolStripButtonLoad.Enabled = true;
+                toolStripButtonSave.Enabled = true;
+                toolStripButtonClear.Enabled = true;
+                toolStripButtonScan.Enabled = true;
+                toolStripComboBoxCom.Enabled = true;
+                toolStripButtonConnect.Text = "连接";
+                toolStripButtonStart.Text = "开始";
+                /* 停止刷新定时器 */
+                m_refreshTimer.Stop();
+            }
         }
 
         private void toolStripButtonScan_Click(object sender, EventArgs e)
@@ -288,9 +373,47 @@ namespace Spirometer
             EnumSerialPorts();
         }
 
-        private void toolStripButtonStart_Click(object sender, EventArgs e)
+        private async void toolStripButtonStart_Click(object sender, EventArgs e)
         {
+            string cmd = "[ADC_START]"; // 启动
+            if ("停止" == toolStripButtonStart.Text)
+            {
+                cmd = "[ADC_STOP]"; // 停止
+            }
+            Console.WriteLine($"Sned: {cmd} \r\n");
+            string cmdResp = await m_flowSensor.ExcuteCmdAsync(cmd, 2000);
+            Console.WriteLine($"Revc: {cmdResp} \r\n");
 
+            if ("[OK]" == cmdResp)
+            {
+                if ("开始" == toolStripButtonStart.Text)
+                {
+                    cmd = "[ADC_CAL]"; // 归零
+
+                    Console.WriteLine($"Sned: {cmd} \r\n");
+                    cmdResp = await m_flowSensor.ExcuteCmdAsync(cmd, 2000);
+                    Console.WriteLine($"Revc: {cmdResp} \r\n");
+                    if ("[OK]" == cmdResp)
+                    { // 归零成功
+                        toolStripButtonStart.Text = "停止";
+                        toolStripButtonClear.Enabled = false;
+                        toolStripButtonLoad.Enabled = false;
+                        toolStripButtonSave.Enabled = false;
+                        //ClearAll();
+                        /* 启动刷新定时器 */
+                        m_refreshTimer.Start();
+                    }
+                }
+                else // if ("停止" == toolStripButtonStart.Text)
+                {
+                    toolStripButtonStart.Text = "开始";
+                    toolStripButtonClear.Enabled = true;
+                    toolStripButtonLoad.Enabled = true;
+                    toolStripButtonSave.Enabled = true;
+                    /* 停止刷新定时器 */
+                    m_refreshTimer.Stop();
+                }
+            }
         }
 
         private void toolStripButtonSave_Click(object sender, EventArgs e)
@@ -358,8 +481,6 @@ namespace Spirometer
 
                     ClearAll();
 
-                    double volume = 923;
-                    double time = 0;
                     string[] strDataArray = strData.Split(new char[] { ',' });
                     foreach (var strVal in strDataArray)
                     {
@@ -374,21 +495,12 @@ namespace Spirometer
                         //double filterFlow = m_kalmanFilter.Input((float)flow); // 执行滤波
                         //flow = filterFlow; // 使用滤波结果
 
-                        volume += flow; // 流量积分得容积
-
-                        AddTimeFlow(time, flow);
-                        AddTimeVolume(time, volume);
-                        AddVolumeFlow(volume, flow);
-                        Console.WriteLine($"({volume},{flow})");
-
-                        time += (1000 / m_sampleRate);
+                        AddFlow(flow);
                     }
 
                     this.BeginInvoke(new Action<Form1>((obj) => { toolStripButtonLoad.Enabled = true; }), this);
 
-                    plotViewFT.InvalidatePlot(true);
-                    plotViewVT.InvalidatePlot(true);
-                    plotViewFV.InvalidatePlot(true);
+                    InvalidatePlot(true);
                 });
             }
         }
