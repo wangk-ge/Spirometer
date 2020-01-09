@@ -9,9 +9,17 @@ namespace Spirometer
     class FlowSensor
     {
         private SerialPort m_serialPort = null;
-
-        public FrameDecoder m_frameDecoder = new FrameDecoder();
         private ConcurrentQueue<TaskCompletionSource<string>> m_cmdRespTaskCompQue = new ConcurrentQueue<TaskCompletionSource<string>>();
+        private readonly double m_presureFlowRatio = 1333; // 压差转流量系数(转出来的单位是ml/s)
+        private readonly double m_sampleRate = 330; // 采样率,单位:HZ
+        private FrameDecoder m_frameDecoder = new FrameDecoder(); // 串口数据帧解码器
+        private KalmanFilter m_kalmanFilter = new KalmanFilter(0.01f/*Q*/, 0.01f/*R*/, 10.0f/*P*/, 0); // 卡尔曼滤波器
+
+        public delegate void FlowRecvHandler(byte channel, double flow); // 流量接收代理
+        public event FlowRecvHandler FlowRecved; // 流量收取事件
+
+        /* 采样时间,单位:MS */
+        public double SampleTime { get { return (1000 / m_sampleRate); } }
 
         public FlowSensor()
         {
@@ -27,6 +35,21 @@ namespace Spirometer
                     taskComp?.SetResult(cmdResp);
                 }
             });
+
+            m_frameDecoder.WaveDataRecved += new FrameDecoder.WaveDataRecvHandler((byte channel, double presure) => {
+                //Console.WriteLine($"WaveDataRespRecved: {channel} {presure}");
+
+                double flow = PresureToFlow(presure); // 压差转流量
+                FlowRecved?.Invoke(channel, flow); // 触发流量收取事件
+            });
+        }
+
+        /* 压差转流量,单位:L/S */
+        public double PresureToFlow(double presure)
+        {
+            presure = m_kalmanFilter.Input((float)presure); // 执行滤波
+            double flow = presure / (m_presureFlowRatio * 1000.0); // 压差转流量
+            return flow;
         }
 
         public bool Open(string portName)

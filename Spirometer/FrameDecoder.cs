@@ -79,9 +79,9 @@ namespace Spirometer
         public delegate void CmdRespRecvHandler(string cmdResp);
         public event CmdRespRecvHandler CmdRespRecved;
         public delegate void WaveDataRecvHandler(byte channel, double value);
-        public event WaveDataRecvHandler WaveDataRespRecved;
+        public event WaveDataRecvHandler WaveDataRecved;
         public delegate void TimeStampRecvHandler(TimeStamp timeStamp);
-        public event TimeStampRecvHandler TimeStampRespRecved;
+        public event TimeStampRecvHandler TimeStampRecved;
 
         public FrameDecoder()
         {
@@ -230,7 +230,7 @@ namespace Spirometer
                             case Result.Done: // 结束初始化状态并返回true
                                 m_status = Status.STA_None;
 
-                                WaveDataRespRecved?.Invoke(dataChannel, dataValue);
+                                WaveDataRecved?.Invoke(dataChannel, dataValue);
                                 return true;
                         }
                         break;
@@ -261,7 +261,7 @@ namespace Spirometer
                                 m_status = Status.STA_None;
                                 break;
                             case Result.Done: // 结束返回true
-                                WaveDataRespRecved?.Invoke(dataChannel, dataValue);
+                                WaveDataRecved?.Invoke(dataChannel, dataValue);
                                 return true;
                         }
                         break;
@@ -275,7 +275,7 @@ namespace Spirometer
                         m_frameCount = 0;
                         m_status = Status.STA_None;
 
-                        TimeStampRespRecved?.Invoke(timeStamp);
+                        TimeStampRecved?.Invoke(timeStamp);
                         return true;
                     }
                     break;
@@ -363,13 +363,13 @@ namespace Spirometer
                 0xa3,0xaa,0x27,0x85,0x5c,0x8a,0x19,0x00,0x00,0x96, /* 19-12-05 11:36:20: 0200 0150 */
             };
             FrameDecoder decoder = new FrameDecoder();
-            decoder.WaveDataRespRecved += new WaveDataRecvHandler((byte channel, double value) => {
+            decoder.WaveDataRecved += new WaveDataRecvHandler((byte channel, double value) => {
                 Console.WriteLine($"WaveDataRespRecved: {channel} {value}");
             });
             decoder.CmdRespRecved += new CmdRespRecvHandler((string cmdResp) => {
                 Console.WriteLine($"CmdRespRecved: {cmdResp}");
             });
-            decoder.TimeStampRespRecved += new TimeStampRecvHandler((TimeStamp timeStamp) => {
+            decoder.TimeStampRecved += new TimeStampRecvHandler((TimeStamp timeStamp) => {
                 Console.WriteLine($"TimeStampRespRecved: {timeStamp}");
             });
             decoder.FrameDecode(frame);

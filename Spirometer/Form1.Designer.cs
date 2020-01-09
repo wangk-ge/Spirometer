@@ -41,9 +41,10 @@
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripButtonStart = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
-            this.toolStripButtonSave = new System.Windows.Forms.ToolStripButton();
-            this.toolStripButtonLoad = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButtonSaveFlow = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButtonLoadPresure = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonClear = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButtonLoadFlow = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -142,8 +143,9 @@
             this.toolStripSeparator1,
             this.toolStripButtonStart,
             this.toolStripSeparator2,
-            this.toolStripButtonSave,
-            this.toolStripButtonLoad,
+            this.toolStripButtonSaveFlow,
+            this.toolStripButtonLoadPresure,
+            this.toolStripButtonLoadFlow,
             this.toolStripButtonClear});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
@@ -196,25 +198,25 @@
             this.toolStripSeparator2.Name = "toolStripSeparator2";
             this.toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
             // 
-            // toolStripButtonSave
+            // toolStripButtonSaveFlow
             // 
-            this.toolStripButtonSave.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripButtonSave.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonSave.Image")));
-            this.toolStripButtonSave.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButtonSave.Name = "toolStripButtonSave";
-            this.toolStripButtonSave.Size = new System.Drawing.Size(36, 22);
-            this.toolStripButtonSave.Text = "保存";
-            this.toolStripButtonSave.Click += new System.EventHandler(this.toolStripButtonSave_Click);
+            this.toolStripButtonSaveFlow.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButtonSaveFlow.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonSaveFlow.Image")));
+            this.toolStripButtonSaveFlow.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonSaveFlow.Name = "toolStripButtonSaveFlow";
+            this.toolStripButtonSaveFlow.Size = new System.Drawing.Size(84, 22);
+            this.toolStripButtonSaveFlow.Text = "保存流量数据";
+            this.toolStripButtonSaveFlow.Click += new System.EventHandler(this.toolStripButtonSaveFlow_Click);
             // 
-            // toolStripButtonLoad
+            // toolStripButtonLoadPresure
             // 
-            this.toolStripButtonLoad.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripButtonLoad.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonLoad.Image")));
-            this.toolStripButtonLoad.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButtonLoad.Name = "toolStripButtonLoad";
-            this.toolStripButtonLoad.Size = new System.Drawing.Size(36, 22);
-            this.toolStripButtonLoad.Text = "加载";
-            this.toolStripButtonLoad.Click += new System.EventHandler(this.toolStripButtonLoad_Click);
+            this.toolStripButtonLoadPresure.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButtonLoadPresure.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonLoadPresure.Image")));
+            this.toolStripButtonLoadPresure.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonLoadPresure.Name = "toolStripButtonLoadPresure";
+            this.toolStripButtonLoadPresure.Size = new System.Drawing.Size(84, 22);
+            this.toolStripButtonLoadPresure.Text = "加载压差数据";
+            this.toolStripButtonLoadPresure.Click += new System.EventHandler(this.toolStripButtonLoadPresure_Click);
             // 
             // toolStripButtonClear
             // 
@@ -225,6 +227,16 @@
             this.toolStripButtonClear.Size = new System.Drawing.Size(36, 22);
             this.toolStripButtonClear.Text = "清除";
             this.toolStripButtonClear.Click += new System.EventHandler(this.toolStripButtonClear_Click);
+            // 
+            // toolStripButtonLoadFlow
+            // 
+            this.toolStripButtonLoadFlow.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButtonLoadFlow.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonLoadFlow.Image")));
+            this.toolStripButtonLoadFlow.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonLoadFlow.Name = "toolStripButtonLoadFlow";
+            this.toolStripButtonLoadFlow.Size = new System.Drawing.Size(84, 22);
+            this.toolStripButtonLoadFlow.Text = "加载流量数据";
+            this.toolStripButtonLoadFlow.Click += new System.EventHandler(this.toolStripButtonLoadFlow_Click);
             // 
             // Form1
             // 
@@ -265,9 +277,10 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripButton toolStripButtonStart;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
-        private System.Windows.Forms.ToolStripButton toolStripButtonSave;
-        private System.Windows.Forms.ToolStripButton toolStripButtonLoad;
+        private System.Windows.Forms.ToolStripButton toolStripButtonSaveFlow;
+        private System.Windows.Forms.ToolStripButton toolStripButtonLoadPresure;
         private System.Windows.Forms.ToolStripButton toolStripButtonClear;
+        private System.Windows.Forms.ToolStripButton toolStripButtonLoadFlow;
     }
 }
 
