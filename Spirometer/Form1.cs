@@ -297,8 +297,29 @@ namespace Spirometer
             m_pointsFV.Add(new DataPoint(volume, flow));
         }
 
+        /* 尝试清空数据队列 */
+        private bool TryClearDataQueue()
+        {
+            bool bRet = true;
+
+            /* 尝试清空队列 */
+            while (m_dataQueue.Count > 0)
+            {
+                bRet = m_dataQueue.TryDequeue(out _);
+                if (!bRet)
+                {
+                    break;
+                }
+            }
+
+            return bRet;
+        }
+
         private void ClearAll()
         {
+            /* 尝试清空数据队列 */
+            TryClearDataQueue();
+
             /* Clear Flow-Volume Plot */
             var serieFV = plotViewFV.Model.Series[0] as LineSeries;
             serieFV.Points.Clear();
@@ -351,6 +372,8 @@ namespace Spirometer
                 toolStripButtonScan.Enabled = !bRet;
                 toolStripComboBoxCom.Enabled = !bRet;
                 toolStripButtonConnect.Text = bRet ? "断开" : "连接";
+                /* 尝试清空数据队列 */
+                TryClearDataQueue();
             }
             else
             {
@@ -365,6 +388,8 @@ namespace Spirometer
                 toolStripButtonStart.Text = "开始";
                 /* 停止刷新定时器 */
                 m_refreshTimer.Stop();
+                /* 尝试清空数据队列 */
+                TryClearDataQueue();
             }
         }
 
@@ -401,6 +426,8 @@ namespace Spirometer
                         toolStripButtonLoad.Enabled = false;
                         toolStripButtonSave.Enabled = false;
                         //ClearAll();
+                        /* 尝试清空数据队列 */
+                        TryClearDataQueue();
                         /* 启动刷新定时器 */
                         m_refreshTimer.Start();
                     }
@@ -413,6 +440,8 @@ namespace Spirometer
                     toolStripButtonSave.Enabled = true;
                     /* 停止刷新定时器 */
                     m_refreshTimer.Stop();
+                    /* 尝试清空数据队列 */
+                    TryClearDataQueue();
                 }
             }
         }
