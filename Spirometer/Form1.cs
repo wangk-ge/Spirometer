@@ -21,6 +21,7 @@ namespace Spirometer
         private readonly double m_defaultRV = 2.55; // 默认残气量(RV),单位: L
         private ConcurrentQueue<double> m_dataQueue = new ConcurrentQueue<double>(); // 数据队列
         private FlowSensor m_flowSensor = new FlowSensor(); // 流量传感器
+        private PulmonaryFuncParam m_pulmonaryFuncParam = new PulmonaryFuncParam(); // 肺功能参数计算
         private PlotModel m_plotModelFV; // 流量(Flow)-容积(Volume)图Model
         private PlotModel m_plotModelVT; // 容积(Volume)-时间(Time)图Model
         private PlotModel m_plotModelFT; // 流量(Flow)-时间(Time)图Model
@@ -239,6 +240,11 @@ namespace Spirometer
             plotViewFT.Model = m_plotModelFT;
             m_pointsFT = seriesFT.Points;
 
+            m_pulmonaryFuncParam.StateChanged += new PulmonaryFuncParam.StateChangeHandler((PulmonaryFuncParam.State state, double time) =>
+            {
+                Console.WriteLine($"StateChanged: {state} {time}");
+            });
+
             /* 通过传感器获取数据 */
             m_flowSensor.FlowRecved += new FlowSensor.FlowRecvHandler((byte channel, double flow) => {
                 //Console.WriteLine($"FlowRecved: {channel} {flow}");
@@ -257,6 +263,7 @@ namespace Spirometer
                     {
                         break;
                     }
+                    //Console.WriteLine(flow);
                     AddFlow(flow);
                 }
 
@@ -280,6 +287,9 @@ namespace Spirometer
                 time = lastPoint.X + m_flowSensor.SampleTime; // 单位: ms
                 volume = lastPoint.Y + flow * (m_flowSensor.SampleTime / 1000); // 流量积分得容积,单位: L
             }
+
+            /* 执行肺功能参数计算 */
+            m_pulmonaryFuncParam.Input(flow, time);
 
             m_pointsFT.Add(new DataPoint(time, flow));
             m_pointsVT.Add(new DataPoint(time, volume));
@@ -309,6 +319,9 @@ namespace Spirometer
         {
             /* 尝试清空数据队列 */
             TryClearDataQueue();
+
+            /* 重置状态 */
+            m_pulmonaryFuncParam.Reset();
 
             /* Clear Flow-Volume Plot */
             var serieFV = plotViewFV.Model.Series[0] as LineSeries;

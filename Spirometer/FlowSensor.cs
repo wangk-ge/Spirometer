@@ -13,7 +13,7 @@ namespace Spirometer
         private readonly double m_presureFlowRatio = 1333; // 压差转流量系数(转出来的单位是ml/s)
         private readonly double m_sampleRate = 330; // 采样率,单位:HZ
         private FrameDecoder m_frameDecoder = new FrameDecoder(); // 串口数据帧解码器
-        private KalmanFilter m_kalmanFilter = new KalmanFilter(0.01f/*Q*/, 10.0f/*R*/, 10.0f/*P*/, 0); // 卡尔曼滤波器
+        private KalmanFilter m_kalmanFilter = new KalmanFilter(0.01f/*Q*/, 0.1f/*R*/, 10.0f/*P*/, 0); // 卡尔曼滤波器
 
         public delegate void FlowRecvHandler(byte channel, double flow); // 流量接收代理
         public event FlowRecvHandler FlowRecved; // 流量收取事件
@@ -47,7 +47,7 @@ namespace Spirometer
         /* 压差转流量,单位:L/S */
         public double PresureToFlow(double presure)
         {
-            presure = m_kalmanFilter.Input((float)presure); // 执行滤波
+            //presure = m_kalmanFilter.Input((float)presure); // 执行滤波
             double flow = presure / (m_presureFlowRatio * 1000.0); // 压差转流量
             return flow;
         }
