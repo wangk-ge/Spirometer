@@ -18,10 +18,11 @@ namespace Spirometer
 {
     public partial class Form1 : Form
     {
-        private const double m_sampleRate = 330; // 采样率,单位HZ
-        private const double m_presureFlowRatio = 1200; // 压差转流量系数
-        private ConcurrentQueue<double> m_dataQueue = new ConcurrentQueue<double>();
-        private FlowSensor m_flowSensor = new FlowSensor();
+        private readonly double m_sampleRate = 330; // 采样率,单位HZ
+        private readonly double m_presureFlowRatio = 1333; // 压差转流量系数(转出来的单位是ml/s)
+        private readonly double m_defaultRV = 2.55; // 默认残气量(RV),单位: L
+        private ConcurrentQueue<double> m_dataQueue = new ConcurrentQueue<double>(); // 数据队列
+        private FlowSensor m_flowSensor = new FlowSensor(); // 流量传感器
         private KalmanFilter m_kalmanFilter = new KalmanFilter(0.01f/*Q*/, 0.01f/*R*/, 10.0f/*P*/, 0);
         private PlotModel m_plotModelFV; // 流量(Flow)-容积(Volume)图Model
         private PlotModel m_plotModelVT; // 容积(Volume)-时间(Time)图Model
@@ -273,7 +274,7 @@ namespace Spirometer
             });
         }
 
-        /* 压差转流量 */
+        /* 压差转流量,单位:L/S */
         private double PresureToFlow(double presure)
         {
             return presure / (m_presureFlowRatio * 1000);
@@ -283,12 +284,12 @@ namespace Spirometer
         private void AddFlow(double flow)
         {
             double time = 0;
-            double volume = flow; // 923
+            double volume = m_defaultRV + flow;
             if (m_pointsVT.Count > 0)
             {
                 DataPoint lastPoint = m_pointsVT.Last();
-                time = lastPoint.X + (1000 / m_sampleRate);
-                volume = lastPoint.Y + flow; // 流量积分得容积
+                time = lastPoint.X + (1000 / m_sampleRate); // 单位: ms
+                volume = lastPoint.Y + flow * (1 / m_sampleRate); // 流量积分得容积,单位: L
             }
 
             m_pointsFT.Add(new DataPoint(time, flow));
