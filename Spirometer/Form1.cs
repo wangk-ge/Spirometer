@@ -1,4 +1,5 @@
 ﻿using OxyPlot;
+using OxyPlot.Annotations;
 using OxyPlot.Axes;
 using OxyPlot.Series;
 using System;
@@ -249,24 +250,60 @@ namespace Spirometer
             m_pulmonaryFunc.ZeroingCompleted += new PulmonaryFunction.ZeroingCompleteHandler((uint index) =>
             {
                 Console.WriteLine($"ZeroingCompleted: {index}");
+                var annotation = new LineAnnotation()
+                {
+                    Color = OxyColors.Red,
+                    X = index * m_flowSensor.SampleTime,
+                    LineStyle = LineStyle.Dash,
+                    Type = LineAnnotationType.Vertical,
+                    Text = "Zeroing"
+                };
+                m_plotModelFT.Annotations.Add(annotation);
             });
 
             /* 开始吸气 */
             m_pulmonaryFunc.InspirationStarted += new PulmonaryFunction.InspirationStartHandler((uint index) =>
             {
                 Console.WriteLine($"InspirationStarted: {index}");
+                var annotation = new LineAnnotation()
+                {
+                    Color = OxyColors.Red,
+                    X = index * m_flowSensor.SampleTime,
+                    LineStyle = LineStyle.Dash,
+                    Type = LineAnnotationType.Vertical,
+                    Text = "Inspiration"
+                };
+                m_plotModelFT.Annotations.Add(annotation);
             });
 
             /* 开始吹气 */
             m_pulmonaryFunc.ExpirationStarted += new PulmonaryFunction.ExpirationStartHandler((uint index) =>
             {
                 Console.WriteLine($"ExpirationStarted: {index}");
+                var annotation = new LineAnnotation()
+                {
+                    Color = OxyColors.Red,
+                    X = index * m_flowSensor.SampleTime,
+                    LineStyle = LineStyle.Dash,
+                    Type = LineAnnotationType.Vertical,
+                    Text = "Expiration"
+                };
+                m_plotModelFT.Annotations.Add(annotation);
             });
 
             /* 测量结束 */
             m_pulmonaryFunc.MeasureStoped += new PulmonaryFunction.MeasureStopHandler((uint index) =>
             {
                 Console.WriteLine($"MeasureStoped: {index}");
+                var annotation = new LineAnnotation()
+                {
+                    Color = OxyColors.Red,
+                    X = index * m_flowSensor.SampleTime,
+                    LineStyle = LineStyle.Dash,
+                    Type = LineAnnotationType.Vertical,
+                    Text = "Stoped"
+                };
+                m_plotModelFT.Annotations.Add(annotation);
             });
 
             /* 通过传感器获取数据 */
