@@ -11,6 +11,7 @@ using System.IO;
 using System.IO.Ports;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -18,15 +19,14 @@ namespace Spirometer
 {
     public partial class Form1 : Form
     {
-        private readonly double m_defaultRV = 2.55; // 默认残气量(RV),单位: L
         private ConcurrentQueue<double> m_dataQueue = new ConcurrentQueue<double>(); // 数据队列
-        private FlowSensor m_flowSensor = new FlowSensor(); // 流量传感器
-        private PulmonaryFuncParam m_pulmonaryFuncParam = new PulmonaryFuncParam(); // 肺功能参数计算
+        private FlowSensor m_flowSensor; // 流量传感器
+        private PulmonaryFunction m_pulmonaryFunc; // 肺功能参数计算器
         private PlotModel m_plotModelFV; // 流量(Flow)-容积(Volume)图Model
         private PlotModel m_plotModelVT; // 容积(Volume)-时间(Time)图Model
         private PlotModel m_plotModelFT; // 流量(Flow)-时间(Time)图Model
 
-        private Timer m_refreshTimer = new Timer(); // 波形刷新定时器
+        private System.Windows.Forms.Timer m_refreshTimer = new System.Windows.Forms.Timer(); // 波形刷新定时器
         private readonly int m_fps = 24; // 帧率
 
         private List<DataPoint> m_pointsFV; // 流量(Flow)-容积(Volume)数据
@@ -35,6 +35,11 @@ namespace Spirometer
 
         public Form1()
         {
+            /* 流量传感器 */
+            m_flowSensor = new FlowSensor();
+            /* 肺功能参数计算器 */
+            m_pulmonaryFunc = new PulmonaryFunction(m_flowSensor.SampleTime);
+
             InitializeComponent();
         }
 
@@ -240,9 +245,28 @@ namespace Spirometer
             plotViewFT.Model = m_plotModelFT;
             m_pointsFT = seriesFT.Points;
 
-            m_pulmonaryFuncParam.StateChanged += new PulmonaryFuncParam.StateChangeHandler((PulmonaryFuncParam.State state, double time) =>
+            /* 归零已完成 */
+            m_pulmonaryFunc.ZeroingCompleted += new PulmonaryFunction.ZeroingCompleteHandler((uint index) =>
             {
-                Console.WriteLine($"StateChanged: {state} {time}");
+                Console.WriteLine($"ZeroingCompleted: {index}");
+            });
+
+            /* 开始吸气 */
+            m_pulmonaryFunc.InspirationStarted += new PulmonaryFunction.InspirationStartHandler((uint index) =>
+            {
+                Console.WriteLine($"InspirationStarted: {index}");
+            });
+
+            /* 开始吹气 */
+            m_pulmonaryFunc.ExpirationStarted += new PulmonaryFunction.ExpirationStartHandler((uint index) =>
+            {
+                Console.WriteLine($"ExpirationStarted: {index}");
+            });
+
+            /* 测量结束 */
+            m_pulmonaryFunc.MeasureStoped += new PulmonaryFunction.MeasureStopHandler((uint index) =>
+            {
+                Console.WriteLine($"MeasureStoped: {index}");
             });
 
             /* 通过传感器获取数据 */
@@ -279,21 +303,12 @@ namespace Spirometer
         /* 加入一个流量采集数据 */
         private void AddFlow(double flow)
         {
-            double time = 0;
-            double volume = m_defaultRV + flow;
-            if (m_pointsVT.Count > 0)
-            {
-                DataPoint lastPoint = m_pointsVT.Last();
-                time = lastPoint.X + m_flowSensor.SampleTime; // 单位: ms
-                volume = lastPoint.Y + flow * (m_flowSensor.SampleTime / 1000); // 流量积分得容积,单位: L
-            }
-
             /* 执行肺功能参数计算 */
-            m_pulmonaryFuncParam.Input(flow, time);
+            m_pulmonaryFunc.Input(flow);
 
-            m_pointsFT.Add(new DataPoint(time, flow));
-            m_pointsVT.Add(new DataPoint(time, volume));
-            m_pointsFV.Add(new DataPoint(volume, flow));
+            m_pointsFT.Add(new DataPoint(m_pulmonaryFunc.Time, m_pulmonaryFunc.Flow));
+            m_pointsVT.Add(new DataPoint(m_pulmonaryFunc.Time, m_pulmonaryFunc.Volume));
+            m_pointsFV.Add(new DataPoint(m_pulmonaryFunc.Volume, m_pulmonaryFunc.Flow));
         }
 
         /* 尝试清空数据队列 */
@@ -321,7 +336,7 @@ namespace Spirometer
             TryClearDataQueue();
 
             /* 重置状态 */
-            m_pulmonaryFuncParam.Reset();
+            m_pulmonaryFunc.Reset();
 
             /* Clear Flow-Volume Plot */
             var serieFV = plotViewFV.Model.Series[0] as LineSeries;

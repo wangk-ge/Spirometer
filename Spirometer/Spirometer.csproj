@@ -65,7 +65,8 @@
     <Compile Include="KalmanFilter.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PulmonaryFuncParam.cs" />
+    <Compile Include="PulmonaryFunction.cs" />
+    <Compile Include="WaveStatistician.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
