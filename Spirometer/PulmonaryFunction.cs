@@ -48,8 +48,20 @@ namespace Spirometer
                 return 0.0;
             }
         }
-        public double FRC { get; private set; } = 0.0; // 功能残气量(L)
-        public double TV { get; private set; } = 0.0; // 潮气量(L)
+        public double FRC // 功能残气量(L)
+        {
+            get
+            {
+                return m_tvLowerAvg;
+            }
+        }
+        public double TV // 潮气量(L)
+        {
+            get
+            {
+                return (m_tvUpperAvg - m_tvLowerAvg);
+            }
+        }
 
         public delegate void ZeroingCompleteHandler(uint sampleIndex, double flowZeroOffset); // 归零完成事件代理
         public event ZeroingCompleteHandler ZeroingCompleted; // 归零完成事件
@@ -103,7 +115,10 @@ namespace Spirometer
         private uint m_peekVolumeIndex = 0U; // 跟踪容积曲线当前极值点Index
         private uint m_peekVolumeKeepCount = 0U; // 跟踪当前极值点不变的次数
         private readonly uint PEEK_VOLUME_KEEP_COUNT = 100; // 如果极值点保持指定的采样次数不变化则认为是稳定的
+        private List<uint> m_peekMaxVolumeIndexList = new List<uint>(); // Volume极大值点列表
+        private List<uint> m_peekMinVolumeIndexList = new List<uint>(); // Volume极小值点列表
 
+        /* 阈值 */
         private readonly double FLOW_DELTA_THRESHOLD = 0.15; // Flow变化量阈值,在指定采样次数后如果Flow变化量超过阈值则确认开始吸气/吹气
         private readonly double VOLUME_DELTA_THRESHOLD = 0.05; // Volume变化量阈值,在过极值点指定采样次数后如果Volume变化量超过阈值则确认极值点有效
 
@@ -118,6 +133,14 @@ namespace Spirometer
         private uint m_maxVolumeIndex = 0U; // 容积最大值点Index
         private uint m_minVolumeIndex = 0U; // 容积最小值点Index
 
+        /* 潮气量上下界信息(用于求TV和FRC) */
+        private double m_tvUpperSum = 0.0; // 潮气量上界Volume求和值
+        private uint m_tvUpperCount = 0U; // 潮气量上界统计数量
+        private double m_tvUpperAvg = 0.0; // 潮气量上界Volume平均值
+        private double m_tvLowerSum = 0.0; // 潮气量下界Volume求和值
+        private uint m_tvLowerCount = 0U; // 潮气量下界统计数量
+        private double m_tvLowerAvg = 0.0; // 潮气量下界Volume平均值
+
         public PulmonaryFunction(double sampleTime)
         {
             SAMPLE_TIME = sampleTime;
@@ -131,8 +154,6 @@ namespace Spirometer
             Flow = 0.0;
             Volume = DEFAULT_FRC;
             RespiratoryRate = 0.0;
-            FRC = 0.0;
-            TV = 0.0;
             m_state = State.Reset;
             m_flowZeroOffset = 0.0;
             m_sampleCount = 0U;
@@ -144,11 +165,19 @@ namespace Spirometer
             m_peekFlowIndex = 0U;
             m_peekVolumeIndex = 0U;
             m_peekVolumeKeepCount = 0U;
+            m_peekMaxVolumeIndexList.Clear();
+            m_peekMinVolumeIndexList.Clear();
             m_measureStartIndex = 0U;
             m_measureStartInspiration = true;
             m_respiratoryCycleCount = 0U;
             m_maxVolumeIndex = 0U;
             m_minVolumeIndex = 0U;
+            m_tvUpperSum = 0.0;
+            m_tvUpperCount = 0U;
+            m_tvUpperAvg = 0.0;
+            m_tvLowerSum = 0.0;
+            m_tvLowerCount = 0U;
+            m_tvLowerAvg = 0.0;
             m_listFV.Clear();
         }
 
@@ -365,6 +394,17 @@ namespace Spirometer
                                     /* 进入正在呼气状态 */
                                     SetState(State.Expiration);
 
+                                    /* Volume极大值点存入列表 */
+                                    m_peekMaxVolumeIndexList.Add(m_peekVolumeIndex);
+
+                                    /* 更新潮气量上界统计信息(只统计6次以内的极大值) */
+                                    if (m_tvUpperCount < 6)
+                                    {
+                                        m_tvUpperSum += m_listFV[(int)m_peekVolumeIndex].volume;
+                                        ++m_tvUpperCount;
+                                        m_tvUpperAvg = m_tvUpperSum / m_tvUpperCount;
+                                    }
+
                                     /* 统计容积最大值点 */
                                     if (m_listFV[(int)m_peekVolumeIndex].volume > m_listFV[(int)m_maxVolumeIndex].volume)
                                     {
@@ -425,6 +465,17 @@ namespace Spirometer
 
                                     /* 进入正在吸气状态 */
                                     SetState(State.Inspiration);
+
+                                    /* Volume极小值点存入列表 */
+                                    m_peekMinVolumeIndexList.Add(m_peekVolumeIndex);
+
+                                    /* 更新潮气量下界统计信息(只统计6次以内的极小值) */
+                                    if (m_tvLowerCount < 6)
+                                    {
+                                        m_tvLowerSum += m_listFV[(int)m_peekVolumeIndex].volume;
+                                        ++m_tvLowerCount;
+                                        m_tvLowerAvg = m_tvLowerSum / m_tvLowerCount;
+                                    }
 
                                     /* 统计容积最小值点 */
                                     if (m_listFV[(int)m_peekVolumeIndex].volume < m_listFV[(int)m_minVolumeIndex].volume)

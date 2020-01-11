@@ -315,6 +315,8 @@ namespace Spirometer
                 toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
                 toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
                 toolStripStatusLabelRV.Text = m_pulmonaryFunc.RV.ToString();
+                toolStripStatusLabelTV.Text = m_pulmonaryFunc.TV.ToString();
+                toolStripStatusLabelFRC.Text = m_pulmonaryFunc.FRC.ToString();
             });
 
             /* 开始吹气 */
@@ -344,6 +346,8 @@ namespace Spirometer
                 toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
                 toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
                 toolStripStatusLabelRV.Text = m_pulmonaryFunc.RV.ToString();
+                toolStripStatusLabelTV.Text = m_pulmonaryFunc.TV.ToString();
+                toolStripStatusLabelFRC.Text = m_pulmonaryFunc.FRC.ToString();
             });
 
             /* 测量结束 */
@@ -363,6 +367,8 @@ namespace Spirometer
                 toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
                 toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
                 toolStripStatusLabelRV.Text = m_pulmonaryFunc.RV.ToString();
+                toolStripStatusLabelTV.Text = m_pulmonaryFunc.TV.ToString();
+                toolStripStatusLabelFRC.Text = m_pulmonaryFunc.FRC.ToString();
             });
 
             /* 通过传感器获取数据 */
@@ -442,11 +448,15 @@ namespace Spirometer
         /* 清除状态栏 */
         private void ClearStatusBar()
         {
-            toolStripStatusLabelRespiratoryRate.Text = "0.0";
-            toolStripStatusLabelVC.Text = "0.0";
-            toolStripStatusLabelVC.Text = "0.0";
-            toolStripStatusLabelTLC.Text = "0.0";
-            toolStripStatusLabelRV.Text = "0.0";
+            this.BeginInvoke(new Action<Form1>((obj) => {
+                toolStripStatusLabelRespiratoryRate.Text = "0.0";
+                toolStripStatusLabelVC.Text = "0.0";
+                toolStripStatusLabelVC.Text = "0.0";
+                toolStripStatusLabelTLC.Text = "0.0";
+                toolStripStatusLabelRV.Text = "0.0";
+                toolStripStatusLabelTV.Text = "0.0";
+                toolStripStatusLabelFRC.Text = "0.0";
+            }), this);
         }
 
         /* 清空所有图表数据和缓存数据,并刷新显示 */

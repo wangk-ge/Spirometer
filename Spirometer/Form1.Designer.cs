@@ -54,6 +54,10 @@
             this.toolStripStatusLabelTLC = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel4 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabelRV = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel5 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabelTV = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel6 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabelFRC = new System.Windows.Forms.ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -258,7 +262,11 @@
             this.toolStripStatusLabel3,
             this.toolStripStatusLabelTLC,
             this.toolStripStatusLabel4,
-            this.toolStripStatusLabelRV});
+            this.toolStripStatusLabelRV,
+            this.toolStripStatusLabel5,
+            this.toolStripStatusLabelTV,
+            this.toolStripStatusLabel6,
+            this.toolStripStatusLabelFRC});
             this.statusStrip1.Location = new System.Drawing.Point(0, 650);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(1372, 22);
@@ -312,6 +320,30 @@
             this.toolStripStatusLabelRV.Name = "toolStripStatusLabelRV";
             this.toolStripStatusLabelRV.Size = new System.Drawing.Size(25, 17);
             this.toolStripStatusLabelRV.Text = "0.0";
+            // 
+            // toolStripStatusLabel5
+            // 
+            this.toolStripStatusLabel5.Name = "toolStripStatusLabel5";
+            this.toolStripStatusLabel5.Size = new System.Drawing.Size(67, 17);
+            this.toolStripStatusLabel5.Text = "潮气量(TV)";
+            // 
+            // toolStripStatusLabelTV
+            // 
+            this.toolStripStatusLabelTV.Name = "toolStripStatusLabelTV";
+            this.toolStripStatusLabelTV.Size = new System.Drawing.Size(25, 17);
+            this.toolStripStatusLabelTV.Text = "0.0";
+            // 
+            // toolStripStatusLabel6
+            // 
+            this.toolStripStatusLabel6.Name = "toolStripStatusLabel6";
+            this.toolStripStatusLabel6.Size = new System.Drawing.Size(98, 17);
+            this.toolStripStatusLabel6.Text = "功能残气量(FRC)";
+            // 
+            // toolStripStatusLabelFRC
+            // 
+            this.toolStripStatusLabelFRC.Name = "toolStripStatusLabelFRC";
+            this.toolStripStatusLabelFRC.Size = new System.Drawing.Size(25, 17);
+            this.toolStripStatusLabelFRC.Text = "0.0";
             // 
             // Form1
             // 
@@ -368,6 +400,10 @@
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelTLC;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel4;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelRV;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel5;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelTV;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel6;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelFRC;
     }
 }
 
