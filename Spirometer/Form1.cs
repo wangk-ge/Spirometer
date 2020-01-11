@@ -274,6 +274,15 @@ namespace Spirometer
                     Text = "Inspiration"
                 };
                 m_plotModelFT.Annotations.Add(annotation);
+                annotation = new LineAnnotation()
+                {
+                    Color = OxyColors.Red,
+                    X = index * m_flowSensor.SampleTime,
+                    LineStyle = LineStyle.Dash,
+                    Type = LineAnnotationType.Vertical,
+                    Text = "Inspiration"
+                };
+                m_plotModelVT.Annotations.Add(annotation);
             });
 
             /* 开始吹气 */
@@ -289,6 +298,15 @@ namespace Spirometer
                     Text = "Expiration"
                 };
                 m_plotModelFT.Annotations.Add(annotation);
+                annotation = new LineAnnotation()
+                {
+                    Color = OxyColors.Red,
+                    X = index * m_flowSensor.SampleTime,
+                    LineStyle = LineStyle.Dash,
+                    Type = LineAnnotationType.Vertical,
+                    Text = "Expiration"
+                };
+                m_plotModelVT.Annotations.Add(annotation);
             });
 
             /* 测量结束 */
