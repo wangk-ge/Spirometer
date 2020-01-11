@@ -511,10 +511,22 @@ namespace Spirometer
             }
         }
 
-        /* 返回索引值对应的Flow-Volume */
-        public FlowVolume GetFlowVolume(uint sampleIendex)
+        /* 返回索引值对应的Time(没有做参数有效性检查) */
+        public double GetTime(uint sampleIendex)
         {
-            return m_listFV[(int)sampleIendex];
+            return sampleIendex * SAMPLE_TIME;
+        }
+
+        /* 返回索引值对应的Flow(没有做参数有效性检查) */
+        public double GetFlow(uint sampleIendex)
+        {
+            return m_listFV[(int)sampleIendex].flow;
+        }
+
+        /* 返回索引值对应的Volume(没有做参数有效性检查) */
+        public double GetVolume(uint sampleIendex)
+        {
+            return m_listFV[(int)sampleIendex].volume;
         }
     }
 }
