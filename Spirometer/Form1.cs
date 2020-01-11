@@ -309,6 +309,12 @@ namespace Spirometer
                     Text = "吸气"
                 };
                 m_plotModelVT.Annotations.Add(annotation);
+
+                toolStripStatusLabelRespiratoryRate.Text = m_pulmonaryFunc.RespiratoryRate.ToString();
+                toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
+                toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
+                toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
+                toolStripStatusLabelRV.Text = m_pulmonaryFunc.RV.ToString();
             });
 
             /* 开始吹气 */
@@ -333,6 +339,11 @@ namespace Spirometer
                     Text = $"呼气"
                 };
                 m_plotModelVT.Annotations.Add(annotation);
+
+                toolStripStatusLabelRespiratoryRate.Text = m_pulmonaryFunc.RespiratoryRate.ToString();
+                toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
+                toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
+                toolStripStatusLabelRV.Text = m_pulmonaryFunc.RV.ToString();
             });
 
             /* 测量结束 */
@@ -348,6 +359,10 @@ namespace Spirometer
                     Text = "停止"
                 };
                 m_plotModelFT.Annotations.Add(annotation);
+                toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
+                toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
+                toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
+                toolStripStatusLabelRV.Text = m_pulmonaryFunc.RV.ToString();
             });
 
             /* 通过传感器获取数据 */
@@ -424,6 +439,16 @@ namespace Spirometer
             return bRet;
         }
 
+        /* 清除状态栏 */
+        private void ClearStatusBar()
+        {
+            toolStripStatusLabelRespiratoryRate.Text = "0.0";
+            toolStripStatusLabelVC.Text = "0.0";
+            toolStripStatusLabelVC.Text = "0.0";
+            toolStripStatusLabelTLC.Text = "0.0";
+            toolStripStatusLabelRV.Text = "0.0";
+        }
+
         /* 清空所有图表数据和缓存数据,并刷新显示 */
         private void ClearAll()
         {
@@ -455,6 +480,8 @@ namespace Spirometer
             xAxisFT.Reset();
 
             InvalidatePlot(true);
+
+            ClearStatusBar();
         }
 
         /* 请求所有图表刷新显示 */

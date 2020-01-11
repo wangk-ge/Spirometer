@@ -45,6 +45,15 @@
             this.toolStripButtonLoadPresure = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonLoadFlow = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonClear = new System.Windows.Forms.ToolStripButton();
+            this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+            this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabelRespiratoryRate = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabelVC = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel3 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabelTLC = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel4 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabelRV = new System.Windows.Forms.ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -54,6 +63,7 @@
             this.splitContainer2.Panel2.SuspendLayout();
             this.splitContainer2.SuspendLayout();
             this.toolStrip1.SuspendLayout();
+            this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // splitContainer1
@@ -71,8 +81,8 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.plotViewFT);
-            this.splitContainer1.Size = new System.Drawing.Size(1372, 647);
-            this.splitContainer1.SplitterDistance = 347;
+            this.splitContainer1.Size = new System.Drawing.Size(1372, 625);
+            this.splitContainer1.SplitterDistance = 335;
             this.splitContainer1.SplitterWidth = 2;
             this.splitContainer1.TabIndex = 0;
             // 
@@ -90,7 +100,7 @@
             // splitContainer2.Panel2
             // 
             this.splitContainer2.Panel2.Controls.Add(this.plotViewVT);
-            this.splitContainer2.Size = new System.Drawing.Size(1372, 347);
+            this.splitContainer2.Size = new System.Drawing.Size(1372, 335);
             this.splitContainer2.SplitterDistance = 667;
             this.splitContainer2.SplitterWidth = 2;
             this.splitContainer2.TabIndex = 0;
@@ -101,7 +111,7 @@
             this.plotViewFV.Location = new System.Drawing.Point(0, 0);
             this.plotViewFV.Name = "plotViewFV";
             this.plotViewFV.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewFV.Size = new System.Drawing.Size(663, 343);
+            this.plotViewFV.Size = new System.Drawing.Size(663, 331);
             this.plotViewFV.TabIndex = 0;
             this.plotViewFV.Text = "plotView1";
             this.plotViewFV.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
@@ -114,7 +124,7 @@
             this.plotViewVT.Location = new System.Drawing.Point(0, 0);
             this.plotViewVT.Name = "plotViewVT";
             this.plotViewVT.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewVT.Size = new System.Drawing.Size(699, 343);
+            this.plotViewVT.Size = new System.Drawing.Size(699, 331);
             this.plotViewVT.TabIndex = 0;
             this.plotViewVT.Text = "plotView1";
             this.plotViewVT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
@@ -127,7 +137,7 @@
             this.plotViewFT.Location = new System.Drawing.Point(0, 0);
             this.plotViewFT.Name = "plotViewFT";
             this.plotViewFT.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewFT.Size = new System.Drawing.Size(1368, 294);
+            this.plotViewFT.Size = new System.Drawing.Size(1368, 284);
             this.plotViewFT.TabIndex = 0;
             this.plotViewFT.Text = "plotView1";
             this.plotViewFT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
@@ -238,6 +248,71 @@
             this.toolStripButtonClear.Text = "清除";
             this.toolStripButtonClear.Click += new System.EventHandler(this.toolStripButtonClear_Click);
             // 
+            // statusStrip1
+            // 
+            this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripStatusLabel1,
+            this.toolStripStatusLabelRespiratoryRate,
+            this.toolStripStatusLabel2,
+            this.toolStripStatusLabelVC,
+            this.toolStripStatusLabel3,
+            this.toolStripStatusLabelTLC,
+            this.toolStripStatusLabel4,
+            this.toolStripStatusLabelRV});
+            this.statusStrip1.Location = new System.Drawing.Point(0, 650);
+            this.statusStrip1.Name = "statusStrip1";
+            this.statusStrip1.Size = new System.Drawing.Size(1372, 22);
+            this.statusStrip1.TabIndex = 2;
+            this.statusStrip1.Text = "statusStrip1";
+            // 
+            // toolStripStatusLabel1
+            // 
+            this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(56, 17);
+            this.toolStripStatusLabel1.Text = "呼吸频率";
+            // 
+            // toolStripStatusLabelRespiratoryRate
+            // 
+            this.toolStripStatusLabelRespiratoryRate.Name = "toolStripStatusLabelRespiratoryRate";
+            this.toolStripStatusLabelRespiratoryRate.Size = new System.Drawing.Size(25, 17);
+            this.toolStripStatusLabelRespiratoryRate.Text = "0.0";
+            // 
+            // toolStripStatusLabel2
+            // 
+            this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
+            this.toolStripStatusLabel2.Size = new System.Drawing.Size(68, 17);
+            this.toolStripStatusLabel2.Text = "肺活量(VC)";
+            // 
+            // toolStripStatusLabelVC
+            // 
+            this.toolStripStatusLabelVC.Name = "toolStripStatusLabelVC";
+            this.toolStripStatusLabelVC.Size = new System.Drawing.Size(25, 17);
+            this.toolStripStatusLabelVC.Text = "0.0";
+            // 
+            // toolStripStatusLabel3
+            // 
+            this.toolStripStatusLabel3.Name = "toolStripStatusLabel3";
+            this.toolStripStatusLabel3.Size = new System.Drawing.Size(73, 17);
+            this.toolStripStatusLabel3.Text = "肺总量(TLC)";
+            // 
+            // toolStripStatusLabelTLC
+            // 
+            this.toolStripStatusLabelTLC.Name = "toolStripStatusLabelTLC";
+            this.toolStripStatusLabelTLC.Size = new System.Drawing.Size(25, 17);
+            this.toolStripStatusLabelTLC.Text = "0.0";
+            // 
+            // toolStripStatusLabel4
+            // 
+            this.toolStripStatusLabel4.Name = "toolStripStatusLabel4";
+            this.toolStripStatusLabel4.Size = new System.Drawing.Size(68, 17);
+            this.toolStripStatusLabel4.Text = "残气量(RV)";
+            // 
+            // toolStripStatusLabelRV
+            // 
+            this.toolStripStatusLabelRV.Name = "toolStripStatusLabelRV";
+            this.toolStripStatusLabelRV.Size = new System.Drawing.Size(25, 17);
+            this.toolStripStatusLabelRV.Text = "0.0";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -245,6 +320,7 @@
             this.ClientSize = new System.Drawing.Size(1372, 672);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.toolStrip1);
+            this.Controls.Add(this.statusStrip1);
             this.Name = "Form1";
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.Form1_Load);
@@ -258,6 +334,8 @@
             this.splitContainer2.ResumeLayout(false);
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
+            this.statusStrip1.ResumeLayout(false);
+            this.statusStrip1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -281,6 +359,15 @@
         private System.Windows.Forms.ToolStripButton toolStripButtonLoadPresure;
         private System.Windows.Forms.ToolStripButton toolStripButtonClear;
         private System.Windows.Forms.ToolStripButton toolStripButtonLoadFlow;
+        private System.Windows.Forms.StatusStrip statusStrip1;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelRespiratoryRate;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel2;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelVC;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel3;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelTLC;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel4;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelRV;
     }
 }
 

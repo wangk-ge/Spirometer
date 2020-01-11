@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OxyPlot;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,6 +14,42 @@ namespace Spirometer
         public double Flow { get; private set; } = 0.0; // 流量(L/S)
         public double Volume { get; private set; } = 0.0; // 容积(L)
         public double RespiratoryRate { get; private set; } = 0.0; // 呼吸频率(次/min)
+        public double TLC // 肺总量(L)
+        {
+            get
+            {
+                if (m_maxVolumeIndex < m_listFV.Count)
+                {
+                    return m_listFV[(int)m_maxVolumeIndex].volume;
+                }
+                return 0.0;
+            }
+        }
+        public double RV // 残气量(L)
+        {
+            get
+            {
+                if (m_minVolumeIndex < m_listFV.Count)
+                {
+                    return m_listFV[(int)m_minVolumeIndex].volume;
+                }
+                return 0.0;
+            }
+        }
+        public double VC  // 肺活量(L)
+        {
+            get
+            {
+                if ((m_maxVolumeIndex < m_listFV.Count)
+                    && (m_minVolumeIndex < m_listFV.Count))
+                {
+                    return m_listFV[(int)m_maxVolumeIndex].volume - m_listFV[(int)m_minVolumeIndex].volume;
+                }
+                return 0.0;
+            }
+        }
+        public double FRC { get; private set; } = 0.0; // 功能残气量(L)
+        public double TV { get; private set; } = 0.0; // 潮气量(L)
 
         public delegate void ZeroingCompleteHandler(uint sampleIndex, double flowZeroOffset); // 归零完成事件代理
         public event ZeroingCompleteHandler ZeroingCompleted; // 归零完成事件
@@ -24,6 +61,13 @@ namespace Spirometer
         public event ExpirationStartHandler ExpirationStarted; // 呼气开始事件
         public delegate void MeasureStopHandler(uint sampleIndex, bool inspiration); // 测试停止事件代理
         public event MeasureStopHandler MeasureStoped; // 测试停止事件
+
+        public struct FlowVolume
+        {
+            public double flow;
+            public double volume;
+        }
+        private List<FlowVolume> m_listFV = new List<FlowVolume>(); // Flow-Volume数据列表
 
         private enum State
         {
@@ -54,11 +98,9 @@ namespace Spirometer
 
         /* 流量(Flow)-时间(Time)曲线极值点 */
         private uint m_peekFlowIndex = 0U; // 跟踪流量曲线当前极值点Index
-        private double m_peekFlow = 0.0; // 跟踪流量曲线当前极值点Flow值
 
         /* 容积(Volume)-时间(Time)曲线极值点 */
         private uint m_peekVolumeIndex = 0U; // 跟踪容积曲线当前极值点Index
-        private double m_peekVolume = 0.0; // 跟踪容积曲线当前极值点Volume值
         private uint m_peekVolumeKeepCount = 0U; // 跟踪当前极值点不变的次数
         private readonly uint PEEK_VOLUME_KEEP_COUNT = 100; // 如果极值点保持指定的采样次数不变化则认为是稳定的
 
@@ -72,6 +114,10 @@ namespace Spirometer
         /* 呼吸周期数 */
         private uint m_respiratoryCycleCount = 0U; // 已检测到的呼吸周期数
 
+        /* 容积参数 */
+        private uint m_maxVolumeIndex = 0U; // 容积最大值点Index
+        private uint m_minVolumeIndex = 0U; // 容积最小值点Index
+
         public PulmonaryFunction(double sampleTime)
         {
             SAMPLE_TIME = sampleTime;
@@ -84,6 +130,9 @@ namespace Spirometer
             Time = 0.0;
             Flow = 0.0;
             Volume = DEFAULT_FRC;
+            RespiratoryRate = 0.0;
+            FRC = 0.0;
+            TV = 0.0;
             m_state = State.Reset;
             m_flowZeroOffset = 0.0;
             m_sampleCount = 0U;
@@ -93,13 +142,14 @@ namespace Spirometer
             m_expirationSampleCnt = 0U;
             m_expirationVolume = 0.0;
             m_peekFlowIndex = 0U;
-            m_peekFlow = 0.0;
             m_peekVolumeIndex = 0U;
-            m_peekVolume = 0.0;
             m_peekVolumeKeepCount = 0U;
             m_measureStartIndex = 0U;
             m_measureStartInspiration = true;
             m_respiratoryCycleCount = 0U;
+            m_maxVolumeIndex = 0U;
+            m_minVolumeIndex = 0U;
+            m_listFV.Clear();
         }
 
         /* 切换状态 */
@@ -118,11 +168,11 @@ namespace Spirometer
         /* 输入流量数据 */
         public void Input(double flow)
         {
-            /* 统计样本个数 */
-            ++m_sampleCount;
+            /* Flow样本索引值 */
+            uint sampleIndex = (uint)m_listFV.Count;
             
             /* 统计样本时间戳 */
-            Time = (m_sampleCount - 1) * SAMPLE_TIME;
+            Time = sampleIndex * SAMPLE_TIME;
 
             /* 当前流量 */
             double flowZeroCorrection = flow - m_flowZeroOffset; // 执行零点校正
@@ -141,6 +191,10 @@ namespace Spirometer
                 /* 当前流量 */
                 Flow = 0.0;
             }
+
+            /* 记录Flow-Volume数据到队列 */
+            m_listFV.Add(new FlowVolume { flow = Flow, volume = Volume});
+            m_sampleCount = (uint)m_listFV.Count;
 
             switch (m_state)
             {
@@ -175,7 +229,7 @@ namespace Spirometer
                             SetState(State.WaitStart);
 
                             /* 触发归零完成事件 */
-                            ZeroingCompleted?.Invoke(m_sampleCount - 1, m_flowZeroOffset);
+                            ZeroingCompleted?.Invoke(sampleIndex, m_flowZeroOffset);
                         }
                         else
                         {
@@ -227,12 +281,10 @@ namespace Spirometer
                                     m_inspirationVolume = 0.0;
 
                                     /* 初始化流量极值点 */
-                                    m_peekFlowIndex = m_sampleCount - 1;
-                                    m_peekFlow = flowZeroCorrection;
+                                    m_peekFlowIndex = sampleIndex;
 
                                     /* 初始化容积极值点 */
-                                    m_peekVolumeIndex = m_sampleCount - 1;
-                                    m_peekVolume = Volume;
+                                    m_peekVolumeIndex = sampleIndex;
                                     m_peekVolumeKeepCount = 1;
                                 }
                             }
@@ -274,12 +326,10 @@ namespace Spirometer
                                     m_expirationVolume = 0.0;
 
                                     /* 初始化流量极值点 */
-                                    m_peekFlowIndex = m_sampleCount - 1;
-                                    m_peekFlow = flowZeroCorrection;
+                                    m_peekFlowIndex = sampleIndex;
 
                                     /* 初始化容积极值点 */
-                                    m_peekVolumeIndex = m_sampleCount - 1;
-                                    m_peekVolume = Volume;
+                                    m_peekVolumeIndex = sampleIndex;
                                     m_peekVolumeKeepCount = 1;
                                 }
                             }
@@ -289,17 +339,15 @@ namespace Spirometer
                 case State.Inspiration: // 正在吸气状态
                     {
                         /* 统计流量极大值 */
-                        if (flowZeroCorrection > m_peekFlow)
+                        if (flowZeroCorrection > m_listFV[(int)m_peekFlowIndex].flow)
                         {
-                            m_peekFlow = flowZeroCorrection;
-                            m_peekFlowIndex = m_sampleCount - 1;
+                            m_peekFlowIndex = sampleIndex;
                         }
 
                         /* 统计容积极大值 */
-                        if (Volume > m_peekVolume)
+                        if (Volume > m_listFV[(int)m_peekVolumeIndex].volume)
                         {
-                            m_peekVolume = Volume;
-                            m_peekVolumeIndex = m_sampleCount - 1;
+                            m_peekVolumeIndex = sampleIndex;
                             m_peekVolumeKeepCount = 1;
                         }
                         else
@@ -309,13 +357,19 @@ namespace Spirometer
                             if (m_peekVolumeKeepCount >= PEEK_VOLUME_KEEP_COUNT)
                             {
                                 /* 过极值点后是否变化明显 */
-                                if ((m_peekVolume - Volume) > VOLUME_DELTA_THRESHOLD)
+                                if ((m_listFV[(int)m_peekVolumeIndex].volume - Volume) > VOLUME_DELTA_THRESHOLD)
                                 {
                                     /* 流量极大值点确认 */
-                                    //Console.WriteLine($"流量极大值点:{m_peekFlowIndex}, {m_peekFlow}");
+                                    //Console.WriteLine($"流量极大值点:{m_peekFlowIndex}, {m_listFV[(int)m_peekFlowIndex].flow}");
 
                                     /* 进入正在呼气状态 */
                                     SetState(State.Expiration);
+
+                                    /* 统计容积最大值点 */
+                                    if (m_listFV[(int)m_peekVolumeIndex].volume > m_listFV[(int)m_maxVolumeIndex].volume)
+                                    {
+                                        m_maxVolumeIndex = m_peekVolumeIndex;
+                                    }
 
                                     /* 是否启动测试时为呼气状态 */
                                     if (!m_measureStartInspiration)
@@ -326,8 +380,7 @@ namespace Spirometer
                                             /* 完成一个呼吸周期,更新呼吸周期数 */
                                             ++m_respiratoryCycleCount;
                                             /* 更新统计呼吸频率 */
-                                            uint index = m_sampleCount - 1;
-                                            double respiratoryTime = (index - m_measureStartIndex) * SAMPLE_TIME; // 总时间(ms)
+                                            double respiratoryTime = (sampleIndex - m_measureStartIndex) * SAMPLE_TIME; // 总时间(ms)
                                             double respiratoryCycleTime = respiratoryTime / m_respiratoryCycleCount; // 呼吸周期(ms)
                                             RespiratoryRate = (1000 * 60) / respiratoryCycleTime; // 呼吸频率(次/min)
                                         }
@@ -337,35 +390,25 @@ namespace Spirometer
                                     ExpirationStarted?.Invoke(m_peekVolumeIndex, m_peekFlowIndex);
 
                                     /* 重新初始化 */
-                                    m_peekVolume = Volume;
-                                    m_peekVolumeIndex = m_sampleCount - 1;
+                                    m_peekVolumeIndex = sampleIndex;
                                     m_peekVolumeKeepCount = 1;
                                 }
                             }
-                        }
-
-                        /* 统计流量极大值 */
-                        if (flowZeroCorrection > m_peekFlow)
-                        {
-                            m_peekFlow = flowZeroCorrection;
-                            m_peekFlowIndex = m_sampleCount - 1;
                         }
                         break;
                     }
                 case State.Expiration: // 正在呼气状态
                     {
                         /* 统计流量极小值 */
-                        if (flowZeroCorrection < m_peekFlow)
+                        if (flowZeroCorrection < m_listFV[(int)m_peekFlowIndex].flow)
                         {
-                            m_peekFlow = flowZeroCorrection;
-                            m_peekFlowIndex = m_sampleCount - 1;
+                            m_peekFlowIndex = sampleIndex;
                         }
 
                         /* 统计容积极小值 */
-                        if (Volume < m_peekVolume)
+                        if (Volume < m_listFV[(int)m_peekVolumeIndex].volume)
                         {
-                            m_peekVolume = Volume;
-                            m_peekVolumeIndex = m_sampleCount - 1;
+                            m_peekVolumeIndex = sampleIndex;
                             m_peekVolumeKeepCount = 1;
                         }
                         else
@@ -375,13 +418,19 @@ namespace Spirometer
                             if (m_peekVolumeKeepCount >= PEEK_VOLUME_KEEP_COUNT)
                             {
                                 /* 过极值点后是否变化明显 */
-                                if (((Volume - m_peekVolume) > VOLUME_DELTA_THRESHOLD))
+                                if (((Volume - m_listFV[(int)m_peekVolumeIndex].volume) > VOLUME_DELTA_THRESHOLD))
                                 {
                                     /* 流量极小值点确认 */
-                                    //Console.WriteLine($"流量极小值点:{m_peekFlowIndex}, {m_peekFlow}");
+                                    //Console.WriteLine($"流量极小值点:{m_peekFlowIndex}, {m_listFV[(int)m_peekFlowIndex].flow}");
 
                                     /* 进入正在吸气状态 */
                                     SetState(State.Inspiration);
+
+                                    /* 统计容积最小值点 */
+                                    if (m_listFV[(int)m_peekVolumeIndex].volume < m_listFV[(int)m_minVolumeIndex].volume)
+                                    {
+                                        m_minVolumeIndex = m_peekVolumeIndex;
+                                    }
 
                                     /* 是否启动测试时为吸气状态 */
                                     if (m_measureStartInspiration)
@@ -392,8 +441,7 @@ namespace Spirometer
                                             /* 完成一个呼吸周期,更新呼吸周期数 */
                                             ++m_respiratoryCycleCount;
                                             /* 更新统计呼吸频率 */
-                                            uint index = m_sampleCount - 1;
-                                            double respiratoryTime = (index - m_measureStartIndex) * SAMPLE_TIME; // 总时间(ms)
+                                            double respiratoryTime = (sampleIndex - m_measureStartIndex) * SAMPLE_TIME; // 总时间(ms)
                                             double respiratoryCycleTime = respiratoryTime / m_respiratoryCycleCount; // 呼吸周期(ms)
                                             RespiratoryRate = (1000 * 60) / respiratoryCycleTime; // 呼吸频率(次/min)
                                         }
@@ -403,8 +451,7 @@ namespace Spirometer
                                     InspirationStarted?.Invoke(m_peekVolumeIndex, m_peekFlowIndex);
 
                                     /* 重新初始化 */
-                                    m_peekVolume = Volume;
-                                    m_peekVolumeIndex = m_sampleCount - 1;
+                                    m_peekVolumeIndex = sampleIndex;
                                     m_peekVolumeKeepCount = 1;
                                 }
                             }
@@ -417,6 +464,12 @@ namespace Spirometer
                         break;
                     }
             }
+        }
+
+        /* 返回索引值对应的Flow-Volume */
+        public FlowVolume GetFlowVolume(uint sampleIendex)
+        {
+            return m_listFV[(int)sampleIendex];
         }
     }
 }
