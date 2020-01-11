@@ -247,14 +247,14 @@ namespace Spirometer
             m_pointsFT = seriesFT.Points;
 
             /* 归零已完成 */
-            m_pulmonaryFunc.ZeroingCompleted += new PulmonaryFunction.ZeroingCompleteHandler((uint index) =>
+            m_pulmonaryFunc.ZeroingCompleted += new PulmonaryFunction.ZeroingCompleteHandler((uint sampleIndex, double zeroOffset) =>
             {
-                Console.WriteLine($"ZeroingCompleted: {index}");
+                Console.WriteLine($"ZeroingCompleted: {sampleIndex} {zeroOffset}");
                 /*
                 var annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Red,
-                    X = index * m_flowSensor.SampleTime,
+                    X = sampleIndex * m_flowSensor.SampleTime,
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
                     Text = "归零"
@@ -263,14 +263,38 @@ namespace Spirometer
                 */
             });
 
-            /* 开始吸气 */
-            m_pulmonaryFunc.InspirationStarted += new PulmonaryFunction.InspirationStartHandler((uint index) =>
+            /* 测量启动 */
+            m_pulmonaryFunc.MeasureStarted += new PulmonaryFunction.MeasureStartHandler((uint sampleIndex, bool inspiration) =>
             {
-                Console.WriteLine($"InspirationStarted: {index}");
+                Console.WriteLine($"MeasureStarted: {sampleIndex} {inspiration}");
                 var annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Red,
-                    X = index * m_flowSensor.SampleTime,
+                    X = sampleIndex * m_flowSensor.SampleTime,
+                    LineStyle = LineStyle.Dash,
+                    Type = LineAnnotationType.Vertical,
+                    Text = $"开始-{(inspiration? "吸气" : "呼气")}"
+                };
+                m_plotModelFT.Annotations.Add(annotation);
+                annotation = new LineAnnotation()
+                {
+                    Color = OxyColors.Red,
+                    X = sampleIndex * m_flowSensor.SampleTime,
+                    LineStyle = LineStyle.Dash,
+                    Type = LineAnnotationType.Vertical,
+                    Text = $"开始-{(inspiration ? "吸气" : "呼气")}"
+                };
+                m_plotModelVT.Annotations.Add(annotation);
+            });
+
+            /* 开始吸气 */
+            m_pulmonaryFunc.InspirationStarted += new PulmonaryFunction.InspirationStartHandler((uint sampleIndex, uint peekFlowIndex) =>
+            {
+                Console.WriteLine($"InspirationStarted: {sampleIndex} {peekFlowIndex} {m_pulmonaryFunc.RespiratoryRate}");
+                var annotation = new LineAnnotation()
+                {
+                    Color = OxyColors.Red,
+                    X = sampleIndex * m_flowSensor.SampleTime,
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
                     Text = "吸气"
@@ -279,7 +303,7 @@ namespace Spirometer
                 annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Red,
-                    X = index * m_flowSensor.SampleTime,
+                    X = sampleIndex * m_flowSensor.SampleTime,
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
                     Text = "吸气"
@@ -288,13 +312,13 @@ namespace Spirometer
             });
 
             /* 开始吹气 */
-            m_pulmonaryFunc.ExpirationStarted += new PulmonaryFunction.ExpirationStartHandler((uint index) =>
+            m_pulmonaryFunc.ExpirationStarted += new PulmonaryFunction.ExpirationStartHandler((uint sampleIndex, uint peekFlowIndex) =>
             {
-                Console.WriteLine($"ExpirationStarted: {index}");
+                Console.WriteLine($"ExpirationStarted: {sampleIndex} {peekFlowIndex} {m_pulmonaryFunc.RespiratoryRate}");
                 var annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Violet,
-                    X = index * m_flowSensor.SampleTime,
+                    X = sampleIndex * m_flowSensor.SampleTime,
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
                     Text = $"呼气"
@@ -303,7 +327,7 @@ namespace Spirometer
                 annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Violet,
-                    X = index * m_flowSensor.SampleTime,
+                    X = sampleIndex * m_flowSensor.SampleTime,
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
                     Text = $"呼气"
@@ -312,13 +336,13 @@ namespace Spirometer
             });
 
             /* 测量结束 */
-            m_pulmonaryFunc.MeasureStoped += new PulmonaryFunction.MeasureStopHandler((uint index) =>
+            m_pulmonaryFunc.MeasureStoped += new PulmonaryFunction.MeasureStopHandler((uint sampleIndex, bool inspiration) =>
             {
-                Console.WriteLine($"MeasureStoped: {index}");
+                Console.WriteLine($"MeasureStoped: {sampleIndex} {inspiration}");
                 var annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Red,
-                    X = index * m_flowSensor.SampleTime,
+                    X = sampleIndex * m_flowSensor.SampleTime,
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
                     Text = "停止"

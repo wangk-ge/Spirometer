@@ -43,8 +43,8 @@
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripButtonSaveFlow = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonLoadPresure = new System.Windows.Forms.ToolStripButton();
-            this.toolStripButtonClear = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonLoadFlow = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButtonClear = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -71,8 +71,8 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.plotViewFT);
-            this.splitContainer1.Size = new System.Drawing.Size(1372, 587);
-            this.splitContainer1.SplitterDistance = 315;
+            this.splitContainer1.Size = new System.Drawing.Size(1372, 647);
+            this.splitContainer1.SplitterDistance = 347;
             this.splitContainer1.SplitterWidth = 2;
             this.splitContainer1.TabIndex = 0;
             // 
@@ -90,7 +90,7 @@
             // splitContainer2.Panel2
             // 
             this.splitContainer2.Panel2.Controls.Add(this.plotViewVT);
-            this.splitContainer2.Size = new System.Drawing.Size(1372, 315);
+            this.splitContainer2.Size = new System.Drawing.Size(1372, 347);
             this.splitContainer2.SplitterDistance = 667;
             this.splitContainer2.SplitterWidth = 2;
             this.splitContainer2.TabIndex = 0;
@@ -101,7 +101,7 @@
             this.plotViewFV.Location = new System.Drawing.Point(0, 0);
             this.plotViewFV.Name = "plotViewFV";
             this.plotViewFV.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewFV.Size = new System.Drawing.Size(663, 311);
+            this.plotViewFV.Size = new System.Drawing.Size(663, 343);
             this.plotViewFV.TabIndex = 0;
             this.plotViewFV.Text = "plotView1";
             this.plotViewFV.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
@@ -114,7 +114,7 @@
             this.plotViewVT.Location = new System.Drawing.Point(0, 0);
             this.plotViewVT.Name = "plotViewVT";
             this.plotViewVT.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewVT.Size = new System.Drawing.Size(699, 311);
+            this.plotViewVT.Size = new System.Drawing.Size(699, 343);
             this.plotViewVT.TabIndex = 0;
             this.plotViewVT.Text = "plotView1";
             this.plotViewVT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
@@ -127,7 +127,7 @@
             this.plotViewFT.Location = new System.Drawing.Point(0, 0);
             this.plotViewFT.Name = "plotViewFT";
             this.plotViewFT.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewFT.Size = new System.Drawing.Size(1368, 266);
+            this.plotViewFT.Size = new System.Drawing.Size(1368, 294);
             this.plotViewFT.TabIndex = 0;
             this.plotViewFT.Text = "plotView1";
             this.plotViewFT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
@@ -218,16 +218,6 @@
             this.toolStripButtonLoadPresure.Text = "加载压差数据";
             this.toolStripButtonLoadPresure.Click += new System.EventHandler(this.toolStripButtonLoadPresure_Click);
             // 
-            // toolStripButtonClear
-            // 
-            this.toolStripButtonClear.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripButtonClear.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonClear.Image")));
-            this.toolStripButtonClear.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButtonClear.Name = "toolStripButtonClear";
-            this.toolStripButtonClear.Size = new System.Drawing.Size(36, 22);
-            this.toolStripButtonClear.Text = "清除";
-            this.toolStripButtonClear.Click += new System.EventHandler(this.toolStripButtonClear_Click);
-            // 
             // toolStripButtonLoadFlow
             // 
             this.toolStripButtonLoadFlow.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
@@ -238,11 +228,21 @@
             this.toolStripButtonLoadFlow.Text = "加载流量数据";
             this.toolStripButtonLoadFlow.Click += new System.EventHandler(this.toolStripButtonLoadFlow_Click);
             // 
+            // toolStripButtonClear
+            // 
+            this.toolStripButtonClear.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButtonClear.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonClear.Image")));
+            this.toolStripButtonClear.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonClear.Name = "toolStripButtonClear";
+            this.toolStripButtonClear.Size = new System.Drawing.Size(36, 22);
+            this.toolStripButtonClear.Text = "清除";
+            this.toolStripButtonClear.Click += new System.EventHandler(this.toolStripButtonClear_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1372, 612);
+            this.ClientSize = new System.Drawing.Size(1372, 672);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.toolStrip1);
             this.Name = "Form1";
