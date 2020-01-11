@@ -14,6 +14,7 @@ namespace Spirometer
         public double Flow { get; private set; } = 0.0; // 流量(L/S)
         public double Volume { get; private set; } = 0.0; // 容积(L)
         public double RespiratoryRate { get; private set; } = 0.0; // 呼吸频率(次/min)
+        public uint RespiratoryCycleCount { get; private set; } = 0U; // 呼吸周期数(次)
         public double TLC // 肺总量(L)
         {
             get
@@ -126,19 +127,14 @@ namespace Spirometer
         private uint m_measureStartIndex = 0U; // 测试启动点Index
         private bool m_measureStartInspiration = true; // 是否启动测试时为吸气状态
 
-        /* 呼吸周期数 */
-        private uint m_respiratoryCycleCount = 0U; // 已检测到的呼吸周期数
-
         /* 容积参数 */
         private uint m_maxVolumeIndex = 0U; // 容积最大值点Index
         private uint m_minVolumeIndex = 0U; // 容积最小值点Index
 
         /* 潮气量上下界信息(用于求TV和FRC) */
         private double m_tvUpperSum = 0.0; // 潮气量上界Volume求和值
-        private uint m_tvUpperCount = 0U; // 潮气量上界统计数量
         private double m_tvUpperAvg = 0.0; // 潮气量上界Volume平均值
         private double m_tvLowerSum = 0.0; // 潮气量下界Volume求和值
-        private uint m_tvLowerCount = 0U; // 潮气量下界统计数量
         private double m_tvLowerAvg = 0.0; // 潮气量下界Volume平均值
 
         public PulmonaryFunction(double sampleTime)
@@ -169,14 +165,12 @@ namespace Spirometer
             m_peekMinVolumeIndexList.Clear();
             m_measureStartIndex = 0U;
             m_measureStartInspiration = true;
-            m_respiratoryCycleCount = 0U;
+            RespiratoryCycleCount = 0U;
             m_maxVolumeIndex = 0U;
             m_minVolumeIndex = 0U;
             m_tvUpperSum = 0.0;
-            m_tvUpperCount = 0U;
             m_tvUpperAvg = 0.0;
             m_tvLowerSum = 0.0;
-            m_tvLowerCount = 0U;
             m_tvLowerAvg = 0.0;
             m_listFV.Clear();
         }
@@ -299,7 +293,7 @@ namespace Spirometer
                                     SetState(State.Inspiration);
 
                                     /* 触发测试启动事件(吸气启动) */
-                                    m_respiratoryCycleCount = 0U;
+                                    RespiratoryCycleCount = 0U;
                                     m_measureStartInspiration = true;
                                     m_measureStartIndex = m_sampleCount - m_inspirationSampleCnt;
                                     MeasureStarted?.Invoke(m_measureStartIndex, m_measureStartInspiration);
@@ -344,7 +338,7 @@ namespace Spirometer
                                     SetState(State.Expiration);
 
                                     /* 触发测试启动事件(呼气启动) */
-                                    m_respiratoryCycleCount = 0U;
+                                    RespiratoryCycleCount = 0U;
                                     m_measureStartInspiration = false;
                                     m_measureStartIndex = m_sampleCount - m_expirationSampleCnt;
                                     MeasureStarted?.Invoke(m_measureStartIndex, m_measureStartInspiration);
@@ -398,11 +392,10 @@ namespace Spirometer
                                     m_peekMaxVolumeIndexList.Add(m_peekVolumeIndex);
 
                                     /* 更新潮气量上界统计信息(只统计6次以内的极大值) */
-                                    if (m_tvUpperCount < 6)
+                                    if (m_peekMaxVolumeIndexList.Count <= 6)
                                     {
                                         m_tvUpperSum += m_listFV[(int)m_peekVolumeIndex].volume;
-                                        ++m_tvUpperCount;
-                                        m_tvUpperAvg = m_tvUpperSum / m_tvUpperCount;
+                                        m_tvUpperAvg = m_tvUpperSum / m_peekMaxVolumeIndexList.Count;
                                     }
 
                                     /* 统计容积最大值点 */
@@ -414,14 +407,15 @@ namespace Spirometer
                                     /* 是否启动测试时为呼气状态 */
                                     if (!m_measureStartInspiration)
                                     {
-                                        /* 只统计6次以内的呼吸频率 */
-                                        if (m_respiratoryCycleCount < 6)
+                                        /* 完成一个呼吸周期,更新呼吸周期数 */
+                                        ++RespiratoryCycleCount;
+
+                                        /* 统计6次以内的呼吸频率 */
+                                        if (RespiratoryCycleCount <= 6)
                                         {
-                                            /* 完成一个呼吸周期,更新呼吸周期数 */
-                                            ++m_respiratoryCycleCount;
                                             /* 更新统计呼吸频率 */
                                             double respiratoryTime = (sampleIndex - m_measureStartIndex) * SAMPLE_TIME; // 总时间(ms)
-                                            double respiratoryCycleTime = respiratoryTime / m_respiratoryCycleCount; // 呼吸周期(ms)
+                                            double respiratoryCycleTime = respiratoryTime / RespiratoryCycleCount; // 呼吸周期(ms)
                                             RespiratoryRate = (1000 * 60) / respiratoryCycleTime; // 呼吸频率(次/min)
                                         }
                                     }
@@ -470,11 +464,10 @@ namespace Spirometer
                                     m_peekMinVolumeIndexList.Add(m_peekVolumeIndex);
 
                                     /* 更新潮气量下界统计信息(只统计6次以内的极小值) */
-                                    if (m_tvLowerCount < 6)
+                                    if (m_peekMinVolumeIndexList.Count <= 6)
                                     {
                                         m_tvLowerSum += m_listFV[(int)m_peekVolumeIndex].volume;
-                                        ++m_tvLowerCount;
-                                        m_tvLowerAvg = m_tvLowerSum / m_tvLowerCount;
+                                        m_tvLowerAvg = m_tvLowerSum / m_peekMinVolumeIndexList.Count;
                                     }
 
                                     /* 统计容积最小值点 */
@@ -486,14 +479,15 @@ namespace Spirometer
                                     /* 是否启动测试时为吸气状态 */
                                     if (m_measureStartInspiration)
                                     {
+                                        /* 完成一个呼吸周期,更新呼吸周期数 */
+                                        ++RespiratoryCycleCount;
+
                                         /* 只统计6次以内的呼吸频率 */
-                                        if (m_respiratoryCycleCount < 6)
+                                        if (RespiratoryCycleCount <= 6)
                                         {
-                                            /* 完成一个呼吸周期,更新呼吸周期数 */
-                                            ++m_respiratoryCycleCount;
                                             /* 更新统计呼吸频率 */
                                             double respiratoryTime = (sampleIndex - m_measureStartIndex) * SAMPLE_TIME; // 总时间(ms)
-                                            double respiratoryCycleTime = respiratoryTime / m_respiratoryCycleCount; // 呼吸周期(ms)
+                                            double respiratoryCycleTime = respiratoryTime / RespiratoryCycleCount; // 呼吸周期(ms)
                                             RespiratoryRate = (1000 * 60) / respiratoryCycleTime; // 呼吸频率(次/min)
                                         }
                                     }

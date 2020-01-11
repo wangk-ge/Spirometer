@@ -309,6 +309,18 @@ namespace Spirometer
                     Text = "吸气"
                 };
                 m_plotModelVT.Annotations.Add(annotation);
+                if (6 == m_pulmonaryFunc.RespiratoryCycleCount)
+                {
+                    annotation = new LineAnnotation()
+                    {
+                        Color = OxyColors.Red,
+                        Y = m_pulmonaryFunc.FRC,
+                        LineStyle = LineStyle.Dash,
+                        Type = LineAnnotationType.Horizontal,
+                        Text = "FRC"
+                    };
+                    m_plotModelVT.Annotations.Add(annotation);
+                }
 
                 toolStripStatusLabelRespiratoryRate.Text = m_pulmonaryFunc.RespiratoryRate.ToString();
                 toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
@@ -341,6 +353,18 @@ namespace Spirometer
                     Text = $"呼气"
                 };
                 m_plotModelVT.Annotations.Add(annotation);
+                if (6 == m_pulmonaryFunc.RespiratoryCycleCount)
+                {
+                    annotation = new LineAnnotation()
+                    {
+                        Color = OxyColors.Red,
+                        Y = m_pulmonaryFunc.FRC,
+                        LineStyle = LineStyle.Dash,
+                        Type = LineAnnotationType.Horizontal,
+                        Text = "FRC"
+                    };
+                    m_plotModelVT.Annotations.Add(annotation);
+                }
 
                 toolStripStatusLabelRespiratoryRate.Text = m_pulmonaryFunc.RespiratoryRate.ToString();
                 toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();

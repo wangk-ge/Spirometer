@@ -87,7 +87,7 @@
             this.splitContainer1.Panel2.Controls.Add(this.plotViewFT);
             this.splitContainer1.Size = new System.Drawing.Size(1372, 625);
             this.splitContainer1.SplitterDistance = 335;
-            this.splitContainer1.SplitterWidth = 2;
+            this.splitContainer1.SplitterWidth = 1;
             this.splitContainer1.TabIndex = 0;
             // 
             // splitContainer2
@@ -106,7 +106,7 @@
             this.splitContainer2.Panel2.Controls.Add(this.plotViewVT);
             this.splitContainer2.Size = new System.Drawing.Size(1372, 335);
             this.splitContainer2.SplitterDistance = 667;
-            this.splitContainer2.SplitterWidth = 2;
+            this.splitContainer2.SplitterWidth = 1;
             this.splitContainer2.TabIndex = 0;
             // 
             // plotViewFV
@@ -128,7 +128,7 @@
             this.plotViewVT.Location = new System.Drawing.Point(0, 0);
             this.plotViewVT.Name = "plotViewVT";
             this.plotViewVT.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewVT.Size = new System.Drawing.Size(699, 331);
+            this.plotViewVT.Size = new System.Drawing.Size(700, 331);
             this.plotViewVT.TabIndex = 0;
             this.plotViewVT.Text = "plotView1";
             this.plotViewVT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
@@ -141,7 +141,7 @@
             this.plotViewFT.Location = new System.Drawing.Point(0, 0);
             this.plotViewFT.Name = "plotViewFT";
             this.plotViewFT.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewFT.Size = new System.Drawing.Size(1368, 284);
+            this.plotViewFT.Size = new System.Drawing.Size(1368, 285);
             this.plotViewFT.TabIndex = 0;
             this.plotViewFT.Text = "plotView1";
             this.plotViewFT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
