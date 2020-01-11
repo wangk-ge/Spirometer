@@ -37,25 +37,25 @@ namespace Spirometer
         private uint m_sampleCount = 0U; // 统计已采样数据个数
         private readonly double SAMPLE_TIME = 0.0; // 采样时间(ms)
         private WaveStatistician m_waveStatistician = new WaveStatistician(); // 用于统计波动数据
-        private readonly int ZEROING_SAMPLE_COUNT = 1000; // 归零过程采样次数
+        private readonly int ZEROING_SAMPLE_COUNT = 100; // 归零过程采样次数
         private readonly double ZEROING_ALLOW_RANGE = 0.04; // 归零过程允许的波动范围
         private readonly double INSPIRATION_START_FLOW = 0.01; // 吸气启动流速阈值(L/S),连续N次采样流速大于该值则判断为开始吸气
-        private readonly double INSPIRATION_START_SAMPLE_COUNT = 100; // 吸气启动检测采样次数
+        private readonly double INSPIRATION_START_SAMPLE_COUNT = 10; // 吸气启动检测采样次数
         private uint m_inspirationSampleCnt = 0U; // 统计持续吸气样本数,用于检测吸气启动条件
         private double m_inspirationVolume = 0.0; // 用于检测吸气启动条件的样本吸气容积
         private readonly double EXPIRATION_START_FLOW = -0.01; // 呼气启动流速阈值(L/S),连续N次采样流速小于该值则判断为开始呼气
-        private readonly double EXPIRATION_START_SAMPLE_COUNT = 100; // 呼气启动检测采样次数
+        private readonly double EXPIRATION_START_SAMPLE_COUNT = 10; // 呼气启动检测采样次数
         private uint m_expirationSampleCnt = 0U; // 统计持续呼气样本数,用于检测呼气启动条件
         private double m_expirationVolume = 0.0; // 用于检测呼气启动条件的样本呼气容积
         private readonly double DEFAULT_RV = 2.55; // 默认残气量(RV),单位: L
 
-        /* 容积曲线极值点 */
+        /* 容积(Volume)-时间(Time)曲线极值点 */
         private uint m_peekVolumeIndex = 0U; // 跟踪容积曲线当前极值点Index
         private double m_peekVolume = 0.0; // 跟踪容积曲线当前极值点Volume值
         private uint m_peekVolumeKeepCount = 0U; // 跟踪当前极值点不变的次数
         private readonly uint PEEK_VOLUME_KEEP_COUNT = 100; // 如果极值点保持指定的采样次数不变化则认为是稳定的
 
-        private readonly double FLOW_DELTA_THRESHOLD = 0.2; // Flow变化量阈值,在指定采样次数后如果Flow变化量超过阈值则确认开始吸气/吹气
+        private readonly double FLOW_DELTA_THRESHOLD = 0.15; // Flow变化量阈值,在指定采样次数后如果Flow变化量超过阈值则确认开始吸气/吹气
         private readonly double VOLUME_DELTA_THRESHOLD = 0.05; // Volume变化量阈值,在过极值点指定采样次数后如果Volume变化量超过阈值则确认极值点有效
 
         public PulmonaryFunction(double sampleTime)
@@ -102,13 +102,22 @@ namespace Spirometer
             /* 统计样本时间戳 */
             Time = (m_sampleCount - 1) * SAMPLE_TIME;
 
-            if (m_state >= State.WaitStart)
+            /* 当前流量 */
+            double flowZeroCorrection = flow - m_flowZeroOffset; // 执行零点校正
+
+            if ((m_state > State.WaitStart)
+                && (m_state < State.Stop))
             {
                 /* 当前流量 */
-                Flow = flow - m_flowZeroOffset; // 执行零点校正
+                Flow = flowZeroCorrection;
 
                 /* 更新当前容积 */
-                Volume += Flow * SAMPLE_TIME / 1000;
+                Volume += flowZeroCorrection * SAMPLE_TIME / 1000;
+            }
+            else
+            {
+                /* 当前流量 */
+                Flow = 0.0;
             }
 
             switch (m_state)
@@ -160,7 +169,7 @@ namespace Spirometer
                 case State.WaitStart: // 等待启动测试状态
                     {
                         /* 流量是否达到吸气阈值 */
-                        if (Flow > INSPIRATION_START_FLOW)
+                        if (flowZeroCorrection > INSPIRATION_START_FLOW)
                         {
                             /* 重置呼气样本数 */
                             m_expirationSampleCnt = 0U;
@@ -170,16 +179,16 @@ namespace Spirometer
                             /* 统计持续吸气样本数 */
                             ++m_inspirationSampleCnt;
                             /* 统计吸气样本容积 */
-                            m_inspirationVolume += Flow * SAMPLE_TIME / 1000;
+                            m_inspirationVolume += flowZeroCorrection * SAMPLE_TIME / 1000;
 
                             /* 是否已监测到吸气启动条件 */
                             if (m_inspirationSampleCnt >= INSPIRATION_START_SAMPLE_COUNT) 
                             {
                                 /* 是否有明显的加快趋势 */
-                                if ((Flow - INSPIRATION_START_FLOW) > FLOW_DELTA_THRESHOLD)
+                                if ((flowZeroCorrection - INSPIRATION_START_FLOW) > FLOW_DELTA_THRESHOLD)
                                 {
                                     /* 更新当前容积 */
-                                    //Volume += m_inspirationVolume;
+                                    Volume += m_inspirationVolume;
 
                                     /* 进入正在吸气状态 */
                                     SetState(State.Inspiration);
@@ -201,7 +210,7 @@ namespace Spirometer
                             }
                         }
                         /* 流量是否达到呼气阈值 */
-                        else if (Flow < EXPIRATION_START_FLOW)
+                        else if (flowZeroCorrection < EXPIRATION_START_FLOW)
                         {
                             /* 重置吸气样本数 */
                             m_inspirationSampleCnt = 0U;
@@ -211,16 +220,16 @@ namespace Spirometer
                             /* 统计持续呼气样本数 */
                             ++m_expirationSampleCnt;
                             /* 统计呼气样本容积 */
-                            m_expirationVolume += Flow * SAMPLE_TIME / 1000;
+                            m_expirationVolume += flowZeroCorrection * SAMPLE_TIME / 1000;
 
                             /* 是否已监测到呼气启动条件 */
                             if (m_expirationSampleCnt >= EXPIRATION_START_SAMPLE_COUNT)
                             {
                                 /* 是否有明显的加快趋势 */
-                                if ((EXPIRATION_START_FLOW - Flow) > FLOW_DELTA_THRESHOLD)
+                                if ((EXPIRATION_START_FLOW - flowZeroCorrection) > FLOW_DELTA_THRESHOLD)
                                 {
                                     /* 更新当前容积 */
-                                    //Volume += m_expirationVolume;
+                                    Volume += m_expirationVolume;
 
                                     /* 进入正在呼气状态 */
                                     SetState(State.Expiration);
@@ -245,9 +254,6 @@ namespace Spirometer
                     }
                 case State.Inspiration: // 正在吸气状态
                     {
-                        /* 更新当前容积 */
-                        //Volume += Flow * SAMPLE_TIME / 1000;
-
                         /* 统计极大值 */
                         if (Volume > m_peekVolume)
                         {
@@ -276,9 +282,6 @@ namespace Spirometer
                     }
                 case State.Expiration: // 正在呼气状态
                     {
-                        /* 更新当前容积 */
-                        //Volume += Flow * SAMPLE_TIME / 1000;
-
                         /* 统计极小值 */
                         if (Volume < m_peekVolume)
                         {

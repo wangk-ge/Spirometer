@@ -100,13 +100,13 @@ namespace Spirometer
             //X轴,Volume
             var xAxisFV = new LinearAxis()
             {
-                MajorGridlineStyle = LineStyle.Solid,
+                MajorGridlineStyle = LineStyle.Dot,
                 MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Bottom,
-                //Minimum = 0,
-                //Maximum = 1000,
+                Minimum = 0,
+                Maximum = 6,
                 Title = "Volume(L)"
             };
             m_plotModelFV.Axes.Add(xAxisFV);
@@ -114,7 +114,7 @@ namespace Spirometer
             //Y轴,Flow
             var yAxisFV = new LinearAxis()
             {
-                MajorGridlineStyle = LineStyle.Solid,
+                MajorGridlineStyle = LineStyle.Dot,
                 MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
@@ -154,13 +154,13 @@ namespace Spirometer
             //X轴,Time
             var xAxisVT = new LinearAxis()
             {
-                MajorGridlineStyle = LineStyle.Solid,
+                MajorGridlineStyle = LineStyle.Dot,
                 MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Bottom,
-                //Minimum = 0,
-                //Maximum = 60 * 1000, // 1分钟
+                Minimum = 0,
+                Maximum = 50 * 1000,
                 Title = "Time(MS)"
             };
             m_plotModelVT.Axes.Add(xAxisVT);
@@ -168,7 +168,7 @@ namespace Spirometer
             //Y轴,Volume
             var yAxisVT = new LinearAxis()
             {
-                MajorGridlineStyle = LineStyle.Solid,
+                MajorGridlineStyle = LineStyle.Dot,
                 MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
@@ -208,13 +208,13 @@ namespace Spirometer
             //X轴,Time
             var xAxisFT = new LinearAxis()
             {
-                MajorGridlineStyle = LineStyle.Solid,
+                MajorGridlineStyle = LineStyle.Dot,
                 MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Bottom,
-                //Minimum = 0,
-                //Maximum = 60 * 1000, // 1分钟
+                Minimum = 0,
+                Maximum = 50 * 1000,
                 Title = "Time(MS)"
             };
             m_plotModelFT.Axes.Add(xAxisFT);
@@ -222,7 +222,7 @@ namespace Spirometer
             //Y轴,Flow
             var yAxisFT = new LinearAxis()
             {
-                MajorGridlineStyle = LineStyle.Solid,
+                MajorGridlineStyle = LineStyle.Dot,
                 MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
@@ -250,15 +250,17 @@ namespace Spirometer
             m_pulmonaryFunc.ZeroingCompleted += new PulmonaryFunction.ZeroingCompleteHandler((uint index) =>
             {
                 Console.WriteLine($"ZeroingCompleted: {index}");
+                /*
                 var annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Red,
                     X = index * m_flowSensor.SampleTime,
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
-                    Text = "Zeroing"
+                    Text = "归零"
                 };
                 m_plotModelFT.Annotations.Add(annotation);
+                */
             });
 
             /* 开始吸气 */
@@ -271,7 +273,7 @@ namespace Spirometer
                     X = index * m_flowSensor.SampleTime,
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
-                    Text = "Inspiration"
+                    Text = "吸气"
                 };
                 m_plotModelFT.Annotations.Add(annotation);
                 annotation = new LineAnnotation()
@@ -280,7 +282,7 @@ namespace Spirometer
                     X = index * m_flowSensor.SampleTime,
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
-                    Text = "Inspiration"
+                    Text = "吸气"
                 };
                 m_plotModelVT.Annotations.Add(annotation);
             });
@@ -291,20 +293,20 @@ namespace Spirometer
                 Console.WriteLine($"ExpirationStarted: {index}");
                 var annotation = new LineAnnotation()
                 {
-                    Color = OxyColors.Red,
+                    Color = OxyColors.Violet,
                     X = index * m_flowSensor.SampleTime,
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
-                    Text = "Expiration"
+                    Text = $"呼气"
                 };
                 m_plotModelFT.Annotations.Add(annotation);
                 annotation = new LineAnnotation()
                 {
-                    Color = OxyColors.Red,
+                    Color = OxyColors.Violet,
                     X = index * m_flowSensor.SampleTime,
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
-                    Text = "Expiration"
+                    Text = $"呼气"
                 };
                 m_plotModelVT.Annotations.Add(annotation);
             });
@@ -319,7 +321,7 @@ namespace Spirometer
                     X = index * m_flowSensor.SampleTime,
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
-                    Text = "Stoped"
+                    Text = "停止"
                 };
                 m_plotModelFT.Annotations.Add(annotation);
             });
@@ -351,6 +353,20 @@ namespace Spirometer
                 if (xDelta > 0)
                 {
                     InvalidatePlot(true);
+
+                    //var xAxisFT = m_plotModelFT.Axes[0];
+                    if (xEnd > xAxisFT.Maximum)
+                    {
+                        double panStep = xAxisFT.Transform(-xDelta + xAxisFT.Offset);
+                        xAxisFT.Pan(panStep);
+                    }
+
+                    //var xAxisVT = m_plotModelVT.Axes[0];
+                    if (xEnd > xAxisVT.Maximum)
+                    {
+                        double panStep = xAxisVT.Transform(-xDelta + xAxisVT.Offset);
+                        xAxisVT.Pan(panStep);
+                    }
                 }
             });
         }
@@ -394,20 +410,23 @@ namespace Spirometer
             m_pulmonaryFunc.Reset();
 
             /* Clear Flow-Volume Plot */
-            var serieFV = plotViewFV.Model.Series[0] as LineSeries;
+            var serieFV = m_plotModelFV.Series[0] as LineSeries;
             serieFV.Points.Clear();
+            m_plotModelFV.Annotations.Clear();
             var xAxisFV = m_plotModelFV.Axes[0];
             xAxisFV.Reset();
 
             /* Clear Volume-Time Plot */
-            var serieVT = plotViewVT.Model.Series[0] as LineSeries;
+            var serieVT = m_plotModelVT.Series[0] as LineSeries;
             serieVT.Points.Clear();
+            m_plotModelVT.Annotations.Clear();
             var xAxisVT = m_plotModelVT.Axes[0];
             xAxisVT.Reset();
 
             /* Clear Flow-Time Plot */
-            var serieFT = plotViewFT.Model.Series[0] as LineSeries;
+            var serieFT = m_plotModelFT.Series[0] as LineSeries;
             serieFT.Points.Clear();
+            m_plotModelFT.Annotations.Clear();
             var xAxisFT = m_plotModelFT.Axes[0];
             xAxisFT.Reset();
 
@@ -534,7 +553,7 @@ namespace Spirometer
 
                 Task.Factory.StartNew(() =>
                 {
-                    var serieVT = plotViewFT.Model.Series[0] as LineSeries;
+                    var serieVT = m_plotModelFT.Series[0] as LineSeries;
                     StringBuilder strData = new StringBuilder();
                     foreach (var point in serieVT.Points)
                     {
