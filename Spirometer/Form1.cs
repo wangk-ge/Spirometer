@@ -446,9 +446,9 @@ namespace Spirometer
             /* 执行肺功能参数计算 */
             m_pulmonaryFunc.Input(flow);
 
-            m_pointsFT.Add(new DataPoint(m_pulmonaryFunc.Time, m_pulmonaryFunc.Flow));
-            m_pointsVT.Add(new DataPoint(m_pulmonaryFunc.Time, m_pulmonaryFunc.Volume));
-            m_pointsFV.Add(new DataPoint(m_pulmonaryFunc.Volume, m_pulmonaryFunc.Flow));
+            m_pointsFT.Add(new DataPoint(m_pulmonaryFunc.Time, m_pulmonaryFunc.InFlow));
+            m_pointsVT.Add(new DataPoint(m_pulmonaryFunc.Time, m_pulmonaryFunc.InVolume));
+            m_pointsFV.Add(new DataPoint(m_pulmonaryFunc.ExVolume, m_pulmonaryFunc.ExFlow));
         }
 
         /* 尝试清空数据队列 */
