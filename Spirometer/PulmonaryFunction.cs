@@ -74,6 +74,8 @@ namespace Spirometer
         public event InspirationStartHandler InspirationStarted; // 吸气开始事件
         public delegate void ExpirationStartHandler(uint sampleIndex, uint peekFlowIndex); // 呼气开始事件代理
         public event ExpirationStartHandler ExpirationStarted; // 呼气开始事件
+        public delegate void ForceExpirationStartHandler(uint sampleIndex, uint peekFlowIndex); // 用力呼气开始事件代理
+        public event ForceExpirationStartHandler ForceExpirationStarted; // 用力呼气开始事件
         public delegate void MeasureStopHandler(uint sampleIndex, bool inspiration); // 测试停止事件代理
         public event MeasureStopHandler MeasureStoped; // 测试停止事件
 
@@ -124,6 +126,7 @@ namespace Spirometer
         /* 阈值 */
         private readonly double FLOW_DELTA_THRESHOLD = 0.15; // Flow变化量阈值,在指定采样次数后如果Flow变化量超过阈值则确认开始吸气/吹气
         private readonly double VOLUME_DELTA_THRESHOLD = 0.05; // Volume变化量阈值,在过极值点指定采样次数后如果Volume变化量超过阈值则确认极值点有效
+        private readonly double FORCE_EXPIRATION_FLOW = 2.0; // 用力呼气Flow阈值,达到该Flow值判断为用力呼气
 
         /* 测试启动点 */
         private uint m_measureStartIndex = 0U; // 测试启动点Index
@@ -429,8 +432,16 @@ namespace Spirometer
                                         }
                                     }
 
-                                    /* 触发呼气开始事件 */
-                                    ExpirationStarted?.Invoke(m_peekVolumeIndex, m_peekFlowIndex);
+                                    /* 呼气流量是否达到用力呼气阈值 */
+                                    if (ExFlow >= FORCE_EXPIRATION_FLOW)
+                                    {
+                                        ForceExpirationStarted?.Invoke(m_peekVolumeIndex, m_peekFlowIndex);
+                                    }
+                                    else
+                                    {
+                                        /* 触发呼气开始事件 */
+                                        ExpirationStarted?.Invoke(m_peekVolumeIndex, m_peekFlowIndex);
+                                    }
 
                                     /* 重新初始化 */
                                     m_peekVolumeIndex = sampleIndex;

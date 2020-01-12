@@ -331,7 +331,7 @@ namespace Spirometer
                 toolStripStatusLabelFRC.Text = m_pulmonaryFunc.FRC.ToString();
             });
 
-            /* 开始吹气 */
+            /* 开始呼气 */
             m_pulmonaryFunc.ExpirationStarted += new PulmonaryFunction.ExpirationStartHandler((uint sampleIndex, uint peekFlowIndex) =>
             {
                 Console.WriteLine($"ExpirationStarted: {sampleIndex} {peekFlowIndex} {m_pulmonaryFunc.RespiratoryRate}");
@@ -351,6 +351,49 @@ namespace Spirometer
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
                     Text = $"呼气"
+                };
+                m_plotModelVT.Annotations.Add(annotation);
+                if (6 == m_pulmonaryFunc.RespiratoryCycleCount)
+                {
+                    annotation = new LineAnnotation()
+                    {
+                        Color = OxyColors.Red,
+                        Y = m_pulmonaryFunc.FRC,
+                        LineStyle = LineStyle.Dash,
+                        Type = LineAnnotationType.Horizontal,
+                        Text = "FRC"
+                    };
+                    m_plotModelVT.Annotations.Add(annotation);
+                }
+
+                toolStripStatusLabelRespiratoryRate.Text = m_pulmonaryFunc.RespiratoryRate.ToString();
+                toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
+                toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
+                toolStripStatusLabelRV.Text = m_pulmonaryFunc.RV.ToString();
+                toolStripStatusLabelTV.Text = m_pulmonaryFunc.TV.ToString();
+                toolStripStatusLabelFRC.Text = m_pulmonaryFunc.FRC.ToString();
+            });
+
+            /* 开始用力呼气 */
+            m_pulmonaryFunc.ForceExpirationStarted += new PulmonaryFunction.ForceExpirationStartHandler((uint sampleIndex, uint peekFlowIndex) =>
+            {
+                Console.WriteLine($"ForceExpirationStarted: {sampleIndex} {peekFlowIndex}");
+                var annotation = new LineAnnotation()
+                {
+                    Color = OxyColors.Violet,
+                    X = sampleIndex * m_flowSensor.SampleTime,
+                    LineStyle = LineStyle.Dash,
+                    Type = LineAnnotationType.Vertical,
+                    Text = $"用力呼气"
+                };
+                m_plotModelFT.Annotations.Add(annotation);
+                annotation = new LineAnnotation()
+                {
+                    Color = OxyColors.Violet,
+                    X = sampleIndex * m_flowSensor.SampleTime,
+                    LineStyle = LineStyle.Dash,
+                    Type = LineAnnotationType.Vertical,
+                    Text = $"用力呼气"
                 };
                 m_plotModelVT.Annotations.Add(annotation);
                 if (6 == m_pulmonaryFunc.RespiratoryCycleCount)
