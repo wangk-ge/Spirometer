@@ -33,7 +33,7 @@
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.plotViewFV = new OxyPlot.WindowsForms.PlotView();
             this.plotViewVT = new OxyPlot.WindowsForms.PlotView();
-            this.plotViewFT = new OxyPlot.WindowsForms.PlotView();
+            this.plotViewVFT = new OxyPlot.WindowsForms.PlotView();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.toolStripComboBoxCom = new System.Windows.Forms.ToolStripComboBox();
             this.toolStripButtonConnect = new System.Windows.Forms.ToolStripButton();
@@ -84,7 +84,7 @@
             // 
             // splitContainer1.Panel2
             // 
-            this.splitContainer1.Panel2.Controls.Add(this.plotViewFT);
+            this.splitContainer1.Panel2.Controls.Add(this.plotViewVFT);
             this.splitContainer1.Size = new System.Drawing.Size(1372, 625);
             this.splitContainer1.SplitterDistance = 335;
             this.splitContainer1.SplitterWidth = 1;
@@ -135,18 +135,18 @@
             this.plotViewVT.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
             this.plotViewVT.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
             // 
-            // plotViewFT
+            // plotViewVFT
             // 
-            this.plotViewFT.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.plotViewFT.Location = new System.Drawing.Point(0, 0);
-            this.plotViewFT.Name = "plotViewFT";
-            this.plotViewFT.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewFT.Size = new System.Drawing.Size(1368, 285);
-            this.plotViewFT.TabIndex = 0;
-            this.plotViewFT.Text = "plotView1";
-            this.plotViewFT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
-            this.plotViewFT.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
-            this.plotViewFT.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
+            this.plotViewVFT.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.plotViewVFT.Location = new System.Drawing.Point(0, 0);
+            this.plotViewVFT.Name = "plotViewVFT";
+            this.plotViewVFT.PanCursor = System.Windows.Forms.Cursors.Hand;
+            this.plotViewVFT.Size = new System.Drawing.Size(1368, 285);
+            this.plotViewVFT.TabIndex = 0;
+            this.plotViewVFT.Text = "plotViewVFT";
+            this.plotViewVFT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
+            this.plotViewVFT.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
+            this.plotViewVFT.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
             // 
             // toolStrip1
             // 
@@ -379,7 +379,7 @@
         private System.Windows.Forms.SplitContainer splitContainer2;
         private OxyPlot.WindowsForms.PlotView plotViewFV;
         private OxyPlot.WindowsForms.PlotView plotViewVT;
-        private OxyPlot.WindowsForms.PlotView plotViewFT;
+        private OxyPlot.WindowsForms.PlotView plotViewVFT;
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.ToolStripComboBox toolStripComboBoxCom;
         private System.Windows.Forms.ToolStripButton toolStripButtonConnect;

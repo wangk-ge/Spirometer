@@ -24,15 +24,16 @@ namespace Spirometer
         private FlowSensor m_flowSensor; // 流量传感器
         private PulmonaryFunction m_pulmonaryFunc; // 肺功能参数计算器
         private PlotModel m_plotModelFV; // 流量(Flow)-容积(Volume)图Model
-        private PlotModel m_plotModelVT; // 容积(Volume)-时间(Time)图Model
-        private PlotModel m_plotModelFT; // 流量(Flow)-时间(Time)图Model
+        private PlotModel m_plotModelVT; // 用力呼气 容积(Volume)-时间(Time)图Model
+        private PlotModel m_plotModelVFT; // 容积(Volume)/流量(Flow)-时间(Time)图Model
 
         private System.Windows.Forms.Timer m_refreshTimer = new System.Windows.Forms.Timer(); // 波形刷新定时器
         private readonly int m_fps = 24; // 帧率
 
         private List<DataPoint> m_pointsFV; // 流量(Flow)-容积(Volume)数据
         private List<DataPoint> m_pointsVT; // 容积(Volume)-时间(Time)数据
-        private List<DataPoint> m_pointsFT; // 流量(Flow)-时间(Time)数据
+        private List<DataPoint> m_pointsVFTFlow; // 容积(Volume)/流量(Flow)-时间(Time)图 Flow数据
+        private List<DataPoint> m_pointsVFTVolume; // 容积(Volume)/流量(Flow)-时间(Time)图 Volume数据
 
         public Form1()
         {
@@ -138,10 +139,10 @@ namespace Spirometer
             plotViewFV.Model = m_plotModelFV;
             m_pointsFV = seriesFV.Points;
 
-            /* 容积(Volume)-时间(Time)图 */
+            /* 【用力呼气 容积(Volume)-时间(Time)图】 */
             m_plotModelVT = new PlotModel()
             {
-                Title = "容积(Volume)-时间(Time)",
+                Title = "用力呼气 容积(Volume)-时间(Time)",
                 LegendTitle = "图例",
                 LegendOrientation = LegendOrientation.Horizontal,
                 LegendPlacement = LegendPlacement.Inside,
@@ -177,7 +178,7 @@ namespace Spirometer
             };
             m_plotModelVT.Axes.Add(yAxisVT);
 
-            // 数据
+            // 数据,Volume
             var seriesVT = new LineSeries()
             {
                 Color = OxyColors.Blue,
@@ -185,28 +186,28 @@ namespace Spirometer
                 //MarkerSize = 1,
                 //MarkerStroke = OxyColors.DarkBlue,
                 //MarkerType = MarkerType.Circle,
-                Title = "Data"
+                Title = "Volume"
             };
             m_plotModelVT.Series.Add(seriesVT);
 
             plotViewVT.Model = m_plotModelVT;
             m_pointsVT = seriesVT.Points;
 
-            /* 流量(Flow)-时间(Time)图 */
-            m_plotModelFT = new PlotModel()
+            /* 【容积(Volume)/流量(Flow)-时间(Time)图】 */
+            m_plotModelVFT = new PlotModel()
             {
-                Title = "流量(Flow)-时间(Time)",
+                Title = "容积(Volume)/流量(Flow)-时间(Time)",
                 LegendTitle = "图例",
                 LegendOrientation = LegendOrientation.Horizontal,
                 LegendPlacement = LegendPlacement.Inside,
                 LegendPosition = LegendPosition.TopRight,
                 LegendBackground = OxyColors.Beige,
                 LegendBorder = OxyColors.Black,
-                IsLegendVisible = false // 隐藏图例
+                //IsLegendVisible = false // 隐藏图例
             };
 
             //X轴,Time
-            var xAxisFT = new LinearAxis()
+            var xAxisVFT = new LinearAxis()
             {
                 MajorGridlineStyle = LineStyle.Dot,
                 MinorGridlineStyle = LineStyle.Dot,
@@ -217,34 +218,63 @@ namespace Spirometer
                 Maximum = 50 * 1000,
                 Title = "Time(MS)"
             };
-            m_plotModelFT.Axes.Add(xAxisFT);
+            m_plotModelVFT.Axes.Add(xAxisVFT);
 
-            //Y轴,Flow
-            var yAxisFT = new LinearAxis()
+            //左侧Y轴,Volume
+            var yAxisVFTLeft = new LinearAxis()
             {
                 MajorGridlineStyle = LineStyle.Dot,
                 MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Left,
-                Title = "Flow(L/S)"
+                Title = "Volume(L)",
+                Key = "yAxisVFTLeft"
             };
-            m_plotModelFT.Axes.Add(yAxisFT);
+            m_plotModelVFT.Axes.Add(yAxisVFTLeft);
 
-            // 数据
-            var seriesFT = new LineSeries()
+            //右侧Y轴,Flow
+            var yAxisVFTRight = new LinearAxis()
+            {
+                MajorGridlineStyle = LineStyle.Dot,
+                MinorGridlineStyle = LineStyle.Dot,
+                IsZoomEnabled = true,
+                IsPanEnabled = true,
+                Position = AxisPosition.Right,
+                Title = "Flow(L/S)",
+                Key = "yAxisVFTRight"
+            };
+            m_plotModelVFT.Axes.Add(yAxisVFTRight);
+
+            // 数据Volume
+            var seriesVFTVolume = new LineSeries()
             {
                 Color = OxyColors.Blue,
                 StrokeThickness = 1,
                 //MarkerSize = 1,
                 //MarkerStroke = OxyColors.DarkBlue,
                 //MarkerType = MarkerType.Circle,
-                Title = "Data"
+                Title = "Volume",
+                YAxisKey = yAxisVFTLeft.Key
             };
-            m_plotModelFT.Series.Add(seriesFT);
+            m_plotModelVFT.Series.Add(seriesVFTVolume);
 
-            plotViewFT.Model = m_plotModelFT;
-            m_pointsFT = seriesFT.Points;
+            // 数据Flow
+            var seriesVFTFlow = new LineSeries()
+            {
+                Color = OxyColors.Black,
+                StrokeThickness = 1,
+                //MarkerSize = 1,
+                //MarkerStroke = OxyColors.DarkBlack,
+                //MarkerType = MarkerType.Circle,
+                Title = "Flow",
+                YAxisKey = yAxisVFTRight.Key
+            };
+            m_plotModelVFT.Series.Add(seriesVFTFlow);
+
+            plotViewVFT.Model = m_plotModelVFT;
+            m_pointsVFTFlow = seriesVFTFlow.Points;
+            m_pointsVFTVolume = seriesVFTVolume.Points;
 
             /* 归零已完成 */
             m_pulmonaryFunc.ZeroingCompleted += new PulmonaryFunction.ZeroingCompleteHandler((uint sampleIndex, double zeroOffset) =>
@@ -259,7 +289,7 @@ namespace Spirometer
                     Type = LineAnnotationType.Vertical,
                     Text = "归零"
                 };
-                m_plotModelFT.Annotations.Add(annotation);
+                m_plotModelVFT.Annotations.Add(annotation);
                 */
             });
 
@@ -275,16 +305,7 @@ namespace Spirometer
                     Type = LineAnnotationType.Vertical,
                     Text = $"开始-{(inspiration? "吸气" : "呼气")}"
                 };
-                m_plotModelFT.Annotations.Add(annotation);
-                annotation = new LineAnnotation()
-                {
-                    Color = OxyColors.Red,
-                    X = sampleIndex * m_flowSensor.SampleTime,
-                    LineStyle = LineStyle.Dash,
-                    Type = LineAnnotationType.Vertical,
-                    Text = $"开始-{(inspiration ? "吸气" : "呼气")}"
-                };
-                m_plotModelVT.Annotations.Add(annotation);
+                m_plotModelVFT.Annotations.Add(annotation);
             });
 
             /* 开始吸气 */
@@ -299,16 +320,7 @@ namespace Spirometer
                     Type = LineAnnotationType.Vertical,
                     Text = "吸气"
                 };
-                m_plotModelFT.Annotations.Add(annotation);
-                annotation = new LineAnnotation()
-                {
-                    Color = OxyColors.Red,
-                    X = sampleIndex * m_flowSensor.SampleTime,
-                    LineStyle = LineStyle.Dash,
-                    Type = LineAnnotationType.Vertical,
-                    Text = "吸气"
-                };
-                m_plotModelVT.Annotations.Add(annotation);
+                m_plotModelVFT.Annotations.Add(annotation);
                 if (6 == m_pulmonaryFunc.RespiratoryCycleCount)
                 {
                     annotation = new LineAnnotation()
@@ -319,7 +331,7 @@ namespace Spirometer
                         Type = LineAnnotationType.Horizontal,
                         Text = "FRC"
                     };
-                    m_plotModelVT.Annotations.Add(annotation);
+                    m_plotModelVFT.Annotations.Add(annotation);
                 }
 
                 toolStripStatusLabelRespiratoryRate.Text = m_pulmonaryFunc.RespiratoryRate.ToString();
@@ -343,16 +355,7 @@ namespace Spirometer
                     Type = LineAnnotationType.Vertical,
                     Text = $"呼气"
                 };
-                m_plotModelFT.Annotations.Add(annotation);
-                annotation = new LineAnnotation()
-                {
-                    Color = OxyColors.Violet,
-                    X = sampleIndex * m_flowSensor.SampleTime,
-                    LineStyle = LineStyle.Dash,
-                    Type = LineAnnotationType.Vertical,
-                    Text = $"呼气"
-                };
-                m_plotModelVT.Annotations.Add(annotation);
+                m_plotModelVFT.Annotations.Add(annotation);
                 if (6 == m_pulmonaryFunc.RespiratoryCycleCount)
                 {
                     annotation = new LineAnnotation()
@@ -363,7 +366,7 @@ namespace Spirometer
                         Type = LineAnnotationType.Horizontal,
                         Text = "FRC"
                     };
-                    m_plotModelVT.Annotations.Add(annotation);
+                    m_plotModelVFT.Annotations.Add(annotation);
                 }
 
                 toolStripStatusLabelRespiratoryRate.Text = m_pulmonaryFunc.RespiratoryRate.ToString();
@@ -386,16 +389,7 @@ namespace Spirometer
                     Type = LineAnnotationType.Vertical,
                     Text = $"用力呼气"
                 };
-                m_plotModelFT.Annotations.Add(annotation);
-                annotation = new LineAnnotation()
-                {
-                    Color = OxyColors.Violet,
-                    X = sampleIndex * m_flowSensor.SampleTime,
-                    LineStyle = LineStyle.Dash,
-                    Type = LineAnnotationType.Vertical,
-                    Text = $"用力呼气"
-                };
-                m_plotModelVT.Annotations.Add(annotation);
+                m_plotModelVFT.Annotations.Add(annotation);
                 if (6 == m_pulmonaryFunc.RespiratoryCycleCount)
                 {
                     annotation = new LineAnnotation()
@@ -406,7 +400,7 @@ namespace Spirometer
                         Type = LineAnnotationType.Horizontal,
                         Text = "FRC"
                     };
-                    m_plotModelVT.Annotations.Add(annotation);
+                    m_plotModelVFT.Annotations.Add(annotation);
                 }
 
                 toolStripStatusLabelRespiratoryRate.Text = m_pulmonaryFunc.RespiratoryRate.ToString();
@@ -429,7 +423,7 @@ namespace Spirometer
                     Type = LineAnnotationType.Vertical,
                     Text = "停止"
                 };
-                m_plotModelFT.Annotations.Add(annotation);
+                m_plotModelVFT.Annotations.Add(annotation);
                 toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
                 toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
                 toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
@@ -466,18 +460,11 @@ namespace Spirometer
                 {
                     InvalidatePlot(true);
 
-                    //var xAxisFT = m_plotModelFT.Axes[0];
-                    if (xEnd > xAxisFT.Maximum)
+                    //var xAxisVFT = m_plotModelVFT.Axes[0];
+                    if (xEnd > xAxisVFT.Maximum)
                     {
-                        double panStep = xAxisFT.Transform(-xDelta + xAxisFT.Offset);
-                        xAxisFT.Pan(panStep);
-                    }
-
-                    //var xAxisVT = m_plotModelVT.Axes[0];
-                    if (xEnd > xAxisVT.Maximum)
-                    {
-                        double panStep = xAxisVT.Transform(-xDelta + xAxisVT.Offset);
-                        xAxisVT.Pan(panStep);
+                        double panStep = xAxisVFT.Transform(-xDelta + xAxisVFT.Offset);
+                        xAxisVFT.Pan(panStep);
                     }
                 }
             });
@@ -489,8 +476,9 @@ namespace Spirometer
             /* 执行肺功能参数计算 */
             m_pulmonaryFunc.Input(flow);
 
-            m_pointsFT.Add(new DataPoint(m_pulmonaryFunc.Time, m_pulmonaryFunc.InFlow));
-            m_pointsVT.Add(new DataPoint(m_pulmonaryFunc.Time, m_pulmonaryFunc.InVolume));
+            m_pointsVFTVolume.Add(new DataPoint(m_pulmonaryFunc.Time, m_pulmonaryFunc.InVolume));
+            m_pointsVFTFlow.Add(new DataPoint(m_pulmonaryFunc.Time, m_pulmonaryFunc.InFlow));
+            //m_pointsVT.Add(new DataPoint(m_pulmonaryFunc.Time, m_pulmonaryFunc.InVolume));
             m_pointsFV.Add(new DataPoint(m_pulmonaryFunc.ExVolume, m_pulmonaryFunc.ExFlow));
         }
 
@@ -549,12 +537,14 @@ namespace Spirometer
             var xAxisVT = m_plotModelVT.Axes[0];
             xAxisVT.Reset();
 
-            /* Clear Flow-Time Plot */
-            var serieFT = m_plotModelFT.Series[0] as LineSeries;
-            serieFT.Points.Clear();
-            m_plotModelFT.Annotations.Clear();
-            var xAxisFT = m_plotModelFT.Axes[0];
-            xAxisFT.Reset();
+            /* Clear Volume/Flow-Time Plot */
+            var serieVFTVolume = m_plotModelVFT.Series[0] as LineSeries;
+            serieVFTVolume.Points.Clear();
+            var serieVFTFlow = m_plotModelVFT.Series[1] as LineSeries;
+            serieVFTFlow.Points.Clear();
+            m_plotModelVFT.Annotations.Clear();
+            var xAxisVFT = m_plotModelVFT.Axes[0];
+            xAxisVFT.Reset();
 
             InvalidatePlot(true);
 
@@ -564,7 +554,7 @@ namespace Spirometer
         /* 请求所有图表刷新显示 */
         private void InvalidatePlot(bool updateData)
         {
-            plotViewFT.InvalidatePlot(updateData);
+            plotViewVFT.InvalidatePlot(updateData);
             plotViewVT.InvalidatePlot(updateData);
             plotViewFV.InvalidatePlot(updateData);
         }
@@ -681,7 +671,7 @@ namespace Spirometer
 
                 Task.Factory.StartNew(() =>
                 {
-                    var serieVT = m_plotModelFT.Series[0] as LineSeries;
+                    var serieVT = m_plotModelVFT.Series[0] as LineSeries;
                     StringBuilder strData = new StringBuilder();
                     foreach (var point in serieVT.Points)
                     {
