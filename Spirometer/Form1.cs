@@ -45,24 +45,25 @@ namespace Spirometer
         /* 枚举可用串口并更新列表控件 */
         private void EnumSerialPorts()
         {
+            /* 先清空串口列表 */
             toolStripComboBoxCom.Items.Clear();
 
-            SerialPort _tempPort;
+            /* 取的系统所有串口名称列表 */
             String[] Portname = SerialPort.GetPortNames();
 
-            //create a loop for each string in SerialPort.GetPortNames
+            /* 通过尝试开启串口来筛选未被占用串口名列表 */
             foreach (string str in Portname)
             {
                 try
                 {
-                    _tempPort = new SerialPort(str);
-                    _tempPort.Open();
+                    SerialPort tempPort = new SerialPort(str);
+                    tempPort.Open();
 
                     //if the port exist and we can open it
-                    if (_tempPort.IsOpen)
+                    if (tempPort.IsOpen)
                     {
                         toolStripComboBoxCom.Items.Add(str);
-                        _tempPort.Close();
+                        tempPort.Close();
                     }
                 }
                 //else we have no ports or can't open them display the 
@@ -74,6 +75,7 @@ namespace Spirometer
                 }
             }
 
+            /* 默认选中第一个 */
             toolStripComboBoxCom.SelectedIndex = 0;
         }
 
@@ -133,7 +135,9 @@ namespace Spirometer
             };
             m_plotModelFV.Series.Add(seriesFV);
 
+            // 设置View对应的Model
             plotViewFV.Model = m_plotModelFV;
+            // 保存数据点列表引用
             m_pointsFV = seriesFV.Points;
 
             /* 【用力呼气 容积(Volume)-时间(Time)图】 */
@@ -187,7 +191,9 @@ namespace Spirometer
             };
             m_plotModelVT.Series.Add(seriesVT);
 
+            // 设置View对应的Model
             plotViewVT.Model = m_plotModelVT;
+            // 保存数据点列表引用
             m_pointsVT = seriesVT.Points;
 
             /* 【容积(Volume)/流量(Flow)-时间(Time)图】 */
@@ -269,7 +275,9 @@ namespace Spirometer
             };
             m_plotModelVFT.Series.Add(seriesVFTFlow);
 
+            // 设置View对应的Model
             plotViewVFT.Model = m_plotModelVFT;
+            // 保存数据点列表引用
             m_pointsVFTFlow = seriesVFTFlow.Points;
             m_pointsVFTVolume = seriesVFTVolume.Points;
 
@@ -425,34 +433,42 @@ namespace Spirometer
             m_flowSensor.FlowRecved += new FlowSensor.FlowRecvHandler((byte channel, double flow) => {
                 //Console.WriteLine($"FlowRecved: {channel} {flow}");
 
+                /* 数据存入队列,将在刷新定时器中读取 */
                 m_dataQueue.Enqueue(flow);
             });
 
-            m_refreshTimer.Interval = 1000 / m_fps;
+            /* 刷新定时器 */
+            m_refreshTimer.Interval = 1000 / m_fps; // 设置定时器超时时间为帧间隔
             m_refreshTimer.Tick += new EventHandler((timer, arg) => {
-
+                // 保存数据添加前的曲线最右端X坐标的位置(用于实现自动滚屏)
                 double xBegin = m_pointsVT.Count > 0 ? m_pointsVT.Last().X : 0;
+                // 尝试读取队列中的数据并添加到曲线
                 while (m_dataQueue.Count > 0)
                 {
+                    /* 尝试读取队列中的数 */
                     bool bRet = m_dataQueue.TryDequeue(out double flow); // 流量
                     if (!bRet)
                     {
                         break;
                     }
-                    //Console.WriteLine(flow);
-                    AddFlow(flow);
+                    
+                    /* 已接收到一个流量采集数据 */
+                    OnFlowRecved(flow);
                 }
 
+                /* 在必要时刷新曲线显示并执行自动滚屏 */
                 double xEnd = m_pointsVT.Count > 0 ? m_pointsVT.Last().X : 0;
                 double xDelta = xEnd - xBegin;
                 if (xDelta > 0)
                 {
+                    /* 刷新曲线显示 */
                     plotViewVFT.InvalidatePlot(true);
                     plotViewFV.InvalidatePlot(true);
 
                     //var xAxisVFT = m_plotModelVFT.Axes[0];
                     if (xEnd > xAxisVFT.Maximum)
                     {
+                        /* 自动滚屏 */
                         double panStep = xAxisVFT.Transform(-xDelta + xAxisVFT.Offset);
                         xAxisVFT.Pan(panStep);
                     }
@@ -460,18 +476,19 @@ namespace Spirometer
             });
         }
 
-        /* 加入一个流量采集数据 */
-        private void AddFlow(double flow)
+        /* 已接收到一个流量采集数据 */
+        private void OnFlowRecved(double flow)
         {
             /* 执行肺功能参数计算 */
             m_pulmonaryFunc.Input(flow);
 
+            /* 加入数据到对应的曲线 */
             m_pointsVFTVolume.Add(new DataPoint(m_pulmonaryFunc.Time, m_pulmonaryFunc.InVolume));
             m_pointsVFTFlow.Add(new DataPoint(m_pulmonaryFunc.Time, m_pulmonaryFunc.InFlow));
             m_pointsFV.Add(new DataPoint(m_pulmonaryFunc.ExVolume, m_pulmonaryFunc.ExFlow));
         }
 
-        /* 输出用力呼气 Volume-Time Plot */
+        /* 输出用力呼气 Volume-Time 曲线 */
         private void UpdateVTPlot()
         {
             m_pointsVT.Clear();
@@ -485,6 +502,8 @@ namespace Spirometer
                     m_pointsVT.Add(new DataPoint(m_pulmonaryFunc.GetTime(index), m_pulmonaryFunc.GetExVolume(i)));
                     ++index;
                 }
+
+                /* 刷新曲线显示 */
                 plotViewVT.InvalidatePlot(true);
             }
         }
@@ -501,6 +520,7 @@ namespace Spirometer
                     m_pointsFV.Add(new DataPoint(m_pulmonaryFunc.GetExVolume(i), m_pulmonaryFunc.GetExFlow(i)));
                 }
 
+                /* 刷新曲线显示 */
                 plotViewFV.InvalidatePlot(true);
             }
         }
@@ -526,6 +546,7 @@ namespace Spirometer
         /* 清除状态栏 */
         private void ClearStatusBar()
         {
+            /* 确保更新UI的操作在UI线程执行 */
             this.BeginInvoke(new Action<Form1>((obj) => {
                 toolStripStatusLabelRespiratoryRate.Text = "0.0";
                 toolStripStatusLabelVC.Text = "0.0";
@@ -567,10 +588,12 @@ namespace Spirometer
             var xAxisVFT = m_plotModelVFT.Axes[0];
             xAxisVFT.Reset();
 
+            /* 刷新曲线显示 */
             plotViewVFT.InvalidatePlot(true);
             plotViewVT.InvalidatePlot(true);
             plotViewFV.InvalidatePlot(true);
 
+            /* 清除状态栏 */
             ClearStatusBar();
         }
 
@@ -590,6 +613,7 @@ namespace Spirometer
         /* 显示加载对话框,加载Flow数据或Preaure数据 */
         private void ShowLoadCSVDialog(bool isFlow)
         {
+            /* 弹出文件打开对话框 */
             OpenFileDialog openCSVDialog = new OpenFileDialog();
             openCSVDialog.Filter = "CSV File (*.csv;)|*.csv";
             openCSVDialog.Multiselect = false;
@@ -601,24 +625,29 @@ namespace Spirometer
                     return;
                 }
 
+                /* 加载过程中暂时不允许再次点击 */
                 toolStripButtonLoadPresure.Enabled = false;
                 toolStripButtonLoadFlow.Enabled = false;
                 toolStripButtonSaveFlow.Enabled = false;
 
+                /* 启动任务执行异步加载(防止阻塞UI线程) */
                 Task.Factory.StartNew(() =>
                 {
+                    /* 所有数据先加载到内存 */
                     string strData = String.Empty;
-
                     using (StreamReader reader = new StreamReader(openCSVDialog.FileName, Encoding.UTF8))
                     {
                         strData = reader.ReadToEnd();
                         reader.Close();
                     }
 
+                    /* 先清空所有图表数据和缓存数据,并刷新显示 */
                     ClearAll();
 
+                    /* 是否是加载流量数据 */
                     if (isFlow)
                     {
+                        /* 解析CSV中的流量数据 */
                         string[] strDataArray = strData.Split(new char[] { ',' });
                         foreach (var strVal in strDataArray)
                         {
@@ -629,13 +658,13 @@ namespace Spirometer
 
                             double flow = Convert.ToDouble(strVal); // 流量
 
-                            //Console.WriteLine(flow);
-
-                            AddFlow(flow);
+                            /* 已接收到一个流量采集数据 */
+                            OnFlowRecved(flow);
                         }
                     }
                     else
                     {
+                        /* 解析CSV中的压差数据 */
                         string[] strDataArray = strData.Split(new char[] { ',' });
                         foreach (var strVal in strDataArray)
                         {
@@ -646,21 +675,22 @@ namespace Spirometer
 
                             double presure = Convert.ToDouble(strVal); // 压差
 
+                            /* 压差转流量 */
                             double flow = m_flowSensor.PresureToFlow(presure); // 流量
 
-                            //Console.WriteLine(flow);
-
-                            AddFlow(flow);
+                            /* 已接收到一个流量采集数据 */
+                            OnFlowRecved(flow);
                         }
                     }
-                    
 
+                    /* 加载完毕恢复按钮使能状态(确保在UI线程执行) */
                     this.BeginInvoke(new Action<Form1>((obj) => { 
                         toolStripButtonLoadPresure.Enabled = true; 
                         toolStripButtonLoadFlow.Enabled = true;
                         toolStripButtonSaveFlow.Enabled = true;
                     }), this);
 
+                    /* 刷新曲线显示 */
                     plotViewVFT.InvalidatePlot(true);
                     plotViewFV.InvalidatePlot(true);
 
@@ -676,6 +706,7 @@ namespace Spirometer
         /* 显示保存对话框,保存Flow数据为CSV文件 */
         private void ShowSaveCSVDialog()
         {
+            /* 弹出文件保存对话框 */
             SaveFileDialog saveCSVDialog = new SaveFileDialog();
             saveCSVDialog.Filter = "CSV File (*.csv;)|*.csv";
             //saveCSVDialog.Multiselect = false;
@@ -687,12 +718,15 @@ namespace Spirometer
                     return;
                 }
 
+                /* 保存过程中暂时不允许再次点击 */
                 toolStripButtonLoadPresure.Enabled = false;
                 toolStripButtonLoadFlow.Enabled = false;
                 toolStripButtonSaveFlow.Enabled = false;
 
+                /* 启动任务执行异步保存(防止阻塞UI线程) */
                 Task.Factory.StartNew(() =>
                 {
+                    /* 在内存中将Flow数据组装称CSV格式字符串 */
                     StringBuilder strData = new StringBuilder();
                     foreach (var point in m_pointsVFTFlow)
                     {
@@ -700,6 +734,7 @@ namespace Spirometer
                         strData.Append(",");
                     }
 
+                    /* 保存为CSV文件 */
                     using (StreamWriter writer = new StreamWriter(saveCSVDialog.FileName, false, Encoding.UTF8))
                     {
                         writer.Write(strData);
@@ -708,6 +743,7 @@ namespace Spirometer
                         MessageBox.Show("保存成功.");
                     }
 
+                    /* 保存完毕恢复按钮使能状态(确保在UI线程执行) */
                     this.BeginInvoke(new Action<Form1>((obj) => {
                         toolStripButtonLoadPresure.Enabled = true;
                         toolStripButtonLoadFlow.Enabled = true;
@@ -721,6 +757,7 @@ namespace Spirometer
         {
             if ("连接" == toolStripButtonConnect.Text)
             {
+                /* 开启流速传感器 */
                 bool bRet = m_flowSensor.Open(toolStripComboBoxCom.Text);
                 toolStripButtonStart.Enabled = bRet;
                 //toolStripButtonLoad.Enabled = !bRet;
@@ -734,6 +771,7 @@ namespace Spirometer
             }
             else
             {
+                /* 关闭流速传感器 */
                 m_flowSensor.Close();
                 toolStripButtonStart.Enabled = false;
                 toolStripButtonLoadPresure.Enabled = true;
