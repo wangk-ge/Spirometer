@@ -3,10 +3,10 @@ using System.Collections.Concurrent;
 using System.IO.Ports;
 using System.Threading.Tasks;
 
-namespace Spirometer
+namespace PulmonaryFunctionLib
 {
     /* 流速传感器 */
-    class FlowSensor
+    public class FlowSensor
     {
         private SerialPort m_serialPort = null;
         private ConcurrentQueue<TaskCompletionSource<string>> m_cmdRespTaskCompQue = new ConcurrentQueue<TaskCompletionSource<string>>();

@@ -1,5 +1,5 @@
 ﻿
-namespace Spirometer
+namespace PulmonaryFunctionLib
 {
     class KalmanFilter
     {
