@@ -26,18 +26,13 @@ namespace Spirometer
             {
                 if (m_maxVolumeIndex < m_listFV.Count)
                 {
-                    return m_listFV[(int)m_maxVolumeIndex].inVolume;
-                }
-                return 0.0;
-            }
-        }
-        public double RV // 残气量(L)
-        {
-            get
-            {
-                if (m_minVolumeIndex < m_listFV.Count)
-                {
-                    return m_listFV[(int)m_minVolumeIndex].inVolume;
+                    double minVolume = 0.0;
+                    if (m_minVolumeIndex < m_listFV.Count)
+                    {
+                        minVolume = m_listFV[(int)m_minVolumeIndex].inVolume;
+                    }
+
+                    return m_listFV[(int)m_maxVolumeIndex].inVolume - minVolume;
                 }
                 return 0.0;
             }

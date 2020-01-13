@@ -223,8 +223,8 @@ namespace Spirometer
             //左侧Y轴,Volume
             var yAxisVFTLeft = new LinearAxis()
             {
-                MajorGridlineStyle = LineStyle.Dot,
-                MinorGridlineStyle = LineStyle.Dot,
+                //MajorGridlineStyle = LineStyle.Dot,
+                //MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Left,
@@ -236,8 +236,8 @@ namespace Spirometer
             //右侧Y轴,Flow
             var yAxisVFTRight = new LinearAxis()
             {
-                MajorGridlineStyle = LineStyle.Dot,
-                MinorGridlineStyle = LineStyle.Dot,
+                //MajorGridlineStyle = LineStyle.Dot,
+                //MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Right,
@@ -338,7 +338,6 @@ namespace Spirometer
                 toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
                 toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
                 toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
-                toolStripStatusLabelRV.Text = m_pulmonaryFunc.RV.ToString();
                 toolStripStatusLabelTV.Text = m_pulmonaryFunc.TV.ToString();
                 toolStripStatusLabelFRC.Text = m_pulmonaryFunc.FRC.ToString();
             });
@@ -372,7 +371,6 @@ namespace Spirometer
                 toolStripStatusLabelRespiratoryRate.Text = m_pulmonaryFunc.RespiratoryRate.ToString();
                 toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
                 toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
-                toolStripStatusLabelRV.Text = m_pulmonaryFunc.RV.ToString();
                 toolStripStatusLabelTV.Text = m_pulmonaryFunc.TV.ToString();
                 toolStripStatusLabelFRC.Text = m_pulmonaryFunc.FRC.ToString();
             });
@@ -406,7 +404,6 @@ namespace Spirometer
                 toolStripStatusLabelRespiratoryRate.Text = m_pulmonaryFunc.RespiratoryRate.ToString();
                 toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
                 toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
-                toolStripStatusLabelRV.Text = m_pulmonaryFunc.RV.ToString();
                 toolStripStatusLabelTV.Text = m_pulmonaryFunc.TV.ToString();
                 toolStripStatusLabelFRC.Text = m_pulmonaryFunc.FRC.ToString();
             });
@@ -427,7 +424,6 @@ namespace Spirometer
                 toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
                 toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
                 toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
-                toolStripStatusLabelRV.Text = m_pulmonaryFunc.RV.ToString();
                 toolStripStatusLabelTV.Text = m_pulmonaryFunc.TV.ToString();
                 toolStripStatusLabelFRC.Text = m_pulmonaryFunc.FRC.ToString();
             });
@@ -542,7 +538,6 @@ namespace Spirometer
                 toolStripStatusLabelVC.Text = "0.0";
                 toolStripStatusLabelVC.Text = "0.0";
                 toolStripStatusLabelTLC.Text = "0.0";
-                toolStripStatusLabelRV.Text = "0.0";
                 toolStripStatusLabelTV.Text = "0.0";
                 toolStripStatusLabelFRC.Text = "0.0";
             }), this);
@@ -706,9 +701,8 @@ namespace Spirometer
 
                 Task.Factory.StartNew(() =>
                 {
-                    var serieVT = m_plotModelVFT.Series[0] as LineSeries;
                     StringBuilder strData = new StringBuilder();
-                    foreach (var point in serieVT.Points)
+                    foreach (var point in m_pointsVFTFlow)
                     {
                         strData.Append(point.Y);
                         strData.Append(",");

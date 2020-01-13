@@ -52,8 +52,6 @@
             this.toolStripStatusLabelVC = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel3 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabelTLC = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusLabel4 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusLabelRV = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel5 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabelTV = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel6 = new System.Windows.Forms.ToolStripStatusLabel();
@@ -261,8 +259,6 @@
             this.toolStripStatusLabelVC,
             this.toolStripStatusLabel3,
             this.toolStripStatusLabelTLC,
-            this.toolStripStatusLabel4,
-            this.toolStripStatusLabelRV,
             this.toolStripStatusLabel5,
             this.toolStripStatusLabelTV,
             this.toolStripStatusLabel6,
@@ -308,18 +304,6 @@
             this.toolStripStatusLabelTLC.Name = "toolStripStatusLabelTLC";
             this.toolStripStatusLabelTLC.Size = new System.Drawing.Size(25, 17);
             this.toolStripStatusLabelTLC.Text = "0.0";
-            // 
-            // toolStripStatusLabel4
-            // 
-            this.toolStripStatusLabel4.Name = "toolStripStatusLabel4";
-            this.toolStripStatusLabel4.Size = new System.Drawing.Size(68, 17);
-            this.toolStripStatusLabel4.Text = "残气量(RV)";
-            // 
-            // toolStripStatusLabelRV
-            // 
-            this.toolStripStatusLabelRV.Name = "toolStripStatusLabelRV";
-            this.toolStripStatusLabelRV.Size = new System.Drawing.Size(25, 17);
-            this.toolStripStatusLabelRV.Text = "0.0";
             // 
             // toolStripStatusLabel5
             // 
@@ -398,8 +382,6 @@
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelVC;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel3;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelTLC;
-        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel4;
-        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelRV;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel5;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelTV;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel6;
