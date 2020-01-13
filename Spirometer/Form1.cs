@@ -326,10 +326,10 @@ namespace Spirometer
                     annotation = new LineAnnotation()
                     {
                         Color = OxyColors.Red,
-                        Y = m_pulmonaryFunc.FRC,
+                        Y = m_pulmonaryFunc.TVLowerAvg,
                         LineStyle = LineStyle.Dash,
                         Type = LineAnnotationType.Horizontal,
-                        Text = "FRC"
+                        //Text = ""
                     };
                     m_plotModelVFT.Annotations.Add(annotation);
                 }
@@ -339,7 +339,6 @@ namespace Spirometer
                 toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
                 toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
                 toolStripStatusLabelTV.Text = m_pulmonaryFunc.TV.ToString();
-                toolStripStatusLabelFRC.Text = m_pulmonaryFunc.FRC.ToString();
             });
 
             /* 开始呼气 */
@@ -360,10 +359,10 @@ namespace Spirometer
                     annotation = new LineAnnotation()
                     {
                         Color = OxyColors.Red,
-                        Y = m_pulmonaryFunc.FRC,
+                        Y = m_pulmonaryFunc.TVLowerAvg,
                         LineStyle = LineStyle.Dash,
                         Type = LineAnnotationType.Horizontal,
-                        Text = "FRC"
+                        //Text = ""
                     };
                     m_plotModelVFT.Annotations.Add(annotation);
                 }
@@ -372,7 +371,6 @@ namespace Spirometer
                 toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
                 toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
                 toolStripStatusLabelTV.Text = m_pulmonaryFunc.TV.ToString();
-                toolStripStatusLabelFRC.Text = m_pulmonaryFunc.FRC.ToString();
             });
 
             /* 开始用力呼气 */
@@ -393,10 +391,10 @@ namespace Spirometer
                     annotation = new LineAnnotation()
                     {
                         Color = OxyColors.Red,
-                        Y = m_pulmonaryFunc.FRC,
+                        Y = m_pulmonaryFunc.TVLowerAvg,
                         LineStyle = LineStyle.Dash,
                         Type = LineAnnotationType.Horizontal,
-                        Text = "FRC"
+                        //Text = ""
                     };
                     m_plotModelVFT.Annotations.Add(annotation);
                 }
@@ -405,7 +403,6 @@ namespace Spirometer
                 toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
                 toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
                 toolStripStatusLabelTV.Text = m_pulmonaryFunc.TV.ToString();
-                toolStripStatusLabelFRC.Text = m_pulmonaryFunc.FRC.ToString();
             });
 
             /* 测量结束 */
@@ -425,7 +422,6 @@ namespace Spirometer
                 toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
                 toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
                 toolStripStatusLabelTV.Text = m_pulmonaryFunc.TV.ToString();
-                toolStripStatusLabelFRC.Text = m_pulmonaryFunc.FRC.ToString();
             });
 
             /* 通过传感器获取数据 */
@@ -539,7 +535,6 @@ namespace Spirometer
                 toolStripStatusLabelVC.Text = "0.0";
                 toolStripStatusLabelTLC.Text = "0.0";
                 toolStripStatusLabelTV.Text = "0.0";
-                toolStripStatusLabelFRC.Text = "0.0";
             }), this);
         }
 

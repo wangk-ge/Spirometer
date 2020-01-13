@@ -49,7 +49,7 @@ namespace Spirometer
                 return 0.0;
             }
         }
-        public double FRC // 功能残气量(L)
+        public double TVLowerAvg // 残气量下界平均值(L)
         {
             get
             {
