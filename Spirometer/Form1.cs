@@ -160,8 +160,8 @@ namespace Spirometer
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Bottom,
-                Minimum = 0,
-                Maximum = 50 * 1000,
+                //Minimum = 0,
+                //Maximum = 50 * 1000,
                 Title = "Time(MS)"
             };
             m_plotModelVT.Axes.Add(xAxisVT);
@@ -262,7 +262,7 @@ namespace Spirometer
             // 数据Flow
             var seriesVFTFlow = new LineSeries()
             {
-                Color = OxyColors.Black,
+                Color = OxyColors.YellowGreen,
                 StrokeThickness = 1,
                 //MarkerSize = 1,
                 //MarkerStroke = OxyColors.DarkBlack,
@@ -458,7 +458,8 @@ namespace Spirometer
                 double xDelta = xEnd - xBegin;
                 if (xDelta > 0)
                 {
-                    InvalidatePlot(true);
+                    plotViewVFT.InvalidatePlot(true);
+                    plotViewFV.InvalidatePlot(true);
 
                     //var xAxisVFT = m_plotModelVFT.Axes[0];
                     if (xEnd > xAxisVFT.Maximum)
@@ -478,8 +479,41 @@ namespace Spirometer
 
             m_pointsVFTVolume.Add(new DataPoint(m_pulmonaryFunc.Time, m_pulmonaryFunc.InVolume));
             m_pointsVFTFlow.Add(new DataPoint(m_pulmonaryFunc.Time, m_pulmonaryFunc.InFlow));
-            //m_pointsVT.Add(new DataPoint(m_pulmonaryFunc.Time, m_pulmonaryFunc.InVolume));
             m_pointsFV.Add(new DataPoint(m_pulmonaryFunc.ExVolume, m_pulmonaryFunc.ExFlow));
+        }
+
+        /* 输出用力呼气 Volume-Time Plot */
+        private void UpdateVTPlot()
+        {
+            m_pointsVT.Clear();
+
+            /* 输出用力呼气 Volume-Time Plot */
+            if (m_pulmonaryFunc.ForceExpirationStartIndex > 0)
+            {
+                uint index = 0;
+                for (uint i = m_pulmonaryFunc.ForceExpirationStartIndex; i <= m_pulmonaryFunc.ForceExpirationEndIndex; ++i)
+                {
+                    m_pointsVT.Add(new DataPoint(m_pulmonaryFunc.GetTime(index), m_pulmonaryFunc.GetExVolume(i)));
+                    ++index;
+                }
+                plotViewVT.InvalidatePlot(true);
+            }
+        }
+
+        /* 更新 Flow-Volume Plot(平移到Volume从0开始) */
+        private void UpdateFVPlot()
+        {
+            if (m_pointsFV.Count > 0)
+            {
+                m_pointsFV.Clear();
+
+                for (uint i = 0; i < m_pulmonaryFunc.SampleCount; ++i)
+                {
+                    m_pointsFV.Add(new DataPoint(m_pulmonaryFunc.GetExVolume(i), m_pulmonaryFunc.GetExFlow(i)));
+                }
+
+                plotViewFV.InvalidatePlot(true);
+            }
         }
 
         /* 尝试清空数据队列 */
@@ -546,17 +580,11 @@ namespace Spirometer
             var xAxisVFT = m_plotModelVFT.Axes[0];
             xAxisVFT.Reset();
 
-            InvalidatePlot(true);
+            plotViewVFT.InvalidatePlot(true);
+            plotViewVT.InvalidatePlot(true);
+            plotViewFV.InvalidatePlot(true);
 
             ClearStatusBar();
-        }
-
-        /* 请求所有图表刷新显示 */
-        private void InvalidatePlot(bool updateData)
-        {
-            plotViewVFT.InvalidatePlot(updateData);
-            plotViewVT.InvalidatePlot(updateData);
-            plotViewFV.InvalidatePlot(updateData);
         }
 
         /* 发送命令到FlowSensor(异步响应) */
@@ -646,7 +674,14 @@ namespace Spirometer
                         toolStripButtonSaveFlow.Enabled = true;
                     }), this);
 
-                    InvalidatePlot(true);
+                    plotViewVFT.InvalidatePlot(true);
+                    plotViewFV.InvalidatePlot(true);
+
+                    /* 输出用力呼气 Volume-Time Plot */
+                    UpdateVTPlot();
+
+                    /* 更新 Flow-Volume Plot(平移到Volume从0开始) */
+                    UpdateFVPlot();
                 });
             }
         }
@@ -778,6 +813,12 @@ namespace Spirometer
                     m_refreshTimer.Stop();
                     /* 尝试清空数据队列 */
                     TryClearDataQueue();
+
+                    /* 输出用力呼气 Volume-Time Plot */
+                    UpdateVTPlot();
+
+                    /* 更新 Flow-Volume Plot(平移到Volume从0开始) */
+                    UpdateFVPlot();
                 }
             }
         }

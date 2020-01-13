@@ -17,6 +17,9 @@ namespace Spirometer
         public double ExVolume { get { return -InVolume; } } // 呼气容积(L)
         public double RespiratoryRate { get; private set; } = 0.0; // 呼吸频率(次/min)
         public uint RespiratoryCycleCount { get; private set; } = 0U; // 呼吸周期数(次)
+        public uint ForceExpirationStartIndex { get; private set; } = 0U; // 用力呼气起点Index
+        public uint ForceExpirationEndIndex { get; private set; } = 0U; // 用力呼气终点Index
+        public uint SampleCount { get { return (uint)m_listFV.Count; } } // 已采集的样本数
         public double TLC // 肺总量(L)
         {
             get
@@ -98,7 +101,6 @@ namespace Spirometer
 
         private State m_state = State.Reset; // 工作状态
         private double m_flowZeroOffset = 0.0; // 流量零点偏移值
-        private uint m_sampleCount = 0U; // 统计已采样数据个数
         private readonly double SAMPLE_TIME = 0.0; // 采样时间(ms)
         private WaveStatistician m_waveStatistician = new WaveStatistician(); // 用于统计波动数据
         private readonly int ZEROING_SAMPLE_COUNT = 100; // 归零过程采样次数
@@ -157,7 +159,6 @@ namespace Spirometer
             RespiratoryRate = 0.0;
             m_state = State.Reset;
             m_flowZeroOffset = 0.0;
-            m_sampleCount = 0U;
             m_waveStatistician.Reset();
             m_inspirationSampleCnt = 0U;
             m_inspirationVolume = 0.0;
@@ -171,6 +172,8 @@ namespace Spirometer
             m_measureStartIndex = 0U;
             m_measureStartInspiration = true;
             RespiratoryCycleCount = 0U;
+            ForceExpirationStartIndex = 0U;
+            ForceExpirationEndIndex = 0U;
             m_maxVolumeIndex = 0U;
             m_minVolumeIndex = 0U;
             m_tvUpperSum = 0.0;
@@ -222,7 +225,6 @@ namespace Spirometer
 
             /* 记录Flow-Volume数据到队列 */
             m_listFV.Add(new FlowVolume { inFlow = InFlow, inVolume = InVolume});
-            m_sampleCount = (uint)m_listFV.Count;
 
             switch (m_state)
             {
@@ -300,7 +302,7 @@ namespace Spirometer
                                     /* 触发测试启动事件(吸气启动) */
                                     RespiratoryCycleCount = 0U;
                                     m_measureStartInspiration = true;
-                                    m_measureStartIndex = m_sampleCount - m_inspirationSampleCnt;
+                                    m_measureStartIndex = SampleCount - m_inspirationSampleCnt;
                                     MeasureStarted?.Invoke(m_measureStartIndex, m_measureStartInspiration);
 
                                     /* 重置吸气样本数 */
@@ -345,7 +347,7 @@ namespace Spirometer
                                     /* 触发测试启动事件(呼气启动) */
                                     RespiratoryCycleCount = 0U;
                                     m_measureStartInspiration = false;
-                                    m_measureStartIndex = m_sampleCount - m_expirationSampleCnt;
+                                    m_measureStartIndex = SampleCount - m_expirationSampleCnt;
                                     MeasureStarted?.Invoke(m_measureStartIndex, m_measureStartInspiration);
 
                                     /* 重置呼气样本数 */
@@ -429,6 +431,7 @@ namespace Spirometer
                                     double exFlow = -flowZeroCorrection;
                                     if (exFlow >= FORCE_EXPIRATION_FLOW)
                                     {
+                                        ForceExpirationStartIndex = m_peekVolumeIndex; // 记录用力呼气起点
                                         ForceExpirationStarted?.Invoke(m_peekVolumeIndex, m_peekFlowIndex);
                                     }
                                     else
@@ -506,6 +509,17 @@ namespace Spirometer
                                         }
                                     }
 
+                                    /* 是否已识别到用力呼气起点 */
+                                    if (ForceExpirationStartIndex > 0)
+                                    {
+                                        /* 是否未识别到用力呼气终点 */
+                                        if (ForceExpirationEndIndex <= ForceExpirationStartIndex)
+                                        {
+                                            /* 本次呼气结束点就是用力呼气终点 */
+                                            ForceExpirationEndIndex = m_peekVolumeIndex;
+                                        }
+                                    }
+
                                     /* 触发吸气开始事件 */
                                     InspirationStarted?.Invoke(m_peekVolumeIndex, m_peekFlowIndex);
 
@@ -549,10 +563,16 @@ namespace Spirometer
             return -GetInFlow(sampleIendex);
         }
 
-        /* 返回索引值对应的呼气Volume(没有做参数有效性检查) */
+        /* 返回索引值对应的呼气Volume,平移到Volume从0开始(没有做参数有效性检查) */
         public double GetExVolume(uint sampleIendex)
         {
-            return -GetInVolume(sampleIendex);
+            double minExVolume = 0.0;
+            if (m_maxVolumeIndex < m_listFV.Count)
+            {
+                minExVolume = -m_listFV[(int)m_maxVolumeIndex].inVolume;
+            }
+            double exVolume = -GetInVolume(sampleIendex);
+            return exVolume - minExVolume; // 平移到Volume从0开始
         }
     }
 }
