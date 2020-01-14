@@ -44,6 +44,120 @@ namespace PulmonaryFunctionLib
                 return 0.0;
             }
         }
+        public double FVC  // 用力肺活量(L)
+        {
+            get
+            {
+                if ((m_maxVolumeIndex < m_listFV.Count)
+                    && (m_minVolumeIndex < m_listFV.Count))
+                {
+                    return m_listFV[(int)m_maxVolumeIndex].inVolume - m_listFV[(int)m_minVolumeIndex].inVolume;
+                }
+                return 0.0;
+            }
+        }
+        public double FEV1  // 1秒量(L)
+        {
+            get
+            {
+                if (ForceExpirationStartIndex > 0)
+                {
+                    /* 用力呼气点之后的1秒的Index */
+                    uint oneSecIndex = ForceExpirationStartIndex + (uint)((1000 / SAMPLE_TIME) + 0.5);
+                    /* 是否已完成一秒量的采集 */
+                    if (oneSecIndex < m_listFV.Count)
+                    {
+                        return GetExVolume(oneSecIndex);
+                    }
+                }
+                return 0.0;
+            }
+        }
+        public double PEF // 峰值呼气流速(peak expiratory flow)
+        {
+            get
+            {
+                /* 最小吸气流速点就是最大呼气流速点 */
+                uint maxExFlowIndex = m_minFlowIndex;
+                if (maxExFlowIndex < m_listFV.Count)
+                {
+                    return GetExFlow(maxExFlowIndex);
+                }
+                return 0.0;
+            }
+        }
+        public double FEF25 // 用力呼出25%肺活量的呼气流速
+        {
+            get
+            {
+                /* 已完成用力呼气测试 */
+                if ((ForceExpirationStartIndex > 0)
+                    && (ForceExpirationEndIndex > ForceExpirationStartIndex))
+                {
+                    /* 计算用力呼气肺活量的25% */
+                    double percent25FVC = FVC * 0.25;
+
+                    for (uint i = (uint)ForceExpirationStartIndex; i < ForceExpirationEndIndex; ++i)
+                    {
+                        double exVolume = GetExVolume(i);
+                        if (exVolume >= percent25FVC)
+                        {
+                            /* 返回该点的呼气流速 */
+                            return GetExFlow(i);
+                        }
+                    }
+                }
+                return 0.0;
+            }
+        }
+        public double FEF50 // 用力呼出50%肺活量的呼气流速
+        {
+            get
+            {
+                /* 已完成用力呼气测试 */
+                if ((ForceExpirationStartIndex > 0)
+                    && (ForceExpirationEndIndex > ForceExpirationStartIndex))
+                {
+                    /* 计算用力呼气肺活量的50% */
+                    double percent50FVC = FVC * 0.50;
+
+                    for (uint i = (uint)ForceExpirationStartIndex; i < ForceExpirationEndIndex; ++i)
+                    {
+                        double exVolume = GetExVolume(i);
+                        if (exVolume >= percent50FVC)
+                        {
+                            /* 返回该点的呼气流速 */
+                            return GetExFlow(i);
+                        }
+                    }
+                }
+                return 0.0;
+            }
+        }
+        public double FEF75 // 用力呼出75%肺活量的呼气流速
+        {
+            get
+            {
+                /* 已完成用力呼气测试 */
+                if ((ForceExpirationStartIndex > 0)
+                    && (ForceExpirationEndIndex > ForceExpirationStartIndex))
+                {
+                    /* 计算用力呼气肺活量的75% */
+                    double percent75FVC = FVC * 0.75;
+
+                    for (uint i = (uint)ForceExpirationStartIndex; i < ForceExpirationEndIndex; ++i)
+                    {
+                        double exVolume = GetExVolume(i);
+                        if (exVolume >= percent75FVC)
+                        {
+                            /* 返回该点的呼气流速 */
+                            return GetExFlow(i);
+                        }
+                    }
+                }
+                return 0.0;
+            }
+        }
         public double TVLowerAvg // 残气量下界平均值(L)
         {
             get
@@ -91,7 +205,7 @@ namespace PulmonaryFunctionLib
 
         private State m_state = State.Reset; // 工作状态
         private double m_flowZeroOffset = 0.0; // 流量零点偏移值
-        private readonly double SAMPLE_TIME = 0.0; // 采样时间(ms)
+        private readonly double SAMPLE_TIME = 3.0; // 采样时间(ms)
         private WaveStatistician m_waveStatistician = new WaveStatistician(); // 用于统计波动数据
         private readonly int ZEROING_SAMPLE_COUNT = 100; // 归零过程采样次数
         private readonly double ZEROING_ALLOW_RANGE = 0.04; // 归零过程允许的波动范围
@@ -127,6 +241,10 @@ namespace PulmonaryFunctionLib
         /* 容积参数 */
         private uint m_maxVolumeIndex = 0U; // 容积最大值点Index
         private uint m_minVolumeIndex = 0U; // 容积最小值点Index
+
+        /* 流速参数 */
+        private uint m_maxFlowIndex = 0U; // 流速最大值点Index
+        private uint m_minFlowIndex = 0U; // 流速最小值点Index
 
         /* 潮气量上下界信息(用于求TV和FRC) */
         private double m_tvUpperSum = 0.0; // 潮气量上界Volume求和值
@@ -166,6 +284,8 @@ namespace PulmonaryFunctionLib
             ForceExpirationEndIndex = 0U;
             m_maxVolumeIndex = 0U;
             m_minVolumeIndex = 0U;
+            m_maxFlowIndex = 0U;
+            m_minFlowIndex = 0U;
             m_tvUpperSum = 0.0;
             m_tvUpperAvg = 0.0;
             m_tvLowerSum = 0.0;
@@ -380,7 +500,13 @@ namespace PulmonaryFunctionLib
                                 if ((m_listFV[(int)m_peekVolumeIndex].inVolume - InVolume) > VOLUME_DELTA_THRESHOLD)
                                 {
                                     /* 流量极大值点确认 */
-                                    //Console.WriteLine($"流量极大值点:{m_peekFlowIndex}, {m_listFV[(int)m_peekFlowIndex].flow}");
+                                    //Console.WriteLine($"流量极大值点:{m_peekFlowIndex}, {m_listFV[(int)m_peekFlowIndex].inFlow}");
+
+                                    /* 统计流量最大值点 */
+                                    if (m_listFV[(int)m_peekFlowIndex].inFlow > m_listFV[(int)m_maxFlowIndex].inFlow)
+                                    {
+                                        m_maxFlowIndex = m_peekFlowIndex;
+                                    }
 
                                     /* 进入正在呼气状态 */
                                     SetState(State.Expiration);
@@ -462,7 +588,13 @@ namespace PulmonaryFunctionLib
                                 if (((InVolume - m_listFV[(int)m_peekVolumeIndex].inVolume) > VOLUME_DELTA_THRESHOLD))
                                 {
                                     /* 流量极小值点确认 */
-                                    //Console.WriteLine($"流量极小值点:{m_peekFlowIndex}, {m_listFV[(int)m_peekFlowIndex].flow}");
+                                    //Console.WriteLine($"流量极小值点:{m_peekFlowIndex}, {m_listFV[(int)m_peekFlowIndex].inFlow}");
+
+                                    /* 统计流量最小值点 */
+                                    if (m_listFV[(int)m_peekFlowIndex].inFlow < m_listFV[(int)m_minFlowIndex].inFlow)
+                                    {
+                                        m_minFlowIndex = m_peekFlowIndex;
+                                    }
 
                                     /* 进入正在吸气状态 */
                                     SetState(State.Inspiration);

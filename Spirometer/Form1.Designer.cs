@@ -54,6 +54,16 @@
             this.toolStripStatusLabelTLC = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel5 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabelTV = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel4 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabelFEV1 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel6 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabelPEF = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel7 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabelFEF25 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel8 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabelFEF50 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabel9 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripStatusLabelFEF75 = new System.Windows.Forms.ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -258,7 +268,17 @@
             this.toolStripStatusLabel3,
             this.toolStripStatusLabelTLC,
             this.toolStripStatusLabel5,
-            this.toolStripStatusLabelTV});
+            this.toolStripStatusLabelTV,
+            this.toolStripStatusLabel4,
+            this.toolStripStatusLabelFEV1,
+            this.toolStripStatusLabel6,
+            this.toolStripStatusLabelPEF,
+            this.toolStripStatusLabel7,
+            this.toolStripStatusLabelFEF25,
+            this.toolStripStatusLabel8,
+            this.toolStripStatusLabelFEF50,
+            this.toolStripStatusLabel9,
+            this.toolStripStatusLabelFEF75});
             this.statusStrip1.Location = new System.Drawing.Point(0, 650);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(1372, 22);
@@ -312,6 +332,66 @@
             this.toolStripStatusLabelTV.Name = "toolStripStatusLabelTV";
             this.toolStripStatusLabelTV.Size = new System.Drawing.Size(25, 17);
             this.toolStripStatusLabelTV.Text = "0.0";
+            // 
+            // toolStripStatusLabel4
+            // 
+            this.toolStripStatusLabel4.Name = "toolStripStatusLabel4";
+            this.toolStripStatusLabel4.Size = new System.Drawing.Size(80, 17);
+            this.toolStripStatusLabel4.Text = "一秒量(FEV1)";
+            // 
+            // toolStripStatusLabelFEV1
+            // 
+            this.toolStripStatusLabelFEV1.Name = "toolStripStatusLabelFEV1";
+            this.toolStripStatusLabelFEV1.Size = new System.Drawing.Size(25, 17);
+            this.toolStripStatusLabelFEV1.Text = "0.0";
+            // 
+            // toolStripStatusLabel6
+            // 
+            this.toolStripStatusLabel6.Name = "toolStripStatusLabel6";
+            this.toolStripStatusLabel6.Size = new System.Drawing.Size(108, 17);
+            this.toolStripStatusLabel6.Text = "峰值呼气流速(PEF)";
+            // 
+            // toolStripStatusLabelPEF
+            // 
+            this.toolStripStatusLabelPEF.Name = "toolStripStatusLabelPEF";
+            this.toolStripStatusLabelPEF.Size = new System.Drawing.Size(25, 17);
+            this.toolStripStatusLabelPEF.Text = "0.0";
+            // 
+            // toolStripStatusLabel7
+            // 
+            this.toolStripStatusLabel7.Name = "toolStripStatusLabel7";
+            this.toolStripStatusLabel7.Size = new System.Drawing.Size(41, 17);
+            this.toolStripStatusLabel7.Text = "FEF25";
+            // 
+            // toolStripStatusLabelFEF25
+            // 
+            this.toolStripStatusLabelFEF25.Name = "toolStripStatusLabelFEF25";
+            this.toolStripStatusLabelFEF25.Size = new System.Drawing.Size(25, 17);
+            this.toolStripStatusLabelFEF25.Text = "0.0";
+            // 
+            // toolStripStatusLabel8
+            // 
+            this.toolStripStatusLabel8.Name = "toolStripStatusLabel8";
+            this.toolStripStatusLabel8.Size = new System.Drawing.Size(41, 17);
+            this.toolStripStatusLabel8.Text = "FEF50";
+            // 
+            // toolStripStatusLabelFEF50
+            // 
+            this.toolStripStatusLabelFEF50.Name = "toolStripStatusLabelFEF50";
+            this.toolStripStatusLabelFEF50.Size = new System.Drawing.Size(25, 17);
+            this.toolStripStatusLabelFEF50.Text = "0.0";
+            // 
+            // toolStripStatusLabel9
+            // 
+            this.toolStripStatusLabel9.Name = "toolStripStatusLabel9";
+            this.toolStripStatusLabel9.Size = new System.Drawing.Size(41, 17);
+            this.toolStripStatusLabel9.Text = "FEF75";
+            // 
+            // toolStripStatusLabelFEF75
+            // 
+            this.toolStripStatusLabelFEF75.Name = "toolStripStatusLabelFEF75";
+            this.toolStripStatusLabelFEF75.Size = new System.Drawing.Size(25, 17);
+            this.toolStripStatusLabelFEF75.Text = "0.0";
             // 
             // Form1
             // 
@@ -368,6 +448,16 @@
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelTLC;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel5;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelTV;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel4;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelFEV1;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel6;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelPEF;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel7;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelFEF25;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel8;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelFEF50;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel9;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelFEF75;
     }
 }
 

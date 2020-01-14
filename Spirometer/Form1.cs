@@ -24,6 +24,8 @@ namespace Spirometer
         private PlotModel m_plotModelVT; // 用力呼气 容积(Volume)-时间(Time)图Model
         private PlotModel m_plotModelVFT; // 容积(Volume)/流量(Flow)-时间(Time)图Model
 
+        private LineAnnotation m_6SecAnnotation; // 用力呼气6秒指示线
+
         private System.Windows.Forms.Timer m_refreshTimer = new System.Windows.Forms.Timer(); // 波形刷新定时器
         private readonly int m_fps = 24; // 帧率
 
@@ -126,7 +128,7 @@ namespace Spirometer
             // 数据
             var seriesFV = new LineSeries()
             {
-                Color = OxyColors.Blue,
+                Color = OxyColors.DimGray,
                 StrokeThickness = 1,
                 //MarkerSize = 1,
                 //MarkerStroke = OxyColors.DarkBlue,
@@ -182,7 +184,7 @@ namespace Spirometer
             // 数据,Volume
             var seriesVT = new LineSeries()
             {
-                Color = OxyColors.Blue,
+                Color = OxyColors.DimGray,
                 StrokeThickness = 1,
                 //MarkerSize = 1,
                 //MarkerStroke = OxyColors.DarkBlue,
@@ -252,7 +254,7 @@ namespace Spirometer
             // 数据Volume
             var seriesVFTVolume = new LineSeries()
             {
-                Color = OxyColors.Blue,
+                Color = OxyColors.DimGray,
                 StrokeThickness = 1,
                 //MarkerSize = 1,
                 //MarkerStroke = OxyColors.DarkBlue,
@@ -338,12 +340,6 @@ namespace Spirometer
                     };
                     m_plotModelVFT.Annotations.Add(annotation);
                 }
-
-                toolStripStatusLabelRespiratoryRate.Text = m_pulmonaryFunc.RespiratoryRate.ToString();
-                toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
-                toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
-                toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
-                toolStripStatusLabelTV.Text = m_pulmonaryFunc.TV.ToString();
             });
 
             /* 开始呼气 */
@@ -371,11 +367,6 @@ namespace Spirometer
                     };
                     m_plotModelVFT.Annotations.Add(annotation);
                 }
-
-                toolStripStatusLabelRespiratoryRate.Text = m_pulmonaryFunc.RespiratoryRate.ToString();
-                toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
-                toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
-                toolStripStatusLabelTV.Text = m_pulmonaryFunc.TV.ToString();
             });
 
             /* 开始用力呼气 */
@@ -404,10 +395,22 @@ namespace Spirometer
                     m_plotModelVFT.Annotations.Add(annotation);
                 }
 
-                toolStripStatusLabelRespiratoryRate.Text = m_pulmonaryFunc.RespiratoryRate.ToString();
-                toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
-                toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
-                toolStripStatusLabelTV.Text = m_pulmonaryFunc.TV.ToString();
+                if (null == m_6SecAnnotation)
+                {
+                    m_6SecAnnotation = new LineAnnotation()
+                    {
+                        Color = OxyColors.Blue,
+                        X = sampleIndex * m_flowSensor.SampleTime + (6 * 1000),
+                        LineStyle = LineStyle.Solid,
+                        Type = LineAnnotationType.Vertical,
+                        Text = $"6秒"
+                    };
+                    m_plotModelVFT.Annotations.Add(m_6SecAnnotation);
+                }
+                else
+                {
+                    m_6SecAnnotation.X = sampleIndex * m_flowSensor.SampleTime + (6 * 1000);
+                }
             });
 
             /* 测量结束 */
@@ -422,11 +425,6 @@ namespace Spirometer
                     Type = LineAnnotationType.Vertical,
                     Text = "停止"
                 };
-                m_plotModelVFT.Annotations.Add(annotation);
-                toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
-                toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString();
-                toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString();
-                toolStripStatusLabelTV.Text = m_pulmonaryFunc.TV.ToString();
             });
 
             /* 通过传感器获取数据 */
@@ -525,6 +523,23 @@ namespace Spirometer
             }
         }
 
+        /* 更新肺功能参数显示 */
+        private void UpdatePulmonaryFunctionParam()
+        {
+            /* 更新肺功能参数显示(确保在UI线程执行) */
+            this.BeginInvoke(new Action<Form1>((obj) => {
+                toolStripStatusLabelRespiratoryRate.Text = m_pulmonaryFunc.RespiratoryRate.ToString("f2");
+                toolStripStatusLabelVC.Text = m_pulmonaryFunc.VC.ToString("f2");
+                toolStripStatusLabelTLC.Text = m_pulmonaryFunc.TLC.ToString("f2");
+                toolStripStatusLabelTV.Text = m_pulmonaryFunc.TV.ToString("f2");
+                toolStripStatusLabelFEV1.Text = m_pulmonaryFunc.FEV1.ToString("f2");
+                toolStripStatusLabelPEF.Text = m_pulmonaryFunc.PEF.ToString("f2");
+                toolStripStatusLabelFEF25.Text = m_pulmonaryFunc.FEF25.ToString("f2");
+                toolStripStatusLabelFEF50.Text = m_pulmonaryFunc.FEF50.ToString("f2");
+                toolStripStatusLabelFEF75.Text = m_pulmonaryFunc.FEF75.ToString("f2");
+            }), this);
+        }
+
         /* 尝试清空数据队列 */
         private bool TryClearDataQueue()
         {
@@ -553,6 +568,11 @@ namespace Spirometer
                 toolStripStatusLabelVC.Text = "0.0";
                 toolStripStatusLabelTLC.Text = "0.0";
                 toolStripStatusLabelTV.Text = "0.0";
+                toolStripStatusLabelFEV1.Text = "0.0";
+                toolStripStatusLabelPEF.Text = "0.0";
+                toolStripStatusLabelFEF25.Text = "0.0";
+                toolStripStatusLabelFEF50.Text = "0.0";
+                toolStripStatusLabelFEF75.Text = "0.0";
             }), this);
         }
 
@@ -564,6 +584,9 @@ namespace Spirometer
 
             /* 重置状态 */
             m_pulmonaryFunc.Reset();
+
+            /* 清除用力呼气6秒指示线 */
+            m_6SecAnnotation = null;
 
             /* Clear Flow-Volume Plot */
             var serieFV = m_plotModelFV.Series[0] as LineSeries;
@@ -605,9 +628,9 @@ namespace Spirometer
                 return;
             }
 
-            Console.WriteLine($"Sned: {cmd} \r\n");
+            Console.WriteLine($"Sned: {cmd}");
             string cmdResp = await m_flowSensor.ExcuteCmdAsync(cmd, 2000);
-            Console.WriteLine($"Revc: {cmdResp} \r\n");
+            Console.WriteLine($"Revc: {cmdResp}");
         }
 
         /* 显示加载对话框,加载Flow数据或Preaure数据 */
@@ -699,6 +722,9 @@ namespace Spirometer
 
                     /* 更新 Flow-Volume Plot(平移到Volume从0开始) */
                     UpdateFVPlot();
+
+                    /* 更新肺功能参数显示 */
+                    UpdatePulmonaryFunctionParam();
                 });
             }
         }
@@ -801,9 +827,9 @@ namespace Spirometer
             {
                 cmd = "[ADC_STOP]"; // 停止
             }
-            Console.WriteLine($"Sned: {cmd} \r\n");
+            Console.WriteLine($"Sned: {cmd}");
             string cmdResp = await m_flowSensor.ExcuteCmdAsync(cmd, 2000);
-            Console.WriteLine($"Revc: {cmdResp} \r\n");
+            Console.WriteLine($"Revc: {cmdResp}");
 
             if ("[OK]" == cmdResp)
             {
@@ -811,9 +837,9 @@ namespace Spirometer
                 {
                     cmd = "[ADC_CAL]"; // 归零
 
-                    Console.WriteLine($"Sned: {cmd} \r\n");
+                    Console.WriteLine($"Sned: {cmd}");
                     cmdResp = await m_flowSensor.ExcuteCmdAsync(cmd, 2000);
-                    Console.WriteLine($"Revc: {cmdResp} \r\n");
+                    Console.WriteLine($"Revc: {cmdResp}");
                     if ("[OK]" == cmdResp)
                     { // 归零成功
                         toolStripButtonStart.Text = "停止";
@@ -843,6 +869,9 @@ namespace Spirometer
 
                     /* 更新 Flow-Volume Plot(平移到Volume从0开始) */
                     UpdateFVPlot();
+                    
+                    /* 更新肺功能参数显示 */
+                    UpdatePulmonaryFunctionParam();
                 }
             }
         }
