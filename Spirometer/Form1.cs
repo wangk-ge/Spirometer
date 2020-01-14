@@ -441,7 +441,7 @@ namespace Spirometer
             m_refreshTimer.Interval = 1000 / m_fps; // 设置定时器超时时间为帧间隔
             m_refreshTimer.Tick += new EventHandler((timer, arg) => {
                 // 保存数据添加前的曲线最右端X坐标的位置(用于实现自动滚屏)
-                double xBegin = m_pointsVT.Count > 0 ? m_pointsVT.Last().X : 0;
+                double xBegin = m_pointsVFTFlow.Count > 0 ? m_pointsVFTFlow.Last().X : 0;
                 // 尝试读取队列中的数据并添加到曲线
                 while (m_dataQueue.Count > 0)
                 {
@@ -457,7 +457,7 @@ namespace Spirometer
                 }
 
                 /* 在必要时刷新曲线显示并执行自动滚屏 */
-                double xEnd = m_pointsVT.Count > 0 ? m_pointsVT.Last().X : 0;
+                double xEnd = m_pointsVFTFlow.Count > 0 ? m_pointsVFTFlow.Last().X : 0;
                 double xDelta = xEnd - xBegin;
                 if (xDelta > 0)
                 {
