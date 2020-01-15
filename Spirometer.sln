@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.29613.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Spirometer", "Spirometer\Spirometer.csproj", "{F09796BA-CE03-4948-9159-41DA8D54C03F}"
+	ProjectSection(ProjectDependencies) = postProject
+		{516A2F34-03B6-4BC5-AEBF-24F935E16437} = {516A2F34-03B6-4BC5-AEBF-24F935E16437}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PulmonaryFunctionLib", "PulmonaryFunctionLib\PulmonaryFunctionLib.csproj", "{516A2F34-03B6-4BC5-AEBF-24F935E16437}"
 EndProject

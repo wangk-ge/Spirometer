@@ -283,23 +283,6 @@ namespace Spirometer
             m_pointsVFTFlow = seriesVFTFlow.Points;
             m_pointsVFTVolume = seriesVFTVolume.Points;
 
-            /* 归零已完成 */
-            m_pulmonaryFunc.ZeroingCompleted += new PulmonaryFunction.ZeroingCompleteHandler((uint sampleIndex, double zeroOffset) =>
-            {
-                Console.WriteLine($"ZeroingCompleted: {sampleIndex} {zeroOffset}");
-                /*
-                var annotation = new LineAnnotation()
-                {
-                    Color = OxyColors.Red,
-                    X = sampleIndex * m_flowSensor.SampleTime,
-                    LineStyle = LineStyle.Dash,
-                    Type = LineAnnotationType.Vertical,
-                    Text = "归零"
-                };
-                m_plotModelVFT.Annotations.Add(annotation);
-                */
-            });
-
             /* 测量启动 */
             m_pulmonaryFunc.MeasureStarted += new PulmonaryFunction.MeasureStartHandler((uint sampleIndex, bool inspiration) =>
             {
@@ -414,9 +397,9 @@ namespace Spirometer
             });
 
             /* 测量结束 */
-            m_pulmonaryFunc.MeasureStoped += new PulmonaryFunction.MeasureStopHandler((uint sampleIndex, bool inspiration) =>
+            m_pulmonaryFunc.MeasureStoped += new PulmonaryFunction.MeasureStopHandler((uint sampleIndex) =>
             {
-                Console.WriteLine($"MeasureStoped: {sampleIndex} {inspiration}");
+                Console.WriteLine($"MeasureStoped: {sampleIndex}");
                 var annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Red,
@@ -425,6 +408,7 @@ namespace Spirometer
                     Type = LineAnnotationType.Vertical,
                     Text = "停止"
                 };
+                m_plotModelVFT.Annotations.Add(annotation);
             });
 
             /* 通过传感器获取数据 */
