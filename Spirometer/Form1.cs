@@ -409,6 +409,9 @@ namespace Spirometer
                     Text = "停止"
                 };
                 m_plotModelVFT.Annotations.Add(annotation);
+
+                /* 测量已停止 */
+                OnMeasureStoped();
             });
 
             /* 通过传感器获取数据 */
@@ -456,6 +459,19 @@ namespace Spirometer
                     }
                 }
             });
+        }
+
+        /* 测量已停止 */
+        private void OnMeasureStoped()
+        {
+            /* 输出用力呼气 Volume-Time Plot */
+            UpdateVTPlot();
+
+            /* 更新 Flow-Volume Plot(平移到Volume从0开始) */
+            UpdateFVPlot();
+
+            /* 更新肺功能参数显示 */
+            UpdatePulmonaryFunctionParam();
         }
 
         /* 已接收到一个流量采集数据 */
@@ -701,14 +717,8 @@ namespace Spirometer
                     plotViewVFT.InvalidatePlot(true);
                     plotViewFV.InvalidatePlot(true);
 
-                    /* 输出用力呼气 Volume-Time Plot */
-                    UpdateVTPlot();
-
-                    /* 更新 Flow-Volume Plot(平移到Volume从0开始) */
-                    UpdateFVPlot();
-
-                    /* 更新肺功能参数显示 */
-                    UpdatePulmonaryFunctionParam();
+                    /* 测量已停止 */
+                    OnMeasureStoped();
                 });
             }
         }
@@ -847,15 +857,6 @@ namespace Spirometer
                     m_refreshTimer.Stop();
                     /* 尝试清空数据队列 */
                     TryClearDataQueue();
-
-                    /* 输出用力呼气 Volume-Time Plot */
-                    UpdateVTPlot();
-
-                    /* 更新 Flow-Volume Plot(平移到Volume从0开始) */
-                    UpdateFVPlot();
-                    
-                    /* 更新肺功能参数显示 */
-                    UpdatePulmonaryFunctionParam();
                 }
             }
         }
