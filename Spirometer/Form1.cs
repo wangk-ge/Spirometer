@@ -716,8 +716,11 @@ namespace Spirometer
             });
 
             /* 异步等待完成对象被触发(数据加载完毕并且已全部输出到Plot) */
-            await loadTask; // 先确保数据已加载完毕
-            await m_dataPlotTaskComp.Task; // 然后确保数据已全部输出到Plot
+            await loadTask; // 先确保数据已加载完毕(只有此时m_dataPlotTaskComp才非空)
+            if (null != m_dataPlotTaskComp)
+            {
+                await m_dataPlotTaskComp.Task; // 然后确保数据已全部输出到Plot
+            }
 
             /* 清除完成对象 */
             m_dataPlotTaskComp = null;
