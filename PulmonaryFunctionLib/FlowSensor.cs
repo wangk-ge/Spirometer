@@ -48,7 +48,16 @@ namespace PulmonaryFunctionLib
         public double PresureToFlow(double presure)
         {
             //presure = m_kalmanFilter.Input((float)presure); // 执行滤波
-            double flow = presure / (m_presureFlowRatio * 1000.0); // 压差转流量
+            //double flow = presure / (m_presureFlowRatio * 1000.0); // 压差转流量
+            double flow = 0.0;
+            if (presure > 0)
+            {
+                flow = (presure * m_sampleRate) / 431802740.089294;
+            }
+            else
+            {
+                flow = (presure * m_sampleRate) / 449724510.226074;
+            }
             return flow;
         }
 
