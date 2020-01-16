@@ -16,6 +16,7 @@ namespace PulmonaryFunctionLib
         public uint ForceExpirationStartIndex { get; private set; } = 0U; // 用力呼气起点Index
         public uint ForceExpirationEndIndex { get; private set; } = 0U; // 用力呼气终点Index
         public uint SampleCount { get { return (uint)m_listFV.Count; } } // 已采集的样本数
+        public bool IsStoped { get { return (State.Stop == m_state); } } // 是否已停止状态
         public double TLC // 肺总量(L)
         {
             get
