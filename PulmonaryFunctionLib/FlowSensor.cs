@@ -69,13 +69,41 @@ namespace PulmonaryFunctionLib
         {
             if (calParam.presure > 0)
             { // 吸气
-                // TODO
                 /* 插入m_inCalibrationParams且保证列表仍按presure升序排列 */
+                for (int i = 0; i < m_inCalibrationParams.Count; ++i)
+                {
+                    if (calParam.presure < m_inCalibrationParams[i].presure)
+                    {
+                        /* 按序插入 */
+                        m_inCalibrationParams.Insert(i, calParam);
+                        break;
+                    }
+                    else if (calParam.presure == m_inCalibrationParams[i].presure)
+                    {
+                        /* 替换 */
+                        m_inCalibrationParams[i] = calParam;
+                        break;
+                    }
+                }
             }
             else
             { // 呼气
-                // TODO
                 /* 插入m_exCalibrationParams且保证列表仍按presure降序排列 */
+                for (int i = 0; i < m_exCalibrationParams.Count; ++i)
+                {
+                    if (calParam.presure > m_exCalibrationParams[i].presure)
+                    {
+                        /* 按序插入 */
+                        m_inCalibrationParams.Insert(i, calParam);
+                        break;
+                    }
+                    else if (calParam.presure == m_exCalibrationParams[i].presure)
+                    {
+                        /* 替换 */
+                        m_exCalibrationParams[i] = calParam;
+                        break;
+                    }
+                }
             }
         }
 
@@ -100,7 +128,7 @@ namespace PulmonaryFunctionLib
         {
             if (presure > 0)
             { // 吸气
-                double k = 0.0;
+                double k = 1.0;
                 foreach (var param in m_inCalibrationParams)
                 {
                     if (presure <= param.presure)
@@ -113,7 +141,7 @@ namespace PulmonaryFunctionLib
             }
             else
             { // 呼气
-                double k = 0.0;
+                double k = 1.0;
                 foreach (var param in m_exCalibrationParams)
                 {
                     if (presure >= param.presure)

@@ -16,7 +16,8 @@ namespace PulmonaryFunctionLib
         public uint ForceExpirationStartIndex { get; private set; } = 0U; // 用力呼气起点Index
         public uint ForceExpirationEndIndex { get; private set; } = 0U; // 用力呼气终点Index
         public uint SampleCount { get { return (uint)m_listFV.Count; } } // 已采集的样本数
-        public bool IsStoped { get { return (State.Stop == m_state); } } // 是否已停止状态
+        public bool IsStoped { get { return (State.Stop == m_state); } } // 是否已进入停止状态
+        public bool AutoStop { get; set; } = true; // 是否自动检测停止状态
         public double TLC // 肺总量(L)
         {
             get
@@ -315,36 +316,40 @@ namespace PulmonaryFunctionLib
                 /* 更新当前吸气容积 */
                 InVolume += InFlow * SAMPLE_TIME / 1000;
 
-                /* 检测停止条件 */
-                if (Math.Abs(flowZeroCorrection) < STOP_FLOW_THRESHOLD)
+                /* 是否开启了自动停止检测 */
+                if (AutoStop)
                 {
-                    /* 持续统计波动范围 */
-                    m_waveStatistician.Input(flow);
-
-                    /* 是否已达到所需采样次数 */
-                    if (m_waveStatistician.SampleCount >= STATISTICIA_SAMPLE_COUNT)
+                    /* 检测停止条件 */
+                    if (Math.Abs(flowZeroCorrection) < STOP_FLOW_THRESHOLD)
                     {
-                        /* 检测停止条件 */
-                        if (Math.Abs(m_waveStatistician.Delta) < START_FLOW_DELTA)
+                        /* 持续统计波动范围 */
+                        m_waveStatistician.Input(flow);
+
+                        /* 是否已达到所需采样次数 */
+                        if (m_waveStatistician.SampleCount >= STATISTICIA_SAMPLE_COUNT)
                         {
-                            /* 重置波动统计器 */
-                            m_waveStatistician.Reset();
+                            /* 检测停止条件 */
+                            if (Math.Abs(m_waveStatistician.Delta) < START_FLOW_DELTA)
+                            {
+                                /* 重置波动统计器 */
+                                m_waveStatistician.Reset();
 
-                            /* 记录结束测试点Index */
-                            m_measureEndIndex = sampleIndex;
+                                /* 记录结束测试点Index */
+                                m_measureEndIndex = sampleIndex;
 
-                            /* 进入测试停止状态 */
-                            SetState(State.Stop);
+                                /* 进入测试停止状态 */
+                                SetState(State.Stop);
 
-                            /* 触发测结束动事件 */
-                            MeasureStoped?.Invoke(m_measureEndIndex);
+                                /* 触发测结束动事件 */
+                                MeasureStoped?.Invoke(m_measureEndIndex);
+                            }
                         }
                     }
-                }
-                else
-                {
-                    /* 重置波动统计器 */
-                    m_waveStatistician.Reset();
+                    else
+                    {
+                        /* 重置波动统计器 */
+                        m_waveStatistician.Reset();
+                    }
                 }
             }
             else

@@ -893,6 +893,16 @@ namespace Spirometer
                         toolStripButtonClear.Enabled = false;
                         toolStripButtonLoadPresure.Enabled = false;
                         toolStripButtonSaveFlow.Enabled = false;
+                        checkBoxCalculation.Enabled = false;
+                        if (checkBoxCalculation.Checked)
+                        {
+                            m_pulmonaryFunc.AutoStop = false;
+                            m_flowSensor.ClearCalibrationParams();
+                        }
+                        else
+                        {
+                            m_pulmonaryFunc.AutoStop = true;
+                        }
                         //ClearAll();
                         /* 尝试清空数据队列 */
                         TryClearDataQueue();
@@ -906,6 +916,7 @@ namespace Spirometer
                     toolStripButtonClear.Enabled = true;
                     toolStripButtonLoadPresure.Enabled = true;
                     toolStripButtonSaveFlow.Enabled = true;
+                    checkBoxCalculation.Enabled = true;
                     /* 停止刷新定时器 */
                     m_refreshTimer.Stop();
                     /* 尝试清空数据队列 */

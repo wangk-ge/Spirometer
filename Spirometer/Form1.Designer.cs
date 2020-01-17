@@ -64,6 +64,8 @@
             this.toolStripStatusLabelFEF50 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel9 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabelFEF75 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.panel1 = new System.Windows.Forms.Panel();
+            this.checkBoxCalculation = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -74,6 +76,7 @@
             this.splitContainer2.SuspendLayout();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
+            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // splitContainer1
@@ -91,8 +94,8 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.plotViewVFT);
-            this.splitContainer1.Size = new System.Drawing.Size(1372, 625);
-            this.splitContainer1.SplitterDistance = 335;
+            this.splitContainer1.Size = new System.Drawing.Size(1372, 571);
+            this.splitContainer1.SplitterDistance = 306;
             this.splitContainer1.SplitterWidth = 1;
             this.splitContainer1.TabIndex = 0;
             // 
@@ -110,7 +113,7 @@
             // splitContainer2.Panel2
             // 
             this.splitContainer2.Panel2.Controls.Add(this.plotViewVT);
-            this.splitContainer2.Size = new System.Drawing.Size(1372, 335);
+            this.splitContainer2.Size = new System.Drawing.Size(1372, 306);
             this.splitContainer2.SplitterDistance = 667;
             this.splitContainer2.SplitterWidth = 1;
             this.splitContainer2.TabIndex = 0;
@@ -121,7 +124,7 @@
             this.plotViewFV.Location = new System.Drawing.Point(0, 0);
             this.plotViewFV.Name = "plotViewFV";
             this.plotViewFV.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewFV.Size = new System.Drawing.Size(663, 331);
+            this.plotViewFV.Size = new System.Drawing.Size(663, 302);
             this.plotViewFV.TabIndex = 0;
             this.plotViewFV.Text = "plotView1";
             this.plotViewFV.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
@@ -134,7 +137,7 @@
             this.plotViewVT.Location = new System.Drawing.Point(0, 0);
             this.plotViewVT.Name = "plotViewVT";
             this.plotViewVT.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewVT.Size = new System.Drawing.Size(700, 331);
+            this.plotViewVT.Size = new System.Drawing.Size(700, 302);
             this.plotViewVT.TabIndex = 0;
             this.plotViewVT.Text = "plotView1";
             this.plotViewVT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
@@ -147,7 +150,7 @@
             this.plotViewVFT.Location = new System.Drawing.Point(0, 0);
             this.plotViewVFT.Name = "plotViewVFT";
             this.plotViewVFT.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewVFT.Size = new System.Drawing.Size(1368, 285);
+            this.plotViewVFT.Size = new System.Drawing.Size(1368, 260);
             this.plotViewVFT.TabIndex = 0;
             this.plotViewVFT.Text = "plotViewVFT";
             this.plotViewVFT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
@@ -393,12 +396,32 @@
             this.toolStripStatusLabelFEF75.Size = new System.Drawing.Size(25, 17);
             this.toolStripStatusLabelFEF75.Text = "0.0";
             // 
+            // panel1
+            // 
+            this.panel1.Controls.Add(this.checkBoxCalculation);
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panel1.Location = new System.Drawing.Point(0, 596);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(1372, 54);
+            this.panel1.TabIndex = 3;
+            // 
+            // checkBoxCalculation
+            // 
+            this.checkBoxCalculation.AutoSize = true;
+            this.checkBoxCalculation.Location = new System.Drawing.Point(12, 19);
+            this.checkBoxCalculation.Name = "checkBoxCalculation";
+            this.checkBoxCalculation.Size = new System.Drawing.Size(48, 16);
+            this.checkBoxCalculation.TabIndex = 0;
+            this.checkBoxCalculation.Text = "校准";
+            this.checkBoxCalculation.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1372, 672);
             this.Controls.Add(this.splitContainer1);
+            this.Controls.Add(this.panel1);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.statusStrip1);
             this.Name = "Form1";
@@ -416,6 +439,8 @@
             this.toolStrip1.PerformLayout();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
+            this.panel1.ResumeLayout(false);
+            this.panel1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -458,6 +483,8 @@
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelFEF50;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel9;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelFEF75;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.CheckBox checkBoxCalculation;
     }
 }
 
