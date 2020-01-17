@@ -42,7 +42,7 @@ namespace Spirometer
             /* 流量传感器 */
             m_flowSensor = new FlowSensor();
             /* 肺功能参数计算器 */
-            m_pulmonaryFunc = new PulmonaryFunction(m_flowSensor.SampleTime);
+            m_pulmonaryFunc = new PulmonaryFunction(m_flowSensor.SAMPLE_TIME);
 
             InitializeComponent();
         }
@@ -293,7 +293,7 @@ namespace Spirometer
                 var annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Red,
-                    X = sampleIndex * m_flowSensor.SampleTime,
+                    X = sampleIndex * m_flowSensor.SAMPLE_TIME,
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
                     Text = $"开始-{(inspiration? "吸气" : "呼气")}"
@@ -308,7 +308,7 @@ namespace Spirometer
                 var annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Red,
-                    X = sampleIndex * m_flowSensor.SampleTime,
+                    X = sampleIndex * m_flowSensor.SAMPLE_TIME,
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
                     Text = "吸气"
@@ -335,7 +335,7 @@ namespace Spirometer
                 var annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Violet,
-                    X = sampleIndex * m_flowSensor.SampleTime,
+                    X = sampleIndex * m_flowSensor.SAMPLE_TIME,
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
                     Text = $"呼气"
@@ -362,7 +362,7 @@ namespace Spirometer
                 var annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Violet,
-                    X = sampleIndex * m_flowSensor.SampleTime,
+                    X = sampleIndex * m_flowSensor.SAMPLE_TIME,
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
                     Text = $"用力呼气"
@@ -386,7 +386,7 @@ namespace Spirometer
                     m_6SecAnnotation = new LineAnnotation()
                     {
                         Color = OxyColors.Blue,
-                        X = sampleIndex * m_flowSensor.SampleTime + (6 * 1000),
+                        X = sampleIndex * m_flowSensor.SAMPLE_TIME + (6 * 1000),
                         LineStyle = LineStyle.Solid,
                         Type = LineAnnotationType.Vertical,
                         Text = $"6秒"
@@ -395,7 +395,7 @@ namespace Spirometer
                 }
                 else
                 {
-                    m_6SecAnnotation.X = sampleIndex * m_flowSensor.SampleTime + (6 * 1000);
+                    m_6SecAnnotation.X = sampleIndex * m_flowSensor.SAMPLE_TIME + (6 * 1000);
                 }
             });
 
@@ -406,7 +406,7 @@ namespace Spirometer
                 var annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Red,
-                    X = sampleIndex * m_flowSensor.SampleTime,
+                    X = sampleIndex * m_flowSensor.SAMPLE_TIME,
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
                     Text = "停止"
@@ -655,10 +655,10 @@ namespace Spirometer
             m_refreshTimer.Start();
 
             /* 启动任务执行异步加载(防止阻塞UI线程) */
-            Task loadTask = Task.Factory.StartNew(() =>
+            Task loadTask = Task.Factory.StartNew((Action)(() =>
             {
                 /* 所有数据先加载到内存 */
-                string strData = String.Empty;
+                string strData = string.Empty;
                 using (StreamReader reader = new StreamReader(filePath, Encoding.UTF8))
                 {
                     strData = reader.ReadToEnd();
@@ -672,7 +672,7 @@ namespace Spirometer
                     string[] strDataArray = strData.Split(new char[] { ',' });
                     foreach (var strVal in strDataArray)
                     {
-                        if (String.Empty == strVal)
+                        if (string.Empty == strVal)
                         {
                             continue;
                         }
@@ -683,7 +683,7 @@ namespace Spirometer
                         m_dataQueue.Enqueue(flow);
 
                         /* 模拟采样率 */
-                        Thread.Sleep((int)m_flowSensor.SampleTime);
+                        Thread.Sleep((int)m_flowSensor.SAMPLE_TIME);
                     }
                 }
                 else
@@ -692,7 +692,7 @@ namespace Spirometer
                     string[] strDataArray = strData.Split(new char[] { ',' });
                     foreach (var strVal in strDataArray)
                     {
-                        if (String.Empty == strVal)
+                        if (string.Empty == strVal)
                         {
                             continue;
                         }
@@ -706,14 +706,14 @@ namespace Spirometer
                         m_dataQueue.Enqueue(flow);
 
                         /* 模拟采样率 */
-                        Thread.Sleep((int)m_flowSensor.SampleTime);
+                        Thread.Sleep((int)m_flowSensor.SAMPLE_TIME);
                     }
                 }
                 /* 数据已加载完毕 */
 
                 /* 建Task完成事件对象(用于监测数据是否已全部输出到Plot) */
                 m_dataPlotTaskComp = new TaskCompletionSource<bool>();
-            });
+            }));
 
             /* 异步等待完成对象被触发(数据加载完毕并且已全部输出到Plot) */
             await loadTask; // 先确保数据已加载完毕(只有此时m_dataPlotTaskComp才非空)

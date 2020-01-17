@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO.Ports;
 using System.Threading.Tasks;
 
@@ -10,20 +11,39 @@ namespace PulmonaryFunctionLib
     {
         private SerialPort m_serialPort = null;
         private ConcurrentQueue<TaskCompletionSource<string>> m_cmdRespTaskCompQue = new ConcurrentQueue<TaskCompletionSource<string>>();
-        private readonly double m_presureFlowRatio = 1333; // 压差转流量系数(转出来的单位是ml/s)
-        private readonly double m_sampleRate = 330; // 采样率,单位:HZ
         private FrameDecoder m_frameDecoder = new FrameDecoder(); // 串口数据帧解码器
         private KalmanFilter m_kalmanFilter = new KalmanFilter(0.01f/*Q*/, 0.1f/*R*/, 10.0f/*P*/, 0); // 卡尔曼滤波器
+        /* 吸气(正压差)流量校准参数列表,按presure升序排列 */
+        private List<CalibrationParam> m_inCalibrationParams = new List<CalibrationParam>();
+        /* 呼气(负压差)流量校准参数列表,按presure降序排列 */
+        private List<CalibrationParam> m_exCalibrationParams = new List<CalibrationParam>();
+
+        /* 采样率,单位:HZ */
+        public readonly double SAMPLE_RATE = 330;
+        /* 采样时间,单位:MS */
+        public double SAMPLE_TIME { get { return (1000 / SAMPLE_RATE); } }
+
+        /* 校准参数类型定义 */
+        public struct CalibrationParam
+        {
+            public double presure; // 压差(inH2O)
+            public double k; // 压差转流量比例系数(Flow=k*Presure)
+        }
+        /* 默认吸气校准参数 */
+        public CalibrationParam DEFAULT_IN_CALIBRATION_PARAM { get { return new CalibrationParam() { presure = double.MaxValue, k = SAMPLE_RATE / 431802740.089294 }; } }
+        /* 默认呼气校准参数 */
+        public CalibrationParam DEFAULT_EX_CALIBRATION_PARAM { get { return new CalibrationParam() { presure = double.MaxValue, k = SAMPLE_RATE / 431802740.089294 }; } }
 
         public delegate void FlowRecvHandler(byte channel, double flow); // 流量接收代理
         public event FlowRecvHandler FlowRecved; // 流量收取事件
 
-        /* 采样时间,单位:MS */
-        public double SampleTime { get { return (1000 / m_sampleRate); } }
-
         public FlowSensor()
         {
             //FrameDecoder.Test();
+
+            /* 初始化使用默认校准参数 */
+            m_inCalibrationParams.Add(DEFAULT_IN_CALIBRATION_PARAM);
+            m_exCalibrationParams.Add(DEFAULT_EX_CALIBRATION_PARAM);
 
             m_frameDecoder.CmdRespRecved += new FrameDecoder.CmdRespRecvHandler((string cmdResp) => {
                 Console.WriteLine($"CmdRespRecved: {cmdResp}");
@@ -44,20 +64,75 @@ namespace PulmonaryFunctionLib
             });
         }
 
+        /* 添加校准参数(自动插入到对应的校准参数列表中) */
+        public void AddCalibrationParam(CalibrationParam calParam)
+        {
+            if (calParam.presure > 0)
+            { // 吸气
+                // TODO
+                /* 插入m_inCalibrationParams且保证列表仍按presure升序排列 */
+            }
+            else
+            { // 呼气
+                // TODO
+                /* 插入m_exCalibrationParams且保证列表仍按presure降序排列 */
+            }
+        }
+
+        /* 清空校准参数列表 */
+        public void ClearCalibrationParams()
+        {
+            m_inCalibrationParams.Clear();
+            m_exCalibrationParams.Clear();
+        }
+
+        /* 复位校准参数列表(使用默认校准参数) */
+        public void ResetCalibrationParams()
+        {
+            ClearCalibrationParams();
+            /* 使用默认校准参数 */
+            m_inCalibrationParams.Add(DEFAULT_IN_CALIBRATION_PARAM);
+            m_exCalibrationParams.Add(DEFAULT_EX_CALIBRATION_PARAM);
+        }
+
+        /* 获取压差对应的压差转流量比例系数 */
+        private double GetK(double presure)
+        {
+            if (presure > 0)
+            { // 吸气
+                double k = 0.0;
+                foreach (var param in m_inCalibrationParams)
+                {
+                    if (presure <= param.presure)
+                    {
+                        k = param.k;
+                        break;
+                    }
+                }
+                return k;
+            }
+            else
+            { // 呼气
+                double k = 0.0;
+                foreach (var param in m_exCalibrationParams)
+                {
+                    if (presure >= param.presure)
+                    {
+                        k = param.k;
+                        break;
+                    }
+                }
+                return k;
+            }
+        }
+
         /* 压差转流量,单位:L/S */
         public double PresureToFlow(double presure)
         {
             //presure = m_kalmanFilter.Input((float)presure); // 执行滤波
-            //double flow = presure / (m_presureFlowRatio * 1000.0); // 压差转流量
-            double flow = 0.0;
-            if (presure > 0)
-            {
-                flow = (presure * m_sampleRate) / 431802740.089294;
-            }
-            else
-            {
-                flow = (presure * m_sampleRate) / 449724510.226074;
-            }
+            /* 压差转流量 */
+            double k = GetK(presure);
+            double flow = k * presure;
             return flow;
         }
 
