@@ -32,7 +32,7 @@ namespace PulmonaryFunctionLib
         /* 默认吸气校准参数 */
         public CalibrationParam DEFAULT_IN_CALIBRATION_PARAM { get { return new CalibrationParam() { presure = double.MaxValue, k = SAMPLE_RATE / 431802740.089294 }; } }
         /* 默认呼气校准参数 */
-        public CalibrationParam DEFAULT_EX_CALIBRATION_PARAM { get { return new CalibrationParam() { presure = double.MaxValue, k = SAMPLE_RATE / 431802740.089294 }; } }
+        public CalibrationParam DEFAULT_EX_CALIBRATION_PARAM { get { return new CalibrationParam() { presure = double.MinValue, k = SAMPLE_RATE / 431802740.089294 }; } }
 
         public delegate void FlowRecvHandler(byte channel, double flow); // 流量接收代理
         public event FlowRecvHandler FlowRecved; // 流量收取事件
