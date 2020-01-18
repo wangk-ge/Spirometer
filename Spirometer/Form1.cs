@@ -293,7 +293,7 @@ namespace Spirometer
                 var annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Red,
-                    X = sampleIndex * m_flowSensor.SAMPLE_TIME,
+                    X = m_pulmonaryFunc.GetTime(sampleIndex),
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
                     Text = $"开始-{(inspiration? "吸气" : "呼气")}"
@@ -308,7 +308,7 @@ namespace Spirometer
                 var annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Red,
-                    X = sampleIndex * m_flowSensor.SAMPLE_TIME,
+                    X = m_pulmonaryFunc.GetTime(sampleIndex),
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
                     Text = "吸气"
@@ -335,7 +335,7 @@ namespace Spirometer
                 var annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Violet,
-                    X = sampleIndex * m_flowSensor.SAMPLE_TIME,
+                    X = m_pulmonaryFunc.GetTime(sampleIndex),
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
                     Text = $"呼气"
@@ -362,7 +362,7 @@ namespace Spirometer
                 var annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Violet,
-                    X = sampleIndex * m_flowSensor.SAMPLE_TIME,
+                    X = m_pulmonaryFunc.GetTime(sampleIndex),
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
                     Text = $"用力呼气"
@@ -386,7 +386,7 @@ namespace Spirometer
                     m_6SecAnnotation = new LineAnnotation()
                     {
                         Color = OxyColors.Blue,
-                        X = sampleIndex * m_flowSensor.SAMPLE_TIME + (6 * 1000),
+                        X = m_pulmonaryFunc.GetTime(sampleIndex) + (6 * 1000),
                         LineStyle = LineStyle.Solid,
                         Type = LineAnnotationType.Vertical,
                         Text = $"6秒"
@@ -395,7 +395,7 @@ namespace Spirometer
                 }
                 else
                 {
-                    m_6SecAnnotation.X = sampleIndex * m_flowSensor.SAMPLE_TIME + (6 * 1000);
+                    m_6SecAnnotation.X = m_pulmonaryFunc.GetTime(sampleIndex) + (6 * 1000);
                 }
             });
 
@@ -406,7 +406,7 @@ namespace Spirometer
                 var annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Red,
-                    X = sampleIndex * m_flowSensor.SAMPLE_TIME,
+                    X = m_pulmonaryFunc.GetTime(sampleIndex),
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
                     Text = "停止"
@@ -839,6 +839,7 @@ namespace Spirometer
                 toolStripButtonScan.Enabled = !bRet;
                 toolStripComboBoxCom.Enabled = !bRet;
                 toolStripButtonConnect.Text = bRet ? "断开" : "连接";
+                toolStripButtonCalibration.Enabled = bRet;
                 /* 尝试清空数据队列 */
                 TryClearDataQueue();
             }
@@ -852,6 +853,7 @@ namespace Spirometer
                 toolStripButtonClear.Enabled = true;
                 toolStripButtonScan.Enabled = true;
                 toolStripComboBoxCom.Enabled = true;
+                toolStripButtonCalibration.Enabled = false;
                 toolStripButtonConnect.Text = "连接";
                 toolStripButtonStart.Text = "开始";
                 /* 停止刷新定时器 */
@@ -893,16 +895,7 @@ namespace Spirometer
                         toolStripButtonClear.Enabled = false;
                         toolStripButtonLoadPresure.Enabled = false;
                         toolStripButtonSaveFlow.Enabled = false;
-                        checkBoxCalculation.Enabled = false;
-                        if (checkBoxCalculation.Checked)
-                        {
-                            m_pulmonaryFunc.AutoStop = false;
-                            m_flowSensor.ClearCalibrationParams();
-                        }
-                        else
-                        {
-                            m_pulmonaryFunc.AutoStop = true;
-                        }
+                        toolStripButtonCalibration.Enabled = false;
                         //ClearAll();
                         /* 尝试清空数据队列 */
                         TryClearDataQueue();
@@ -916,7 +909,7 @@ namespace Spirometer
                     toolStripButtonClear.Enabled = true;
                     toolStripButtonLoadPresure.Enabled = true;
                     toolStripButtonSaveFlow.Enabled = true;
-                    checkBoxCalculation.Enabled = true;
+                    toolStripButtonCalibration.Enabled = true;
                     /* 停止刷新定时器 */
                     m_refreshTimer.Stop();
                     /* 尝试清空数据队列 */
@@ -943,6 +936,13 @@ namespace Spirometer
         private void toolStripButtonClear_Click(object sender, EventArgs e)
         {
             ClearAll();
+        }
+
+        private void toolStripButtonCalibration_Click(object sender, EventArgs e)
+        {
+            FormCalibration calDialog = new FormCalibration(m_flowSensor);
+            calDialog.ShowDialog();
+            calDialog.Close();
         }
     }
 }

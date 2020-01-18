@@ -8,8 +8,6 @@ namespace PulmonaryFunctionLib
         public double MinVal { get; private set; } = double.MaxValue; // 波动最小值
         public double AvgVal { get { return (SampleCount > 0) ? (m_sumVal / SampleCount) : 0; } } // 波动平均值
         public double Range { get { return (MaxVal > MinVal) ? (MaxVal - MinVal) : 0; } } // 波动范围
-        public double EndVal { get; private set; } = 0.0; // 最后一个值
-        public double Delta { get { return (EndVal - AvgVal); } } // 斜度(最后值和平均值的差值)
         public uint SampleCount { get; private set; } = 0U; // 采样次数
 
         private double m_sumVal = 0.0; // 求和值
@@ -36,8 +34,6 @@ namespace PulmonaryFunctionLib
             }
             /* 累加采样次数 */
             ++SampleCount;
-            /* 记录最后一个值 */
-            EndVal = data;
             /* 累加和值 */
             m_sumVal += data;
         }
@@ -55,6 +51,12 @@ namespace PulmonaryFunctionLib
         public bool Check(double data)
         {
             return (MinVal < data) && (data < MaxVal);
+        }
+
+        /* 和平均值的差值 */
+        public double Delta(double data)
+        {
+            return data - AvgVal;
         }
     }
 }

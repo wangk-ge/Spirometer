@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FlowCalibrator.cs" />
     <Compile Include="FlowSensor.cs" />
     <Compile Include="FrameDecoder.cs" />
     <Compile Include="KalmanFilter.cs" />

@@ -65,7 +65,8 @@
             this.toolStripStatusLabel9 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabelFEF75 = new System.Windows.Forms.ToolStripStatusLabel();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.checkBoxCalculation = new System.Windows.Forms.CheckBox();
+            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripButtonCalibration = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -76,7 +77,6 @@
             this.splitContainer2.SuspendLayout();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
-            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // splitContainer1
@@ -169,7 +169,9 @@
             this.toolStripButtonSaveFlow,
             this.toolStripButtonLoadPresure,
             this.toolStripButtonLoadFlow,
-            this.toolStripButtonClear});
+            this.toolStripButtonClear,
+            this.toolStripSeparator3,
+            this.toolStripButtonCalibration});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1372, 25);
@@ -209,6 +211,7 @@
             // toolStripButtonStart
             // 
             this.toolStripButtonStart.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButtonStart.Enabled = false;
             this.toolStripButtonStart.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonStart.Image")));
             this.toolStripButtonStart.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripButtonStart.Name = "toolStripButtonStart";
@@ -398,22 +401,27 @@
             // 
             // panel1
             // 
-            this.panel1.Controls.Add(this.checkBoxCalculation);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.panel1.Location = new System.Drawing.Point(0, 596);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(1372, 54);
             this.panel1.TabIndex = 3;
             // 
-            // checkBoxCalculation
+            // toolStripSeparator3
             // 
-            this.checkBoxCalculation.AutoSize = true;
-            this.checkBoxCalculation.Location = new System.Drawing.Point(12, 19);
-            this.checkBoxCalculation.Name = "checkBoxCalculation";
-            this.checkBoxCalculation.Size = new System.Drawing.Size(48, 16);
-            this.checkBoxCalculation.TabIndex = 0;
-            this.checkBoxCalculation.Text = "校准";
-            this.checkBoxCalculation.UseVisualStyleBackColor = true;
+            this.toolStripSeparator3.Name = "toolStripSeparator3";
+            this.toolStripSeparator3.Size = new System.Drawing.Size(6, 25);
+            // 
+            // toolStripButtonCalibration
+            // 
+            this.toolStripButtonCalibration.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButtonCalibration.Enabled = false;
+            this.toolStripButtonCalibration.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonCalibration.Image")));
+            this.toolStripButtonCalibration.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonCalibration.Name = "toolStripButtonCalibration";
+            this.toolStripButtonCalibration.Size = new System.Drawing.Size(36, 22);
+            this.toolStripButtonCalibration.Text = "校准";
+            this.toolStripButtonCalibration.Click += new System.EventHandler(this.toolStripButtonCalibration_Click);
             // 
             // Form1
             // 
@@ -439,8 +447,6 @@
             this.toolStrip1.PerformLayout();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -484,7 +490,8 @@
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel9;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelFEF75;
         private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.CheckBox checkBoxCalculation;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
+        private System.Windows.Forms.ToolStripButton toolStripButtonCalibration;
     }
 }
 

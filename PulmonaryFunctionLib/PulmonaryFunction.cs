@@ -17,7 +17,6 @@ namespace PulmonaryFunctionLib
         public uint ForceExpirationEndIndex { get; private set; } = 0U; // 用力呼气终点Index
         public uint SampleCount { get { return (uint)m_listFV.Count; } } // 已采集的样本数
         public bool IsStoped { get { return (State.Stop == m_state); } } // 是否已进入停止状态
-        public bool AutoStop { get; set; } = true; // 是否自动检测停止状态
         public double TLC // 肺总量(L)
         {
             get
@@ -204,11 +203,11 @@ namespace PulmonaryFunctionLib
         }
 
         private State m_state = State.Reset; // 工作状态
-        private double m_flowZeroOffset = 0.0; // 流量零点偏移值
         private readonly double SAMPLE_TIME = 3.0; // 采样时间(ms)
         private WaveStatistician m_waveStatistician = new WaveStatistician(); // 用于统计波动数据
-        private readonly int STATISTICIA_SAMPLE_COUNT = 100; // 波动统计采样次数
-        private readonly double START_FLOW_DELTA = 0.005; // 斜度绝对值超过该阈值将识别为启动测试(斜度为正表示吸气启动、为负表示吹气开始)
+        private readonly int START_SAMPLE_COUNT = 2; // 启动检测,波动统计采样次数
+        private readonly int STOP_SAMPLE_COUNT = 100; // 停止检测,波动统计采样次数
+        private readonly double START_FLOW_DELTA = 0.01; // 斜度绝对值超过该阈值将识别为启动测试(斜度为正表示吸气启动、为负表示吹气开始)
         private readonly double STOP_FLOW_THRESHOLD = 0.01; // 停止检测流量阈值,当启动测试后如果流量对值小于阈值,则开始检测停止条件
 
         /* 流量(Flow)-时间(Time)曲线极值点 */
@@ -244,9 +243,12 @@ namespace PulmonaryFunctionLib
         private double m_tvLowerSum = 0.0; // 潮气量下界Volume求和值
         private double m_tvLowerAvg = 0.0; // 潮气量下界Volume平均值
 
-        public PulmonaryFunction(double sampleTime)
+        private readonly bool m_autoStop = true; // 是否自动检测停止状态
+
+        public PulmonaryFunction(double sampleTime, bool autoStop = true)
         {
             SAMPLE_TIME = sampleTime;
+            m_autoStop = autoStop;
             InVolume = 0.0;
         }
 
@@ -258,7 +260,6 @@ namespace PulmonaryFunctionLib
             InVolume = 0.0;
             RespiratoryRate = 0.0;
             m_state = State.Reset;
-            m_flowZeroOffset = 0.0;
             m_waveStatistician.Reset();
             m_peekFlowIndex = 0U;
             m_peekVolumeIndex = 0U;
@@ -304,32 +305,29 @@ namespace PulmonaryFunctionLib
             /* 统计样本时间戳 */
             Time = sampleIndex * SAMPLE_TIME;
 
-            /* 当前流量 */
-            double flowZeroCorrection = flow/* - m_flowZeroOffset*/; // 执行零点校正
+            /* 当前吸气流量 */
+            InFlow = flow;
 
             if ((m_state > State.WaitStart)
                 && (m_state < State.Stop))
             {
-                /* 当前吸气流量 */
-                InFlow = flowZeroCorrection;
-
                 /* 更新当前吸气容积 */
                 InVolume += InFlow * SAMPLE_TIME / 1000;
 
                 /* 是否开启了自动停止检测 */
-                if (AutoStop)
+                if (m_autoStop)
                 {
                     /* 检测停止条件 */
-                    if (Math.Abs(flowZeroCorrection) < STOP_FLOW_THRESHOLD)
+                    if (Math.Abs(flow) < STOP_FLOW_THRESHOLD)
                     {
                         /* 持续统计波动范围 */
                         m_waveStatistician.Input(flow);
 
-                        /* 是否已达到所需采样次数 */
-                        if (m_waveStatistician.SampleCount >= STATISTICIA_SAMPLE_COUNT)
+                        if (m_waveStatistician.SampleCount >= STOP_SAMPLE_COUNT)
                         {
                             /* 检测停止条件 */
-                            if (Math.Abs(m_waveStatistician.Delta) < START_FLOW_DELTA)
+                            double delta = m_waveStatistician.Delta(flow);
+                            if (Math.Abs(delta) < START_FLOW_DELTA)
                             {
                                 /* 重置波动统计器 */
                                 m_waveStatistician.Reset();
@@ -343,6 +341,16 @@ namespace PulmonaryFunctionLib
                                 /* 触发测结束动事件 */
                                 MeasureStoped?.Invoke(m_measureEndIndex);
                             }
+                            else
+                            {
+                                /* 统计波动范围 */
+                                m_waveStatistician.Input(flow);
+                            }
+                        }
+                        else
+                        {
+                            /* 统计波动范围 */
+                            m_waveStatistician.Input(flow);
                         }
                     }
                     else
@@ -351,11 +359,6 @@ namespace PulmonaryFunctionLib
                         m_waveStatistician.Reset();
                     }
                 }
-            }
-            else
-            {
-                /* 当前吸气流量 */
-                InFlow = 0.0;
             }
 
             /* 记录Flow-Volume数据到队列 */
@@ -374,51 +377,49 @@ namespace PulmonaryFunctionLib
                     }
                 case State.WaitStart: // 等待启动测试状态
                     {
-                        /* 持续统计波动范围 */
-                        m_waveStatistician.Input(flow);
-
-                        /* 是否已达到所需采样次数 */
-                        if (m_waveStatistician.SampleCount < STATISTICIA_SAMPLE_COUNT)
+                        if (m_waveStatistician.SampleCount >= START_SAMPLE_COUNT)
                         {
-                            /* 保持等待启动测试状态 */
-                            break;
-                        }
+                            /* 检测启动条件 */
+                            double delta = m_waveStatistician.Delta(flow);
+                            if (Math.Abs(delta) > START_FLOW_DELTA)
+                            {
+                                /* 初始化容积 */
+                                InVolume = (m_waveStatistician.AvgVal + flow) * (SAMPLE_TIME / 1000);
 
-                        /* 检测启动条件 */
-                        if (Math.Abs(m_waveStatistician.Delta) > START_FLOW_DELTA)
-                        {
-                            /* 将统计平均值作为零点校准值 */
-                            m_flowZeroOffset = m_waveStatistician.AvgVal;
+                                /* 重置波动统计器 */
+                                m_waveStatistician.Reset();
 
-                            /* 重置波动统计器 */
-                            m_waveStatistician.Reset();
+                                /* 呼吸周期数清零 */
+                                RespiratoryCycleCount = 0U;
 
-                            /* 呼吸周期数清零 */
-                            RespiratoryCycleCount = 0U;
+                                /* 记录启动测试点Index */
+                                m_measureStartIndex = sampleIndex;
 
-                            /* 记录启动测试点Index */
-                            m_measureStartIndex = sampleIndex;
+                                /* 记录启动类型(是否吸气启动) */
+                                m_measureStartInspiration = (delta > START_FLOW_DELTA);
 
-                            /* 记录启动类型(是否吸气启动) */
-                            m_measureStartInspiration = (m_waveStatistician.Delta > START_FLOW_DELTA);
+                                /* 进入正在吸气/呼气状态 */
+                                SetState(m_measureStartInspiration ? State.Inspiration : State.Expiration);
 
-                            /* 进入正在吸气/呼气状态 */
-                            SetState(m_measureStartInspiration ? State.Inspiration : State.Expiration);
+                                /* 触发测试启动事件 */
+                                MeasureStarted?.Invoke(m_measureStartIndex, m_measureStartInspiration);
 
-                            /* 触发测试启动事件 */
-                            MeasureStarted?.Invoke(m_measureStartIndex, m_measureStartInspiration);
+                                /* 初始化流量极值点 */
+                                m_peekFlowIndex = sampleIndex;
 
-                            /* 初始化流量极值点 */
-                            m_peekFlowIndex = sampleIndex;
-
-                            /* 初始化容积极值点 */
-                            m_peekVolumeIndex = sampleIndex;
-                            m_peekVolumeKeepCount = 1;
+                                /* 初始化容积极值点 */
+                                m_peekVolumeIndex = sampleIndex;
+                                m_peekVolumeKeepCount = 1;
+                            }
+                            else
+                            {
+                                /* 统计波动范围 */
+                                m_waveStatistician.Input(flow);
+                            }
                         }
                         else
                         {
-                            /* 重置波动统计器,重新开始评估输入数据 */
-                            m_waveStatistician.Reset();
+                            /* 统计波动范围 */
                             m_waveStatistician.Input(flow);
                         }
                         break;
@@ -426,7 +427,7 @@ namespace PulmonaryFunctionLib
                 case State.Inspiration: // 正在吸气状态
                     {
                         /* 统计流量极大值 */
-                        if (flowZeroCorrection > m_listFV[(int)m_peekFlowIndex].inFlow)
+                        if (flow > m_listFV[(int)m_peekFlowIndex].inFlow)
                         {
                             m_peekFlowIndex = sampleIndex;
                         }
@@ -491,7 +492,7 @@ namespace PulmonaryFunctionLib
                                     }
 
                                     /* 呼气流量是否达到用力呼气阈值 */
-                                    double exFlow = -flowZeroCorrection;
+                                    double exFlow = -flow;
                                     if (exFlow >= FORCE_EXPIRATION_FLOW)
                                     {
                                         ForceExpirationStartIndex = m_peekVolumeIndex; // 记录用力呼气起点
@@ -514,7 +515,7 @@ namespace PulmonaryFunctionLib
                 case State.Expiration: // 正在呼气状态
                     {
                         /* 统计流量极小值 */
-                        if (flowZeroCorrection < m_listFV[(int)m_peekFlowIndex].inFlow)
+                        if (flow < m_listFV[(int)m_peekFlowIndex].inFlow)
                         {
                             m_peekFlowIndex = sampleIndex;
                         }
