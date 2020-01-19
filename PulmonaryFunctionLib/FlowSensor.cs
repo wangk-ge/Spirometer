@@ -67,7 +67,7 @@ namespace PulmonaryFunctionLib
             m_frameDecoder.WaveDataRecved += new FrameDecoder.WaveDataRecvHandler((byte channel, double presure) => {
                 //Console.WriteLine($"WaveDataRespRecved: {channel} {presure}");
 
-                PresureRecved?.Invoke(channel, presure); // 触发压差收取事件
+                PresureRecved?.Invoke(channel, presure / (10 * 1000 * 1000)); // 触发压差收取事件
             });
         }
 

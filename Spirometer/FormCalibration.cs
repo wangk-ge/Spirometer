@@ -278,7 +278,7 @@ namespace Spirometer
                     }
 
                     /* 已接收到一个压差采集数据 */
-                    OnPresureRecved(presure / 10000000);
+                    OnPresureRecved(presure);
                 }
 
                 /* 在必要时刷新曲线显示并执行自动滚屏 */
