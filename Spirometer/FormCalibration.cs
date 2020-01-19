@@ -127,8 +127,8 @@ namespace Spirometer
             //Y轴,Presure
             var yAxisPT = new LinearAxis()
             {
-                //MajorGridlineStyle = LineStyle.Dot,
-                //MinorGridlineStyle = LineStyle.Dot,
+                MajorGridlineStyle = LineStyle.Dot,
+                MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Left,
@@ -201,14 +201,6 @@ namespace Spirometer
                 OnMeasureStoped();
             });
 
-            /* 通过传感器获取数据 */
-            m_flowSensor.PresureRecved += new FlowSensor.PresureRecvHandler((byte channel, double presure) => {
-                //Console.WriteLine($"PresureRecved: {channel} {presure}");
-
-                /* 数据存入队列,将在刷新定时器中读取 */
-                m_dataQueue.Enqueue(presure);
-            });
-
             /* 刷新定时器 */
             m_refreshTimer.Interval = 1000 / m_fps; // 设置定时器超时时间为帧间隔
             m_refreshTimer.Tick += new EventHandler((timer, arg) => {
@@ -231,6 +223,15 @@ namespace Spirometer
                 /* 在必要时刷新曲线显示并执行自动滚屏 */
                 UpdatePTPlot(xBegin);
             });
+        }
+
+        /* 收到传感器数据事件处理 */
+        private void OnPresureRecved(byte channel, double presure)
+        {
+            //Console.WriteLine($"OnPresureRecved: {channel} {presure}");
+
+            /* 压差数据存入队列,将在刷新定时器中读取 */
+            m_dataQueue.Enqueue(presure);
         }
 
         /* 测量已停止 */
@@ -320,6 +321,8 @@ namespace Spirometer
                         m_flowSensor.ClearCalibrationParams();
                         /* 尝试清空数据队列 */
                         TryClearDataQueue();
+                        /* 监听流量传感器数据收取事件 */
+                        m_flowSensor.PresureRecved += OnPresureRecved;
                         /* 启动刷新定时器 */
                         m_refreshTimer.Start();
                     }
@@ -327,12 +330,20 @@ namespace Spirometer
                 else // if ("停止" == toolStripButtonStart.Text)
                 {
                     toolStripButtonStart.Text = "开始";
+                    /* 取消监听流量传感器数据收取事件 */
+                    m_flowSensor.PresureRecved -= OnPresureRecved;
                     /* 停止刷新定时器 */
                     m_refreshTimer.Stop();
                     /* 尝试清空数据队列 */
                     TryClearDataQueue();
                 }
             }
+        }
+
+        private void FormCalibration_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            /* 取消监听流量传感器数据收取事件 */
+            m_flowSensor.PresureRecved -= OnPresureRecved;
         }
     }
 }

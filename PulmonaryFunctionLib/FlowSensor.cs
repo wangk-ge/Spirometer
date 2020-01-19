@@ -36,8 +36,6 @@ namespace PulmonaryFunctionLib
 
         public delegate void PresureRecvHandler(byte channel, double presure); // 压差接收代理
         public event PresureRecvHandler PresureRecved; // 压差收取事件
-        public delegate void FlowRecvHandler(byte channel, double flow); // 流量接收代理
-        public event FlowRecvHandler FlowRecved; // 流量收取事件
 
         public FlowSensor()
         {
@@ -71,12 +69,6 @@ namespace PulmonaryFunctionLib
                 //Console.WriteLine($"WaveDataRespRecved: {channel} {presure}");
 
                 PresureRecved?.Invoke(channel, presure); // 触发压差收取事件
-
-                if (FlowRecved != null)
-                {
-                    double flow = PresureToFlow(presure); // 压差转流量
-                    FlowRecved.Invoke(channel, flow); // 触发流量收取事件
-                }
             });
         }
 

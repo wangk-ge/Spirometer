@@ -417,14 +417,6 @@ namespace Spirometer
                 OnMeasureStoped();
             });
 
-            /* 通过传感器获取数据 */
-            m_flowSensor.FlowRecved += new FlowSensor.FlowRecvHandler((byte channel, double flow) => {
-                //Console.WriteLine($"FlowRecved: {channel} {flow}");
-
-                /* 数据存入队列,将在刷新定时器中读取 */
-                m_dataQueue.Enqueue(flow);
-            });
-
             /* 刷新定时器 */
             m_refreshTimer.Interval = 1000 / m_fps; // 设置定时器超时时间为帧间隔
             m_refreshTimer.Tick += new EventHandler((timer, arg) => {
@@ -450,6 +442,18 @@ namespace Spirometer
                 /* 通知数据已输出到Plot完毕 */
                 m_dataPlotTaskComp?.SetResult(true);
             });
+        }
+
+        /* 收到传感器数据事件处理 */
+        private void OnPresureRecved(byte channel, double presure)
+        {
+            //Console.WriteLine($"OnPresureRecved: {channel} {presure}");
+
+            /* 压差转流量 */
+            double flow = m_flowSensor.PresureToFlow(presure); // 流量
+
+            /* 流量数据存入队列,将在刷新定时器中读取 */
+            m_dataQueue.Enqueue(flow);
         }
 
         /* 测量已停止 */
@@ -899,6 +903,8 @@ namespace Spirometer
                         //ClearAll();
                         /* 尝试清空数据队列 */
                         TryClearDataQueue();
+                        /* 监听流量传感器数据收取事件 */
+                        m_flowSensor.PresureRecved += OnPresureRecved;
                         /* 启动刷新定时器 */
                         m_refreshTimer.Start();
                     }
@@ -910,6 +916,8 @@ namespace Spirometer
                     toolStripButtonLoadPresure.Enabled = true;
                     toolStripButtonSaveFlow.Enabled = true;
                     toolStripButtonCalibration.Enabled = true;
+                    /* 取消监听流量传感器数据收取事件 */
+                    m_flowSensor.PresureRecved -= OnPresureRecved;
                     /* 停止刷新定时器 */
                     m_refreshTimer.Stop();
                     /* 尝试清空数据队列 */
@@ -940,9 +948,14 @@ namespace Spirometer
 
         private void toolStripButtonCalibration_Click(object sender, EventArgs e)
         {
-            FormCalibration calDialog = new FormCalibration(m_flowSensor);
-            calDialog.ShowDialog();
-            calDialog.Close();
+            /* 取消监听流量传感器数据收取事件 */
+            m_flowSensor.PresureRecved -= OnPresureRecved;
+            /* 弹出校准对话框 */
+            using (FormCalibration calDialog = new FormCalibration(m_flowSensor))
+            {
+                calDialog.ShowDialog();
+                calDialog.Close();
+            }
         }
     }
 }

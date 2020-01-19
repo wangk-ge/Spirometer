@@ -35,11 +35,14 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.toolStripButtonStart = new System.Windows.Forms.ToolStripButton();
+            this.dataGridView1 = new System.Windows.Forms.DataGridView();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
+            this.panel1.SuspendLayout();
             this.toolStrip1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.SuspendLayout();
             // 
             // splitContainer1
@@ -57,31 +60,31 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.plotViewPT);
-            this.splitContainer1.Size = new System.Drawing.Size(1116, 492);
-            this.splitContainer1.SplitterDistance = 234;
+            this.splitContainer1.Size = new System.Drawing.Size(1116, 547);
+            this.splitContainer1.SplitterDistance = 275;
             this.splitContainer1.SplitterWidth = 2;
             this.splitContainer1.TabIndex = 0;
             // 
-            // plotViewFV
+            // plotViewPS
             // 
             this.plotViewPS.Dock = System.Windows.Forms.DockStyle.Fill;
             this.plotViewPS.Location = new System.Drawing.Point(0, 0);
-            this.plotViewPS.Name = "plotViewFV";
+            this.plotViewPS.Name = "plotViewPS";
             this.plotViewPS.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewPS.Size = new System.Drawing.Size(1112, 230);
+            this.plotViewPS.Size = new System.Drawing.Size(1112, 271);
             this.plotViewPS.TabIndex = 0;
             this.plotViewPS.Text = "plotViewFV";
             this.plotViewPS.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
             this.plotViewPS.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
             this.plotViewPS.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
             // 
-            // plotViewVFT
+            // plotViewPT
             // 
             this.plotViewPT.Dock = System.Windows.Forms.DockStyle.Fill;
             this.plotViewPT.Location = new System.Drawing.Point(0, 0);
-            this.plotViewPT.Name = "plotViewVFT";
+            this.plotViewPT.Name = "plotViewPT";
             this.plotViewPT.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewPT.Size = new System.Drawing.Size(1112, 252);
+            this.plotViewPT.Size = new System.Drawing.Size(1112, 266);
             this.plotViewPT.TabIndex = 0;
             this.plotViewPT.Text = "plotViewVFT";
             this.plotViewPT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
@@ -90,10 +93,11 @@
             // 
             // panel1
             // 
+            this.panel1.Controls.Add(this.dataGridView1);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel1.Location = new System.Drawing.Point(0, 517);
+            this.panel1.Location = new System.Drawing.Point(0, 572);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1116, 105);
+            this.panel1.Size = new System.Drawing.Size(1116, 216);
             this.panel1.TabIndex = 1;
             // 
             // toolStrip1
@@ -116,23 +120,36 @@
             this.toolStripButtonStart.Text = "开始";
             this.toolStripButtonStart.Click += new System.EventHandler(this.toolStripButtonStart_Click);
             // 
+            // dataGridView1
+            // 
+            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dataGridView1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dataGridView1.Location = new System.Drawing.Point(0, 0);
+            this.dataGridView1.Name = "dataGridView1";
+            this.dataGridView1.RowTemplate.Height = 23;
+            this.dataGridView1.Size = new System.Drawing.Size(1116, 216);
+            this.dataGridView1.TabIndex = 0;
+            // 
             // FormCalibration
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1116, 622);
+            this.ClientSize = new System.Drawing.Size(1116, 788);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.panel1);
             this.Name = "FormCalibration";
             this.Text = "校准";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.FormCalibration_FormClosed);
             this.Load += new System.EventHandler(this.FormCalibration_Load);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
+            this.panel1.ResumeLayout(false);
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -146,5 +163,6 @@
         private OxyPlot.WindowsForms.PlotView plotViewPT;
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.ToolStripButton toolStripButtonStart;
+        private System.Windows.Forms.DataGridView dataGridView1;
     }
 }
