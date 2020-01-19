@@ -45,6 +45,8 @@
             this.toolStripButtonLoadPresure = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonLoadFlow = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonClear = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripButtonCalibration = new System.Windows.Forms.ToolStripButton();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabelRespiratoryRate = new System.Windows.Forms.ToolStripStatusLabel();
@@ -65,8 +67,6 @@
             this.toolStripStatusLabel9 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabelFEF75 = new System.Windows.Forms.ToolStripStatusLabel();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
-            this.toolStripButtonCalibration = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -94,8 +94,8 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.plotViewVFT);
-            this.splitContainer1.Size = new System.Drawing.Size(1372, 571);
-            this.splitContainer1.SplitterDistance = 306;
+            this.splitContainer1.Size = new System.Drawing.Size(1372, 615);
+            this.splitContainer1.SplitterDistance = 329;
             this.splitContainer1.SplitterWidth = 1;
             this.splitContainer1.TabIndex = 0;
             // 
@@ -113,7 +113,7 @@
             // splitContainer2.Panel2
             // 
             this.splitContainer2.Panel2.Controls.Add(this.plotViewVT);
-            this.splitContainer2.Size = new System.Drawing.Size(1372, 306);
+            this.splitContainer2.Size = new System.Drawing.Size(1372, 329);
             this.splitContainer2.SplitterDistance = 667;
             this.splitContainer2.SplitterWidth = 1;
             this.splitContainer2.TabIndex = 0;
@@ -124,7 +124,7 @@
             this.plotViewFV.Location = new System.Drawing.Point(0, 0);
             this.plotViewFV.Name = "plotViewFV";
             this.plotViewFV.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewFV.Size = new System.Drawing.Size(663, 302);
+            this.plotViewFV.Size = new System.Drawing.Size(663, 325);
             this.plotViewFV.TabIndex = 0;
             this.plotViewFV.Text = "plotView1";
             this.plotViewFV.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
@@ -137,7 +137,7 @@
             this.plotViewVT.Location = new System.Drawing.Point(0, 0);
             this.plotViewVT.Name = "plotViewVT";
             this.plotViewVT.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewVT.Size = new System.Drawing.Size(700, 302);
+            this.plotViewVT.Size = new System.Drawing.Size(700, 325);
             this.plotViewVT.TabIndex = 0;
             this.plotViewVT.Text = "plotView1";
             this.plotViewVT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
@@ -150,7 +150,7 @@
             this.plotViewVFT.Location = new System.Drawing.Point(0, 0);
             this.plotViewVFT.Name = "plotViewVFT";
             this.plotViewVFT.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewVFT.Size = new System.Drawing.Size(1368, 260);
+            this.plotViewVFT.Size = new System.Drawing.Size(1368, 281);
             this.plotViewVFT.TabIndex = 0;
             this.plotViewVFT.Text = "plotViewVFT";
             this.plotViewVFT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
@@ -264,6 +264,22 @@
             this.toolStripButtonClear.Text = "清除";
             this.toolStripButtonClear.Click += new System.EventHandler(this.toolStripButtonClear_Click);
             // 
+            // toolStripSeparator3
+            // 
+            this.toolStripSeparator3.Name = "toolStripSeparator3";
+            this.toolStripSeparator3.Size = new System.Drawing.Size(6, 25);
+            // 
+            // toolStripButtonCalibration
+            // 
+            this.toolStripButtonCalibration.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButtonCalibration.Enabled = false;
+            this.toolStripButtonCalibration.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonCalibration.Image")));
+            this.toolStripButtonCalibration.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonCalibration.Name = "toolStripButtonCalibration";
+            this.toolStripButtonCalibration.Size = new System.Drawing.Size(36, 22);
+            this.toolStripButtonCalibration.Text = "校准";
+            this.toolStripButtonCalibration.Click += new System.EventHandler(this.toolStripButtonCalibration_Click);
+            // 
             // statusStrip1
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -285,7 +301,7 @@
             this.toolStripStatusLabelFEF50,
             this.toolStripStatusLabel9,
             this.toolStripStatusLabelFEF75});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 650);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 694);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(1372, 22);
             this.statusStrip1.TabIndex = 2;
@@ -402,32 +418,16 @@
             // panel1
             // 
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel1.Location = new System.Drawing.Point(0, 596);
+            this.panel1.Location = new System.Drawing.Point(0, 640);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(1372, 54);
             this.panel1.TabIndex = 3;
-            // 
-            // toolStripSeparator3
-            // 
-            this.toolStripSeparator3.Name = "toolStripSeparator3";
-            this.toolStripSeparator3.Size = new System.Drawing.Size(6, 25);
-            // 
-            // toolStripButtonCalibration
-            // 
-            this.toolStripButtonCalibration.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripButtonCalibration.Enabled = false;
-            this.toolStripButtonCalibration.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonCalibration.Image")));
-            this.toolStripButtonCalibration.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButtonCalibration.Name = "toolStripButtonCalibration";
-            this.toolStripButtonCalibration.Size = new System.Drawing.Size(36, 22);
-            this.toolStripButtonCalibration.Text = "校准";
-            this.toolStripButtonCalibration.Click += new System.EventHandler(this.toolStripButtonCalibration_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1372, 672);
+            this.ClientSize = new System.Drawing.Size(1372, 716);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.toolStrip1);

@@ -37,6 +37,9 @@
             this.toolStripButtonStart = new System.Windows.Forms.ToolStripButton();
             this.dataGridViewResult = new System.Windows.Forms.DataGridView();
             this.toolStripButtonApply = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripButtonLoadPresure = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.Column0 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -68,8 +71,8 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.plotViewPT);
-            this.splitContainer1.Size = new System.Drawing.Size(1116, 547);
-            this.splitContainer1.SplitterDistance = 275;
+            this.splitContainer1.Size = new System.Drawing.Size(1372, 475);
+            this.splitContainer1.SplitterDistance = 239;
             this.splitContainer1.SplitterWidth = 2;
             this.splitContainer1.TabIndex = 0;
             // 
@@ -79,7 +82,7 @@
             this.plotViewPS.Location = new System.Drawing.Point(0, 0);
             this.plotViewPS.Name = "plotViewPS";
             this.plotViewPS.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewPS.Size = new System.Drawing.Size(1112, 271);
+            this.plotViewPS.Size = new System.Drawing.Size(1368, 235);
             this.plotViewPS.TabIndex = 0;
             this.plotViewPS.Text = "plotViewFV";
             this.plotViewPS.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
@@ -92,7 +95,7 @@
             this.plotViewPT.Location = new System.Drawing.Point(0, 0);
             this.plotViewPT.Name = "plotViewPT";
             this.plotViewPT.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewPT.Size = new System.Drawing.Size(1112, 266);
+            this.plotViewPT.Size = new System.Drawing.Size(1368, 230);
             this.plotViewPT.TabIndex = 0;
             this.plotViewPT.Text = "plotViewVFT";
             this.plotViewPT.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
@@ -103,19 +106,22 @@
             // 
             this.panel1.Controls.Add(this.dataGridViewResult);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel1.Location = new System.Drawing.Point(0, 572);
+            this.panel1.Location = new System.Drawing.Point(0, 500);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1116, 216);
+            this.panel1.Size = new System.Drawing.Size(1372, 216);
             this.panel1.TabIndex = 1;
             // 
             // toolStrip1
             // 
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripButtonStart,
+            this.toolStripSeparator1,
+            this.toolStripButtonLoadPresure,
+            this.toolStripSeparator2,
             this.toolStripButtonApply});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(1116, 25);
+            this.toolStrip1.Size = new System.Drawing.Size(1372, 25);
             this.toolStrip1.TabIndex = 2;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -148,7 +154,7 @@
             this.dataGridViewResult.Name = "dataGridViewResult";
             this.dataGridViewResult.RowTemplate.Height = 23;
             this.dataGridViewResult.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dataGridViewResult.Size = new System.Drawing.Size(1116, 216);
+            this.dataGridViewResult.Size = new System.Drawing.Size(1372, 216);
             this.dataGridViewResult.TabIndex = 0;
             // 
             // toolStripButtonApply
@@ -161,6 +167,26 @@
             this.toolStripButtonApply.Text = "应用校准结果";
             this.toolStripButtonApply.Click += new System.EventHandler(this.toolStripButtonApply_Click);
             // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
+            // 
+            // toolStripButtonLoadPresure
+            // 
+            this.toolStripButtonLoadPresure.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButtonLoadPresure.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonLoadPresure.Image")));
+            this.toolStripButtonLoadPresure.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonLoadPresure.Name = "toolStripButtonLoadPresure";
+            this.toolStripButtonLoadPresure.Size = new System.Drawing.Size(84, 22);
+            this.toolStripButtonLoadPresure.Text = "加载压差数据";
+            this.toolStripButtonLoadPresure.Click += new System.EventHandler(this.toolStripButtonLoadPresure_Click);
+            // 
+            // toolStripSeparator2
+            // 
+            this.toolStripSeparator2.Name = "toolStripSeparator2";
+            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
+            // 
             // Column0
             // 
             this.Column0.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
@@ -172,35 +198,35 @@
             // Column1
             // 
             this.Column1.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.Column1.HeaderText = "PresureFlowScale";
+            this.Column1.HeaderText = "转换系数";
             this.Column1.Name = "Column1";
             this.Column1.ReadOnly = true;
             // 
             // Column2
             // 
             this.Column2.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.Column2.HeaderText = "PresureAvg";
+            this.Column2.HeaderText = "数据平均值";
             this.Column2.Name = "Column2";
             this.Column2.ReadOnly = true;
             // 
             // Column3
             // 
             this.Column3.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.Column3.HeaderText = "PresureSum";
+            this.Column3.HeaderText = "数据求和值";
             this.Column3.Name = "Column3";
             this.Column3.ReadOnly = true;
             // 
             // Column4
             // 
             this.Column4.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.Column4.HeaderText = "PeekPresure";
+            this.Column4.HeaderText = "数据极值";
             this.Column4.Name = "Column4";
             this.Column4.ReadOnly = true;
             // 
             // Column5
             // 
             this.Column5.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.Column5.HeaderText = "PresureVariance";
+            this.Column5.HeaderText = "数据方差";
             this.Column5.Name = "Column5";
             this.Column5.ReadOnly = true;
             // 
@@ -215,7 +241,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1116, 788);
+            this.ClientSize = new System.Drawing.Size(1372, 716);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.panel1);
@@ -246,6 +272,9 @@
         private System.Windows.Forms.ToolStripButton toolStripButtonStart;
         private System.Windows.Forms.DataGridView dataGridViewResult;
         private System.Windows.Forms.ToolStripButton toolStripButtonApply;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripButton toolStripButtonLoadPresure;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column0;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column1;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column2;

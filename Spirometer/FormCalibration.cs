@@ -13,6 +13,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.IO;
+using System.Threading;
 
 namespace Spirometer
 {
@@ -29,6 +31,8 @@ namespace Spirometer
 
         private List<DataPoint> m_pointsPS; // 压差(Presure)-和值(Sum)数据
         private List<DataPoint> m_pointsPT; // 压差(Presure)-时间(Time)数据
+
+        private TaskCompletionSource<bool> m_dataPlotTaskComp; // 用于监控数据输出到Plot数据完成事件
 
         public FormCalibration(FlowSensor flowSensor)
         {
@@ -62,8 +66,8 @@ namespace Spirometer
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Bottom,
-                Minimum = -50,
-                Maximum = 50,
+                Minimum = -55,
+                Maximum = 55,
                 Title = "Sum"
             };
             m_plotModelPS.Axes.Add(xAxisPS);
@@ -79,6 +83,50 @@ namespace Spirometer
                 Title = "Presure(inH2O)"
             };
             m_plotModelPS.Axes.Add(yAxisPS);
+
+            //标记线+10%
+            var annotationPS1 = new LineAnnotation()
+            {
+                Color = OxyColors.Red,
+                X = -50,
+                LineStyle = LineStyle.Dash,
+                Type = LineAnnotationType.Vertical,
+                Text = "+10%"
+            };
+            m_plotModelPS.Annotations.Add(annotationPS1);
+
+            //标记线-10%
+            var annotationPS2 = new LineAnnotation()
+            {
+                Color = OxyColors.Red,
+                X = -40,
+                LineStyle = LineStyle.Dash,
+                Type = LineAnnotationType.Vertical,
+                Text = "-10%"
+            };
+            m_plotModelPS.Annotations.Add(annotationPS2);
+
+            //标记线-10%
+            var annotationPS3 = new LineAnnotation()
+            {
+                Color = OxyColors.Red,
+                X = 40,
+                LineStyle = LineStyle.Dash,
+                Type = LineAnnotationType.Vertical,
+                Text = "-10%"
+            };
+            m_plotModelPS.Annotations.Add(annotationPS3);
+
+            //标记线+10%
+            var annotationPS4 = new LineAnnotation()
+            {
+                Color = OxyColors.Red,
+                X = 50,
+                LineStyle = LineStyle.Dash,
+                Type = LineAnnotationType.Vertical,
+                Text = "+10%"
+            };
+            m_plotModelPS.Annotations.Add(annotationPS4);
 
             // 数据
             var seriesPS = new LineSeries()
@@ -153,15 +201,15 @@ namespace Spirometer
             // 保存数据点列表引用
             m_pointsPT = seriesPT.Points;
 
-            /* 加载现有的吸气校准参数到表格 */
+            /* 加载现有的吸气校准参数到结果列表 */
             foreach (var p in m_flowSensor.InCalibrationParams())
             {
-                AddParamToDataGridView(p);
+                AddParamToResultDataGridView(p, true);
             }
-            /* 加载现有的呼气校准参数到表格 */
+            /* 加载现有的呼气校准参数到结果列表 */
             foreach (var p in m_flowSensor.EnCalibrationParams())
             {
-                AddParamToDataGridView(p);
+                AddParamToResultDataGridView(p, true);
             }
 
             /* 开始吸气 */
@@ -233,6 +281,9 @@ namespace Spirometer
 
                 /* 在必要时刷新曲线显示并执行自动滚屏 */
                 UpdatePTPlot(xBegin);
+
+                /* 通知数据已输出到Plot完毕 */
+                m_dataPlotTaskComp?.SetResult(true);
             });
         }
 
@@ -245,8 +296,14 @@ namespace Spirometer
             m_dataQueue.Enqueue(presure);
         }
 
-        /* 添加校准参数到列表控件 */
-        private void AddParamToDataGridView(FlowSensor.CalibrationParam p)
+        /* 清空结果列表 */
+        private void ClearResultDataGridView()
+        {
+            dataGridViewResult.Rows.Clear();
+        }
+
+        /* 添加校准参数到结果列表 */
+        private void AddParamToResultDataGridView(FlowSensor.CalibrationParam p, bool bApply)
         {
             int index = dataGridViewResult.Rows.Add();
             dataGridViewResult.Rows[index].Cells[0].Value = (p.presureAvg > 0) ? "吸气" : "呼气";
@@ -255,7 +312,7 @@ namespace Spirometer
             dataGridViewResult.Rows[index].Cells[3].Value = p.presureSum;
             dataGridViewResult.Rows[index].Cells[4].Value = p.peekPresure;
             dataGridViewResult.Rows[index].Cells[5].Value = p.presureVariance;
-            dataGridViewResult.Rows[index].Cells[6].Value = false;
+            dataGridViewResult.Rows[index].Cells[6].Value = bApply;
         }
 
         /* 测量已停止 */
@@ -263,7 +320,7 @@ namespace Spirometer
         {
             Console.WriteLine($"PresureSum: {m_flowCalibrator.PresureSum} \t PeekPresure: {m_flowCalibrator.PeekPresure} \t PresureAvg: {m_flowCalibrator.PresureAvg} \t K: {m_flowSensor.SAMPLE_RATE / m_flowCalibrator.PresureSum} \t PresureVariance: {m_flowCalibrator.PresureVariance}");
 
-            /* 添加校准参数到列表控件 */
+            /* 添加校准参数到结果列表 */
             FlowSensor.CalibrationParam p = new FlowSensor.CalibrationParam()
             {
                 presureAvg = m_flowCalibrator.PresureAvg,
@@ -272,7 +329,7 @@ namespace Spirometer
                 peekPresure = m_flowCalibrator.PeekPresure,
                 presureVariance = m_flowCalibrator.PresureVariance
             };
-            AddParamToDataGridView(p);
+            AddParamToResultDataGridView(p, false);
 
             /* 重置校准器,开始检测下一次校准启动 */
             m_flowCalibrator.Reset();
@@ -329,6 +386,121 @@ namespace Spirometer
             return bRet;
         }
 
+        /* 清空所有图表数据和缓存数据,并刷新显示 */
+        private void ClearAll()
+        {
+            /* 尝试清空数据队列 */
+            TryClearDataQueue();
+
+            /* 重置状态 */
+            m_flowCalibrator.Reset();
+
+            /* 清空结果列表 */
+            ClearResultDataGridView();
+
+            /* Clear Presure-Time Plot */
+            m_pointsPT.Clear();
+            m_plotModelPT.Annotations.Clear();
+            var xAxisFV = m_plotModelPT.Axes[0];
+            xAxisFV.Reset();
+
+            /* Clear Presure-Sum Plot */
+            m_pointsPS.Clear();
+            //m_plotModelPS.Annotations.Clear();
+            var xAxisVT = m_plotModelPS.Axes[0];
+            xAxisVT.Reset();
+
+            /* 刷新曲线显示 */
+            plotViewPT.InvalidatePlot(true);
+            plotViewPS.InvalidatePlot(true);
+        }
+
+        private async Task LoadCSVFileAsync(string filePath)
+        {
+            /* 先清空所有图表数据和缓存数据,并刷新显示 */
+            ClearAll();
+
+            /* 启动刷新定时器 */
+            m_refreshTimer.Start();
+
+            /* 启动任务执行异步加载(防止阻塞UI线程) */
+            Task loadTask = Task.Factory.StartNew((Action)(() =>
+            {
+                /* 所有数据先加载到内存 */
+                string strData = string.Empty;
+                using (StreamReader reader = new StreamReader(filePath, Encoding.UTF8))
+                {
+                    strData = reader.ReadToEnd();
+                    reader.Close();
+                }
+
+                
+                /* 解析CSV中的压差数据 */
+                string[] strDataArray = strData.Split(new char[] { ',' });
+                foreach (var strVal in strDataArray)
+                {
+                    if (string.Empty == strVal)
+                    {
+                        continue;
+                    }
+
+                    double presure = Convert.ToDouble(strVal); // 压差
+
+                    /* 压差数据存入队列,将在刷新定时器中读取 */
+                    m_dataQueue.Enqueue(presure);
+
+                    /* 模拟采样率 */
+                    //Thread.Sleep((int)m_flowSensor.SAMPLE_TIME);
+                }
+
+                /* 数据已加载完毕 */
+
+                /* 建Task完成事件对象(用于监测数据是否已全部输出到Plot) */
+                m_dataPlotTaskComp = new TaskCompletionSource<bool>();
+            }));
+
+            /* 异步等待完成对象被触发(数据加载完毕并且已全部输出到Plot) */
+            await loadTask; // 先确保数据已加载完毕(只有此时m_dataPlotTaskComp才非空)
+            if (null != m_dataPlotTaskComp)
+            {
+                await m_dataPlotTaskComp.Task; // 然后确保数据已全部输出到Plot
+            }
+
+            /* 清除完成对象 */
+            m_dataPlotTaskComp = null;
+        }
+
+        /* 显示加载对话框,加载Preaure数据 */
+        private async void ShowLoadCSVDialog()
+        {
+            /* 弹出文件打开对话框 */
+            OpenFileDialog openCSVDialog = new OpenFileDialog();
+            openCSVDialog.Filter = "CSV File (*.csv;)|*.csv";
+            openCSVDialog.Multiselect = false;
+
+            if (openCSVDialog.ShowDialog() == DialogResult.OK)
+            {
+                if (String.IsNullOrEmpty(openCSVDialog.FileName))
+                {
+                    return;
+                }
+
+                /* 加载过程中暂时不允许再次点击 */
+                toolStripButtonLoadPresure.Enabled = false;
+                toolStripButtonStart.Enabled = false;
+                toolStripButtonApply.Enabled = false;
+
+                await LoadCSVFileAsync(openCSVDialog.FileName);
+
+                /* 加载完毕,执行UI相关操作(确保在UI线程执行) */
+                this.BeginInvoke(new Action<FormCalibration>((obj) => {
+                    toolStripButtonLoadPresure.Enabled = true;
+                    toolStripButtonStart.Enabled = true;
+                    toolStripButtonApply.Enabled = true;
+                }), this);
+            }
+        }
+
         private async void toolStripButtonStart_Click(object sender, EventArgs e)
         {
             bool bRet = false;
@@ -351,6 +523,7 @@ namespace Spirometer
                     if (bRet)
                     { // 归零成功
                         toolStripButtonStart.Text = "停止";
+                        toolStripButtonLoadPresure.Enabled = false;
                         //ClearAll();
                         /* 清除旧的校准数据 */
                         m_flowSensor.ClearCalibrationParams();
@@ -365,6 +538,7 @@ namespace Spirometer
                 else // if ("停止" == toolStripButtonStart.Text)
                 {
                     toolStripButtonStart.Text = "开始";
+                    toolStripButtonLoadPresure.Enabled = true;
                     /* 取消监听流量传感器数据收取事件 */
                     m_flowSensor.PresureRecved -= OnPresureRecved;
                     /* 停止刷新定时器 */
@@ -383,6 +557,12 @@ namespace Spirometer
 
         private void toolStripButtonApply_Click(object sender, EventArgs e)
         {
+            DialogResult dialogResult = MessageBox.Show("将替换现有校准参数,是否继续？", "选择", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
+            if (dialogResult != DialogResult.Yes)
+            {
+                return;
+            }
+
             uint inCalCount = 0; // 吸气校准项目个数
             uint exCalCount = 0; // 呼气校准项目个数
 
@@ -433,6 +613,11 @@ namespace Spirometer
             {
                 MessageBox.Show($"应用校准参数失败：请确保至少包含一项吸气校准和一项呼气校准。吸气参数{inCalCount}项、呼气参数{exCalCount}项！");
             }
+        }
+
+        private void toolStripButtonLoadPresure_Click(object sender, EventArgs e)
+        {
+            ShowLoadCSVDialog();
         }
     }
 }

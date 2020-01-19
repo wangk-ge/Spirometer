@@ -77,7 +77,8 @@ namespace PulmonaryFunctionLib
             if (calParam.presureAvg > 0)
             { // 吸气
                 /* 插入m_inCalibrationParams且保证列表仍按presure升序排列 */
-                for (int i = 0; i < m_inCalibrationParams.Count; ++i)
+                int i = 0;
+                for (; i < m_inCalibrationParams.Count; ++i)
                 {
                     if (calParam.presureAvg < m_inCalibrationParams[i].presureAvg)
                     {
@@ -92,11 +93,17 @@ namespace PulmonaryFunctionLib
                         break;
                     }
                 }
+
+                if (i >= m_inCalibrationParams.Count)
+                {
+                    m_inCalibrationParams.Add(calParam);
+                }
             }
             else
             { // 呼气
                 /* 插入m_exCalibrationParams且保证列表仍按presure降序排列 */
-                for (int i = 0; i < m_exCalibrationParams.Count; ++i)
+                int i = 0;
+                for (; i < m_exCalibrationParams.Count; ++i)
                 {
                     if (calParam.presureAvg > m_exCalibrationParams[i].presureAvg)
                     {
@@ -110,6 +117,11 @@ namespace PulmonaryFunctionLib
                         m_exCalibrationParams[i] = calParam;
                         break;
                     }
+                }
+
+                if (i >= m_exCalibrationParams.Count)
+                {
+                    m_exCalibrationParams.Add(calParam);
                 }
             }
         }

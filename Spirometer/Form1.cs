@@ -950,11 +950,9 @@ namespace Spirometer
             /* 取消监听流量传感器数据收取事件 */
             m_flowSensor.PresureRecved -= OnPresureRecved;
             /* 弹出校准对话框 */
-            using (FormCalibration calDialog = new FormCalibration(m_flowSensor))
-            {
-                calDialog.ShowDialog();
-                calDialog.Close();
-            }
+            FormCalibration calDialog = new FormCalibration(m_flowSensor);
+            calDialog.ShowDialog();
+            calDialog.Close();
         }
     }
 }
