@@ -843,7 +843,8 @@ namespace Spirometer
                 toolStripButtonScan.Enabled = !bRet;
                 toolStripComboBoxCom.Enabled = !bRet;
                 toolStripButtonConnect.Text = bRet ? "断开" : "连接";
-                toolStripButtonCalibration.Enabled = bRet;
+                toolStripButtonCalibration1L.Enabled = bRet;
+                toolStripButtonCalibration3L.Enabled = bRet;
                 /* 尝试清空数据队列 */
                 TryClearDataQueue();
             }
@@ -857,7 +858,8 @@ namespace Spirometer
                 toolStripButtonClear.Enabled = true;
                 toolStripButtonScan.Enabled = true;
                 toolStripComboBoxCom.Enabled = true;
-                toolStripButtonCalibration.Enabled = false;
+                toolStripButtonCalibration1L.Enabled = false;
+                toolStripButtonCalibration3L.Enabled = false;
                 toolStripButtonConnect.Text = "连接";
                 toolStripButtonStart.Text = "开始";
                 /* 停止刷新定时器 */
@@ -898,7 +900,8 @@ namespace Spirometer
                         toolStripButtonClear.Enabled = false;
                         toolStripButtonLoadPresure.Enabled = false;
                         toolStripButtonSaveFlow.Enabled = false;
-                        toolStripButtonCalibration.Enabled = false;
+                        toolStripButtonCalibration1L.Enabled = false;
+                        toolStripButtonCalibration3L.Enabled = false;
                         //ClearAll();
                         /* 尝试清空数据队列 */
                         TryClearDataQueue();
@@ -914,7 +917,8 @@ namespace Spirometer
                     toolStripButtonClear.Enabled = true;
                     toolStripButtonLoadPresure.Enabled = true;
                     toolStripButtonSaveFlow.Enabled = true;
-                    toolStripButtonCalibration.Enabled = true;
+                    toolStripButtonCalibration1L.Enabled = true;
+                    toolStripButtonCalibration3L.Enabled = true;
                     /* 取消监听流量传感器数据收取事件 */
                     m_flowSensor.PresureRecved -= OnPresureRecved;
                     /* 停止刷新定时器 */
@@ -945,14 +949,28 @@ namespace Spirometer
             ClearAll();
         }
 
-        private void toolStripButtonCalibration_Click(object sender, EventArgs e)
+        private void toolStripButtonCalibration1L_Click(object sender, EventArgs e)
         {
             /* 取消监听流量传感器数据收取事件 */
             m_flowSensor.PresureRecved -= OnPresureRecved;
             /* 弹出校准对话框 */
-            FormCalibration calDialog = new FormCalibration(m_flowSensor);
-            calDialog.ShowDialog();
-            calDialog.Close();
+            using (FormCalibration calDialog = new FormCalibration(m_flowSensor, 1))
+            {
+                calDialog.ShowDialog();
+                calDialog.Close();
+            } 
+        }
+
+        private void toolStripButtonCalibration3L_Click(object sender, EventArgs e)
+        {
+            /* 取消监听流量传感器数据收取事件 */
+            m_flowSensor.PresureRecved -= OnPresureRecved;
+            /* 弹出校准对话框 */
+            using (FormCalibration calDialog = new FormCalibration(m_flowSensor, 3))
+            {
+                calDialog.ShowDialog();
+                calDialog.Close();
+            }
         }
     }
 }

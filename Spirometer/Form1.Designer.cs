@@ -46,7 +46,8 @@
             this.toolStripButtonLoadFlow = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonClear = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
-            this.toolStripButtonCalibration = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButtonCalibration1L = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButtonCalibration3L = new System.Windows.Forms.ToolStripButton();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabelRespiratoryRate = new System.Windows.Forms.ToolStripStatusLabel();
@@ -171,7 +172,8 @@
             this.toolStripButtonLoadFlow,
             this.toolStripButtonClear,
             this.toolStripSeparator3,
-            this.toolStripButtonCalibration});
+            this.toolStripButtonCalibration1L,
+            this.toolStripButtonCalibration3L});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1372, 25);
@@ -269,16 +271,27 @@
             this.toolStripSeparator3.Name = "toolStripSeparator3";
             this.toolStripSeparator3.Size = new System.Drawing.Size(6, 25);
             // 
-            // toolStripButtonCalibration
+            // toolStripButtonCalibration1L
             // 
-            this.toolStripButtonCalibration.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripButtonCalibration.Enabled = false;
-            this.toolStripButtonCalibration.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonCalibration.Image")));
-            this.toolStripButtonCalibration.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButtonCalibration.Name = "toolStripButtonCalibration";
-            this.toolStripButtonCalibration.Size = new System.Drawing.Size(36, 22);
-            this.toolStripButtonCalibration.Text = "校准";
-            this.toolStripButtonCalibration.Click += new System.EventHandler(this.toolStripButtonCalibration_Click);
+            this.toolStripButtonCalibration1L.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButtonCalibration1L.Enabled = false;
+            this.toolStripButtonCalibration1L.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonCalibration1L.Image")));
+            this.toolStripButtonCalibration1L.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonCalibration1L.Name = "toolStripButtonCalibration1L";
+            this.toolStripButtonCalibration1L.Size = new System.Drawing.Size(57, 22);
+            this.toolStripButtonCalibration1L.Text = "校准(1L)";
+            this.toolStripButtonCalibration1L.Click += new System.EventHandler(this.toolStripButtonCalibration1L_Click);
+            // 
+            // toolStripButtonCalibration3L
+            // 
+            this.toolStripButtonCalibration3L.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButtonCalibration3L.Enabled = false;
+            this.toolStripButtonCalibration3L.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonCalibration3L.Image")));
+            this.toolStripButtonCalibration3L.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonCalibration3L.Name = "toolStripButtonCalibration3L";
+            this.toolStripButtonCalibration3L.Size = new System.Drawing.Size(57, 22);
+            this.toolStripButtonCalibration3L.Text = "校准(3L)";
+            this.toolStripButtonCalibration3L.Click += new System.EventHandler(this.toolStripButtonCalibration3L_Click);
             // 
             // statusStrip1
             // 
@@ -491,7 +504,8 @@
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelFEF75;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
-        private System.Windows.Forms.ToolStripButton toolStripButtonCalibration;
+        private System.Windows.Forms.ToolStripButton toolStripButtonCalibration1L;
+        private System.Windows.Forms.ToolStripButton toolStripButtonCalibration3L;
     }
 }
 

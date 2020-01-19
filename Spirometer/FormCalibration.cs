@@ -34,13 +34,15 @@ namespace Spirometer
 
         private TaskCompletionSource<bool> m_dataPlotTaskComp; // 用于监控数据输出到Plot数据完成事件
 
-        public FormCalibration(FlowSensor flowSensor)
+        public FormCalibration(FlowSensor flowSensor, double calVolume = 1.0)
         {
             m_flowSensor = flowSensor;
             /* 流量校准器 */
-            m_flowCalibrator = new FlowCalibrator(m_flowSensor.SAMPLE_RATE);
+            m_flowCalibrator = new FlowCalibrator(m_flowSensor.SAMPLE_RATE, calVolume);
 
             InitializeComponent();
+
+            this.Text = $"校准-{calVolume}L定标桶";
         }
 
         private void FormCalibration_Load(object sender, EventArgs e)
