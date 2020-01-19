@@ -875,25 +875,24 @@ namespace Spirometer
 
         private async void toolStripButtonStart_Click(object sender, EventArgs e)
         {
-            string cmd = "[ADC_START]"; // 启动
-            if ("停止" == toolStripButtonStart.Text)
+            bool bRet = false;
+            
+            if ("开始" == toolStripButtonStart.Text)
             {
-                cmd = "[ADC_STOP]"; // 停止
+                bRet = await m_flowSensor.StartAsync(); // 启动
             }
-            Console.WriteLine($"Sned: {cmd}");
-            string cmdResp = await m_flowSensor.ExcuteCmdAsync(cmd, 2000);
-            Console.WriteLine($"Revc: {cmdResp}");
+            else //if ("停止" == toolStripButtonStart.Text)
+            {
+                bRet = await m_flowSensor.StopAsync(); // 停止
+            }
 
-            if ("[OK]" == cmdResp)
+            if (bRet)
             {
                 if ("开始" == toolStripButtonStart.Text)
                 {
-                    cmd = "[ADC_CAL]"; // 归零
+                    bRet = await m_flowSensor.ZeroingAsync(); // 归零
 
-                    Console.WriteLine($"Sned: {cmd}");
-                    cmdResp = await m_flowSensor.ExcuteCmdAsync(cmd, 2000);
-                    Console.WriteLine($"Revc: {cmdResp}");
-                    if ("[OK]" == cmdResp)
+                    if (bRet)
                     { // 归零成功
                         toolStripButtonStart.Text = "停止";
                         toolStripButtonClear.Enabled = false;

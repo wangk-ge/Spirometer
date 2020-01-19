@@ -398,5 +398,133 @@ namespace PulmonaryFunctionLib
 
             return string.Empty;
         }
+
+        /* 请求启动采集(异步版本) */
+        public async Task<bool> StartAsync()
+        {
+            string cmd = "[ADC_START]"; // 启动采集
+            string cmdResp = await ExcuteCmdAsync(cmd, 2000);
+            return cmdResp == "[OK]";
+        }
+
+        /* 请求启动采集(同步版本) */
+        public bool Start()
+        {
+            string cmd = "[ADC_START]"; // 启动采集
+            string cmdResp = ExcuteCmd(cmd, 2000);
+            return cmdResp == "[OK]";
+        }
+
+        /* 请求停止采集(异步版本) */
+        public async Task<bool> StopAsync()
+        {
+            string cmd = "[ADC_STOP]"; // 启动采集
+            string cmdResp = await ExcuteCmdAsync(cmd, 2000);
+            return cmdResp == "[OK]";
+        }
+
+        /* 请求停止采集(同步版本) */
+        public bool Stop()
+        {
+            string cmd = "[ADC_STOP]"; // 启动采集
+            string cmdResp = ExcuteCmd(cmd, 2000);
+            return cmdResp == "[OK]";
+        }
+
+        /* 请求执行归零(异步版本) */
+        public async Task<bool> ZeroingAsync()
+        {
+            string cmd = "[ADC_CAL]"; // 归零
+            string cmdResp = await ExcuteCmdAsync(cmd, 2000);
+            return cmdResp == "[OK]";
+        }
+
+        /* 请求执行归零(同步版本) */
+        public bool Zeroing()
+        {
+            string cmd = "[ADC_CAL]"; // 归零
+            string cmdResp = ExcuteCmd(cmd, 2000);
+            return cmdResp == "[OK]";
+        }
+
+        /* 取得下位机版本号(异步版本) */
+        public async Task<string> BoardVersionAsync()
+        {
+            string cmd = "[VER]"; // 取得版本号
+            string cmdResp = await ExcuteCmdAsync(cmd, 2000);
+            return cmdResp;
+        }
+
+        /* 取得下位机版本号(同步版本) */
+        public string BoardVersion()
+        {
+            string cmd = "[VER]"; // 取得版本号
+            string cmdResp = ExcuteCmd(cmd, 2000);
+            return cmdResp;
+        }
+
+        /* 取得下位机固件编译时间(异步版本) */
+        public async Task<string> BoardBuildTimeAsync()
+        {
+            string cmd = "[BUILD]"; // 取得固件编译时间
+            string cmdResp = await ExcuteCmdAsync(cmd, 2000);
+            return cmdResp;
+        }
+
+        /* 取得下位机固件编译时间(同步版本) */
+        public string BoardBuildTime()
+        {
+            string cmd = "[BUILD]"; // 取得固件编译时间
+            string cmdResp = ExcuteCmd(cmd, 2000);
+            return cmdResp;
+        }
+
+        /* 取得环境温度(异步版本) */
+        public async Task<string> AmbientTemperatureAsync()
+        {
+            string cmd = "[BME280_TEMP]"; // 取得环境温度
+            string cmdResp = await ExcuteCmdAsync(cmd, 2000);
+            return cmdResp;
+        }
+
+        /* 取得环境温度(同步版本) */
+        public string AmbientTemperature()
+        {
+            string cmd = "[BME280_TEMP]"; // 取得环境温度
+            string cmdResp = ExcuteCmd(cmd, 2000);
+            return cmdResp;
+        }
+
+        /* 取得环境湿度(异步版本) */
+        public async Task<string> AmbientHumidityAsync()
+        {
+            string cmd = "[BME280_HUMI]"; // 取得环境湿度
+            string cmdResp = await ExcuteCmdAsync(cmd, 2000);
+            return cmdResp;
+        }
+
+        /* 取得环境湿度(同步版本) */
+        public string AmbientHumidity()
+        {
+            string cmd = "[BME280_HUMI]"; // 取得环境湿度
+            string cmdResp = ExcuteCmd(cmd, 2000);
+            return cmdResp;
+        }
+
+        /* 取得大气压(异步版本) */
+        public async Task<string> BarometricAsync()
+        {
+            string cmd = "[BME280_BARO]"; // 取得大气压
+            string cmdResp = await ExcuteCmdAsync(cmd, 2000);
+            return cmdResp;
+        }
+
+        /* 取得大气压(同步版本) */
+        public string Barometric()
+        {
+            string cmd = "[BME280_BARO]"; // 取得大气压
+            string cmdResp = ExcuteCmd(cmd, 2000);
+            return cmdResp;
+        }
     }
 }

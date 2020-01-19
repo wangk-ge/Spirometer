@@ -17,6 +17,8 @@ namespace PulmonaryFunctionLib
         public double PresureVariance { get; private set; } = 0.0; // 采集的Presure方差(代表压差的离散程度,越小表示越集中)
         public double CalVolume { get; private set; } = 0.0; // 定标桶容积(单位: L)
         public double PeekPresure { get { return (m_peekPresureIndex < m_listPresure.Count) ? m_listPresure[(int)m_peekPresureIndex] : 0.0; } } // Presure极值
+        public double PresureFlowScale { get { return (PresureSum != 0) ? (SAMPLE_RATE / PresureSum) : 0.0; } } // Presure转换成Flow的比例系数
+        public bool IsValid { get { return true; } } // 本次结果是否有效(自动判断校准结果有效性)[TODO]
 
         public delegate void InspirationStartHandler(uint sampleIndex); // 吸气开始事件代理
         public event InspirationStartHandler InspirationStarted; // 吸气开始事件
@@ -38,6 +40,7 @@ namespace PulmonaryFunctionLib
 
         private State m_state = State.Reset; // 工作状态
         private readonly double SAMPLE_TIME = 3.0; // 采样时间(ms)
+        private readonly double SAMPLE_RATE = 330; // 采样率
         private WaveStatistician m_waveStatistician = new WaveStatistician(); // 用于统计波动数据
         private readonly int START_SAMPLE_COUNT = 2; // 启动检测,波动统计采样次数
         private readonly int STOP_SAMPLE_COUNT = 20; // 停止检测,波动统计采样次数
@@ -50,9 +53,10 @@ namespace PulmonaryFunctionLib
         private uint m_measureStartIndex = 0U; // 测试启动点Index
         private uint m_measureEndIndex = 0U; // 测试结束点Index
 
-        public FlowCalibrator(double sampleTime, double calVolume = 1.0)
+        public FlowCalibrator(double sampleRate, double calVolume = 1.0)
         {
-            SAMPLE_TIME = sampleTime;
+            SAMPLE_RATE = sampleRate;
+            SAMPLE_TIME = 1000 / sampleRate;
             CalVolume = calVolume;
         }
 

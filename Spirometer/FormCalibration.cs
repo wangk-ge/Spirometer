@@ -34,7 +34,7 @@ namespace Spirometer
         {
             m_flowSensor = flowSensor;
             /* 流量校准器 */
-            m_flowCalibrator = new FlowCalibrator(m_flowSensor.SAMPLE_TIME);
+            m_flowCalibrator = new FlowCalibrator(m_flowSensor.SAMPLE_RATE);
 
             InitializeComponent();
         }
@@ -239,6 +239,14 @@ namespace Spirometer
         {
             Console.WriteLine($"PresureSum: {m_flowCalibrator.PresureSum} \t PeekPresure: {m_flowCalibrator.PeekPresure} \t PresureAvg: {m_flowCalibrator.PresureAvg} \t K: {m_flowSensor.SAMPLE_RATE / m_flowCalibrator.PresureSum} \t PresureVariance: {m_flowCalibrator.PresureVariance}");
 
+            int index = dataGridViewResult.Rows.Add();
+            dataGridViewResult.Rows[index].Cells[0].Value = m_flowCalibrator.PresureFlowScale;
+            dataGridViewResult.Rows[index].Cells[1].Value = m_flowCalibrator.PresureAvg;
+            dataGridViewResult.Rows[index].Cells[2].Value = m_flowCalibrator.PresureSum;
+            dataGridViewResult.Rows[index].Cells[3].Value = m_flowCalibrator.PeekPresure;
+            dataGridViewResult.Rows[index].Cells[4].Value = m_flowCalibrator.PresureVariance;
+            dataGridViewResult.Rows[index].Cells[5].Value = false;
+
             m_flowCalibrator.Reset();
         }
 
@@ -295,25 +303,24 @@ namespace Spirometer
 
         private async void toolStripButtonStart_Click(object sender, EventArgs e)
         {
-            string cmd = "[ADC_START]"; // 启动
-            if ("停止" == toolStripButtonStart.Text)
-            {
-                cmd = "[ADC_STOP]"; // 停止
-            }
-            Console.WriteLine($"Sned: {cmd}");
-            string cmdResp = await m_flowSensor.ExcuteCmdAsync(cmd, 2000);
-            Console.WriteLine($"Revc: {cmdResp}");
+            bool bRet = false;
 
-            if ("[OK]" == cmdResp)
+            if ("开始" == toolStripButtonStart.Text)
+            {
+                bRet = await m_flowSensor.StartAsync(); // 启动
+            }
+            else //if ("停止" == toolStripButtonStart.Text)
+            {
+                bRet = await m_flowSensor.StopAsync(); // 停止
+            }
+
+            if (bRet)
             {
                 if ("开始" == toolStripButtonStart.Text)
                 {
-                    cmd = "[ADC_CAL]"; // 归零
+                    bRet = await m_flowSensor.ZeroingAsync(); // 归零
 
-                    Console.WriteLine($"Sned: {cmd}");
-                    cmdResp = await m_flowSensor.ExcuteCmdAsync(cmd, 2000);
-                    Console.WriteLine($"Revc: {cmdResp}");
-                    if ("[OK]" == cmdResp)
+                    if (bRet)
                     { // 归零成功
                         toolStripButtonStart.Text = "停止";
                         //ClearAll();
@@ -344,6 +351,12 @@ namespace Spirometer
         {
             /* 取消监听流量传感器数据收取事件 */
             m_flowSensor.PresureRecved -= OnPresureRecved;
+        }
+
+        private void toolStripButtonApply_Click(object sender, EventArgs e)
+        {
+            /* 将挑选的校准结果设置到流量传感器 */
+
         }
     }
 }
