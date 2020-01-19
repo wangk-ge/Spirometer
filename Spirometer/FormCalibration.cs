@@ -153,12 +153,12 @@ namespace Spirometer
             // 保存数据点列表引用
             m_pointsPT = seriesPT.Points;
 
-            /* 加载现有的吸气校准参数 */
-            foreach(var p in m_flowSensor.InCalibrationParams())
+            /* 加载现有的吸气校准参数到表格 */
+            foreach (var p in m_flowSensor.InCalibrationParams())
             {
                 AddParamToDataGridView(p);
             }
-            /* 加载现有的呼气校准参数 */
+            /* 加载现有的呼气校准参数到表格 */
             foreach (var p in m_flowSensor.EnCalibrationParams())
             {
                 AddParamToDataGridView(p);

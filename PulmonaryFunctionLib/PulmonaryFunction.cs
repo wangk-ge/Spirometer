@@ -204,7 +204,7 @@ namespace PulmonaryFunctionLib
 
         private State m_state = State.Reset; // 工作状态
         private readonly double SAMPLE_TIME = 3.0; // 采样时间(ms)
-        private WaveStatistician m_waveStatistician = new WaveStatistician(); // 用于统计波动数据
+        private WaveStatistician m_waveStatistician = new WaveStatistician(100); // 用于统计波动数据
         private readonly int START_SAMPLE_COUNT = 2; // 启动检测,波动统计采样次数
         private readonly int STOP_SAMPLE_COUNT = 100; // 停止检测,波动统计采样次数
         private readonly double START_FLOW_DELTA = 0.01; // 斜度绝对值超过该阈值将识别为启动测试(斜度为正表示吸气启动、为负表示吹气开始)

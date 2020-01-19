@@ -146,7 +146,6 @@
             this.dataGridViewResult.Location = new System.Drawing.Point(0, 0);
             this.dataGridViewResult.MultiSelect = false;
             this.dataGridViewResult.Name = "dataGridViewResult";
-            this.dataGridViewResult.ReadOnly = true;
             this.dataGridViewResult.RowTemplate.Height = 23;
             this.dataGridViewResult.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dataGridViewResult.Size = new System.Drawing.Size(1116, 216);
@@ -210,7 +209,6 @@
             this.Column6.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
             this.Column6.HeaderText = "是否应用";
             this.Column6.Name = "Column6";
-            this.Column6.ReadOnly = true;
             this.Column6.Width = 59;
             // 
             // FormCalibration
