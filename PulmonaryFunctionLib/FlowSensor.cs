@@ -480,51 +480,75 @@ namespace PulmonaryFunctionLib
         }
 
         /* 取得环境温度(异步版本) */
-        public async Task<string> AmbientTemperatureAsync()
+        public async Task<double> AmbientTemperatureAsync()
         {
             string cmd = "[BME280_TEMP]"; // 取得环境温度
             string cmdResp = await ExcuteCmdAsync(cmd, 2000);
-            return cmdResp;
+            if (cmdResp != string.Empty)
+            {
+                return Convert.ToDouble(cmdResp);
+            }
+            return 0.0;
         }
 
         /* 取得环境温度(同步版本) */
-        public string AmbientTemperature()
+        public double AmbientTemperature()
         {
             string cmd = "[BME280_TEMP]"; // 取得环境温度
             string cmdResp = ExcuteCmd(cmd, 2000);
-            return cmdResp;
+            if (cmdResp != string.Empty)
+            {
+                return Convert.ToDouble(cmdResp);
+            }
+            return 0.0;
         }
 
         /* 取得环境湿度(异步版本) */
-        public async Task<string> AmbientHumidityAsync()
+        public async Task<double> AmbientHumidityAsync()
         {
             string cmd = "[BME280_HUMI]"; // 取得环境湿度
             string cmdResp = await ExcuteCmdAsync(cmd, 2000);
-            return cmdResp;
+            if (cmdResp != string.Empty)
+            {
+                return Convert.ToDouble(cmdResp);
+            }
+            return 0.0;
         }
 
         /* 取得环境湿度(同步版本) */
-        public string AmbientHumidity()
+        public double AmbientHumidity()
         {
             string cmd = "[BME280_HUMI]"; // 取得环境湿度
             string cmdResp = ExcuteCmd(cmd, 2000);
-            return cmdResp;
+            if (cmdResp != string.Empty)
+            {
+                return Convert.ToDouble(cmdResp);
+            }
+            return 0.0;
         }
 
         /* 取得大气压(异步版本) */
-        public async Task<string> BarometricAsync()
+        public async Task<double> BarometricAsync()
         {
             string cmd = "[BME280_BARO]"; // 取得大气压
             string cmdResp = await ExcuteCmdAsync(cmd, 2000);
-            return cmdResp;
+            if (cmdResp != string.Empty)
+            {
+                return Convert.ToDouble(cmdResp);
+            }
+            return 0.0;
         }
 
         /* 取得大气压(同步版本) */
-        public string Barometric()
+        public double Barometric()
         {
             string cmd = "[BME280_BARO]"; // 取得大气压
             string cmdResp = ExcuteCmd(cmd, 2000);
-            return cmdResp;
+            if (cmdResp != string.Empty)
+            {
+                return Convert.ToDouble(cmdResp);
+            }
+            return 0.0;   
         }
     }
 }
