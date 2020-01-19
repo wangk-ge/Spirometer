@@ -37,6 +37,7 @@
             this.toolStripButtonStart = new System.Windows.Forms.ToolStripButton();
             this.dataGridViewResult = new System.Windows.Forms.DataGridView();
             this.toolStripButtonApply = new System.Windows.Forms.ToolStripButton();
+            this.Column0 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -134,6 +135,7 @@
             this.dataGridViewResult.BackgroundColor = System.Drawing.SystemColors.ControlLightLight;
             this.dataGridViewResult.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridViewResult.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.Column0,
             this.Column1,
             this.Column2,
             this.Column3,
@@ -159,6 +161,14 @@
             this.toolStripButtonApply.Size = new System.Drawing.Size(84, 22);
             this.toolStripButtonApply.Text = "应用校准结果";
             this.toolStripButtonApply.Click += new System.EventHandler(this.toolStripButtonApply_Click);
+            // 
+            // Column0
+            // 
+            this.Column0.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.ColumnHeader;
+            this.Column0.HeaderText = "方向";
+            this.Column0.Name = "Column0";
+            this.Column0.ReadOnly = true;
+            this.Column0.Width = 54;
             // 
             // Column1
             // 
@@ -238,6 +248,7 @@
         private System.Windows.Forms.ToolStripButton toolStripButtonStart;
         private System.Windows.Forms.DataGridView dataGridViewResult;
         private System.Windows.Forms.ToolStripButton toolStripButtonApply;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column0;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column1;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column2;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column3;

@@ -17,7 +17,7 @@ namespace PulmonaryFunctionLib
         public double PresureVariance { get; private set; } = 0.0; // 采集的Presure方差(代表压差的离散程度,越小表示越集中)
         public double CalVolume { get; private set; } = 0.0; // 定标桶容积(单位: L)
         public double PeekPresure { get { return (m_peekPresureIndex < m_listPresure.Count) ? m_listPresure[(int)m_peekPresureIndex] : 0.0; } } // Presure极值
-        public double PresureFlowScale { get { return (PresureSum != 0) ? (SAMPLE_RATE / PresureSum) : 0.0; } } // Presure转换成Flow的比例系数
+        public double PresureFlowScale { get { return (PresureSum != 0) ? (SAMPLE_RATE / Math.Abs(PresureSum)) : 0.0; } } // Presure转换成Flow的比例系数
         public bool IsValid { get { return true; } } // 本次结果是否有效(自动判断校准结果有效性)[TODO]
 
         public delegate void InspirationStartHandler(uint sampleIndex); // 吸气开始事件代理
