@@ -621,5 +621,10 @@ namespace Spirometer
         {
             ShowLoadCSVDialog();
         }
+
+        private void toolStripButtonClear_Click(object sender, EventArgs e)
+        {
+            ClearAll();
+        }
     }
 }
