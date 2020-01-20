@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MathNet.Numerics.LinearAlgebra;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -29,6 +30,13 @@ namespace PulmonaryFunctionLib
 
         private List<double> m_listPresure = new List<double>(); // 压差数据列表
 
+        private struct SampleListInfo
+        {
+            public uint startIndex; // 起始下标
+            public uint endIndex; // 结束下标
+        }
+        private List<SampleListInfo> m_sampleListInfos = new List<SampleListInfo>();
+
         private enum State
         {
             Reset, // 复位状态
@@ -50,8 +58,11 @@ namespace PulmonaryFunctionLib
         private uint m_peekPresureIndex = 0U; // 跟踪峰值压差点Index
 
         /* 测试启动/结束点 */
-        private uint m_measureStartIndex = 0U; // 测试启动点Index
-        private uint m_measureEndIndex = 0U; // 测试结束点Index
+        private uint m_startIndex = 0U; // 测试启动点Index
+        private uint m_endIndex = 0U; // 测试结束点Index
+
+        private double m_minPresaure = double.MaxValue; // 最小值
+        private double m_maxPresaure = double.MinValue; // 最大值
 
         public FlowCalibrator(double sampleRate, double calVolume = 1.0)
         {
@@ -72,19 +83,22 @@ namespace PulmonaryFunctionLib
             m_state = State.Reset;
             m_waveStatistician.Reset();
             m_peekPresureIndex = 0U;
-            m_measureStartIndex = 0U;
-            m_measureEndIndex = 0U;
+            m_startIndex = 0U;
+            m_endIndex = 0U;
+            //m_sampleListInfos.Clear();
+            //m_minPresaure = double.MaxValue;
+            //m_maxPresaure = double.MinValue;
         }
 
         /* 计算Presure数据均值 */
         private double CalcPresureAvg()
         {
-            if (m_measureEndIndex <= m_measureStartIndex)
+            if (m_endIndex <= m_startIndex)
             {
                 return 0.0;
             }
 
-            uint n = m_measureEndIndex - m_measureStartIndex;
+            uint n = m_endIndex - m_startIndex;
             double avg = PresureSum / n;
             return avg;
         }
@@ -94,7 +108,7 @@ namespace PulmonaryFunctionLib
         {
             double varianceSum = 0.0;
             uint i = 0;
-            for (i = m_measureStartIndex; i < m_measureEndIndex; ++i)
+            for (i = m_startIndex; i < m_endIndex; ++i)
             {
                 double d = m_listPresure[(int)i] - PresureAvg;
                 varianceSum += (d * d);
@@ -151,7 +165,7 @@ namespace PulmonaryFunctionLib
                             m_waveStatistician.Reset();
 
                             /* 记录结束测试点Index */
-                            m_measureEndIndex = sampleIndex;
+                            m_endIndex = sampleIndex;
 
                             /* 进入测试停止状态 */
                             SetState(State.Stop);
@@ -162,8 +176,16 @@ namespace PulmonaryFunctionLib
                             /* 计算方差 */
                             PresureVariance = CalcPresureVariance();
 
+                            /* 记录本次校准过程数据 */
+                            uint count = m_endIndex - m_startIndex + 1;
+                            if (count > (SAMPLE_RATE / 4))
+                            {
+                                SampleListInfo info = new SampleListInfo() { startIndex = m_startIndex, endIndex = m_endIndex };
+                                m_sampleListInfos.Add(info);
+                            }
+
                             /* 触发测量结束事件 */
-                            MeasureStoped?.Invoke(m_measureEndIndex, m_peekPresureIndex);
+                            MeasureStoped?.Invoke(m_endIndex, m_peekPresureIndex);
                         }
                         else
                         {
@@ -213,7 +235,7 @@ namespace PulmonaryFunctionLib
                                 m_waveStatistician.Reset();
 
                                 /* 记录启动测试点Index */
-                                m_measureStartIndex = sampleIndex;
+                                m_startIndex = sampleIndex;
 
                                 /* 记录启动类型(是否吸气启动) */
                                 if (delta > START_PRESURE_DELTA)
@@ -222,7 +244,7 @@ namespace PulmonaryFunctionLib
                                     SetState(State.Inspiration);
 
                                     /* 触发吸气开始事件 */
-                                    InspirationStarted?.Invoke(m_measureStartIndex);
+                                    InspirationStarted?.Invoke(m_startIndex);
                                 }
                                 else
                                 { // 呼气开始
@@ -230,7 +252,7 @@ namespace PulmonaryFunctionLib
                                     SetState(State.Expiration);
 
                                     /* 触发呼气开始事件 */
-                                    ExpirationStarted?.Invoke(m_measureStartIndex);
+                                    ExpirationStarted?.Invoke(m_startIndex);
                                 }
                             }
                             else
@@ -253,6 +275,15 @@ namespace PulmonaryFunctionLib
                         {
                             m_peekPresureIndex = sampleIndex;
                         }
+
+                        if (presure < m_minPresaure)
+                        {
+                            m_minPresaure = presure;
+                        }
+                        if (presure > m_maxPresaure)
+                        {
+                            m_maxPresaure = presure;
+                        }
                         break;
                     }
                 case State.Expiration: // 正在呼气状态
@@ -261,6 +292,15 @@ namespace PulmonaryFunctionLib
                         if (presure < m_listPresure[(int)m_peekPresureIndex])
                         {
                             m_peekPresureIndex = sampleIndex;
+                        }
+
+                        if (presure < m_minPresaure)
+                        {
+                            m_minPresaure = presure;
+                        }
+                        if (presure > m_maxPresaure)
+                        {
+                            m_maxPresaure = presure;
                         }
                         break;
                     }
@@ -276,6 +316,54 @@ namespace PulmonaryFunctionLib
         public double GetTime(uint sampleIendex)
         {
             return sampleIendex * SAMPLE_TIME;
+        }
+
+        /* 计算校准参数 */
+        public void CalcCalibrationParams()
+        {
+            int sectionNum = m_sampleListInfos.Count; // 分段个数
+            if (sectionNum < 2)
+            {
+                return;
+            }
+
+            double maxRange = m_maxPresaure - m_minPresaure; // 最大范围
+            double sectionLen = maxRange / sectionNum; // 分段长度
+            double[] sectionTable = new double[sectionNum];
+            for (int i = 0; i < sectionNum; ++i)
+            {
+                sectionTable[i] = m_minPresaure + i * sectionLen;
+            }
+            double[,] matrixA = new double[m_sampleListInfos.Count, sectionNum];
+            for (int listIndex = 0; listIndex < m_sampleListInfos.Count; ++listIndex)
+            {
+                SampleListInfo info = m_sampleListInfos[listIndex];
+                int startIndex = (int)info.startIndex;
+                int endIndex = (int)info.endIndex;
+                for (int i = startIndex; i <= endIndex; ++i)
+                {
+                    double presure = m_listPresure[i];
+                    /* 计算所属分段Index */
+                    int sectionIndex = (int)((presure - m_minPresaure) / sectionLen);
+                    if (sectionIndex >= sectionNum)
+                    {
+                        sectionIndex = sectionNum - 1;
+                    }
+                    matrixA[listIndex, sectionIndex] += presure; // 累加到对应分段
+                }
+            }
+            double[] vectorB = new double[m_sampleListInfos.Count];
+            for (int i = 0; i < vectorB.Length; ++i)
+            {
+                vectorB[i] = CalVolume * SAMPLE_RATE;
+            }
+
+            var A = Matrix<double>.Build.DenseOfArray(matrixA);
+            var b = Vector<double>.Build.Dense(vectorB);
+
+            var result = A.Solve(b);
+
+            Console.WriteLine(result.ToString());
         }
     }
 }

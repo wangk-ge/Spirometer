@@ -320,7 +320,7 @@ namespace Spirometer
         /* 测量已停止 */
         private void OnMeasureStoped()
         {
-            Console.WriteLine($"PresureSum: {m_flowCalibrator.PresureSum} \t PeekPresure: {m_flowCalibrator.PeekPresure} \t PresureAvg: {m_flowCalibrator.PresureAvg} \t K: {m_flowSensor.SAMPLE_RATE / m_flowCalibrator.PresureSum} \t PresureVariance: {m_flowCalibrator.PresureVariance}");
+            //Console.WriteLine($"PresureSum: {m_flowCalibrator.PresureSum} \t PeekPresure: {m_flowCalibrator.PeekPresure} \t PresureAvg: {m_flowCalibrator.PresureAvg} \t K: {m_flowSensor.SAMPLE_RATE / m_flowCalibrator.PresureSum} \t PresureVariance: {m_flowCalibrator.PresureVariance}");
 
             /* 添加校准参数到结果列表 */
             FlowSensor.CalibrationParam p = new FlowSensor.CalibrationParam()
@@ -547,6 +547,8 @@ namespace Spirometer
                     m_refreshTimer.Stop();
                     /* 尝试清空数据队列 */
                     TryClearDataQueue();
+
+                    m_flowCalibrator.CalcCalibrationParams();
                 }
             }
         }
