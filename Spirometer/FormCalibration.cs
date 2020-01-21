@@ -34,6 +34,9 @@ namespace Spirometer
 
         private TaskCompletionSource<bool> m_dataPlotTaskComp; // 用于监控数据输出到Plot数据完成事件
 
+        private List<double> m_calParamSectionKeyList = new List<double>();
+        private List<double> m_calParamValList = new List<double>();
+
         public FormCalibration(FlowSensor flowSensor, double calVolume = 1.0)
         {
             m_flowSensor = flowSensor;
@@ -499,7 +502,11 @@ namespace Spirometer
                 toolStripButtonStart.Enabled = true;
                 toolStripButtonApply.Enabled = true;
 
-                m_flowCalibrator.CalcCalibrationParams();
+                bool bRet = m_flowCalibrator.CalcCalibrationParams(m_calParamSectionKeyList, m_calParamValList);
+                if (bRet)
+                {
+                    m_flowSensor.SetCalibrationParamList(m_calParamSectionKeyList, m_calParamValList);
+                }
             }
         }
 
@@ -548,7 +555,11 @@ namespace Spirometer
                     /* 尝试清空数据队列 */
                     TryClearDataQueue();
 
-                    m_flowCalibrator.CalcCalibrationParams();
+                    bRet = m_flowCalibrator.CalcCalibrationParams(m_calParamSectionKeyList, m_calParamValList);
+                    if (bRet)
+                    {
+                        m_flowSensor.SetCalibrationParamList(m_calParamSectionKeyList, m_calParamValList);
+                    }
                 }
             }
         }

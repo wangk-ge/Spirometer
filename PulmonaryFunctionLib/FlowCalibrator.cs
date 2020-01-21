@@ -1,4 +1,5 @@
-﻿using MathNet.Numerics.LinearAlgebra;
+﻿using MathNet.Numerics;
+using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double.Solvers;
 using MathNet.Numerics.LinearAlgebra.Solvers;
 using System;
@@ -37,8 +38,6 @@ namespace PulmonaryFunctionLib
         {
             public uint startIndex; // 起始下标
             public uint endIndex; // 结束下标
-            public double min; // 最小值
-            public double max; // 最大值
             public double sum; // 和值
         }
         private List<SampleListInfo> m_sampleListInfos = new List<SampleListInfo>();
@@ -92,8 +91,8 @@ namespace PulmonaryFunctionLib
             m_startIndex = 0U;
             m_endIndex = 0U;
             //m_sampleListInfos.Clear();
-            m_minPresaure = double.MaxValue;
-            m_maxPresaure = double.MinValue;
+            //m_minPresaure = double.MaxValue;
+            //m_maxPresaure = double.MinValue;
         }
 
         /* 清除 */
@@ -104,6 +103,8 @@ namespace PulmonaryFunctionLib
             Presure = 0.0;
             m_listPresure.Clear();
             m_sampleListInfos.Clear();
+            m_minPresaure = double.MaxValue;
+            m_maxPresaure = double.MinValue;
         }
 
         /* 计算Presure数据均值 */
@@ -205,7 +206,7 @@ namespace PulmonaryFunctionLib
                             double absSum = Math.Abs(PresureSum);
                             if (absSum > 40 * CalVolume)
                             {
-                                SampleListInfo info = new SampleListInfo() { startIndex = m_startIndex, endIndex = m_endIndex, min = m_minPresaure, max = m_maxPresaure, sum = PresureSum };
+                                SampleListInfo info = new SampleListInfo() { startIndex = m_startIndex, endIndex = m_endIndex, sum = PresureSum };
                                 m_sampleListInfos.Add(info);
                             }
 
@@ -258,10 +259,6 @@ namespace PulmonaryFunctionLib
 
                                 /* 初始化和值 */
                                 PresureSum = (m_listPresure[(int)m_startIndex] + presure);
-
-                                /* 初始化最值 */
-                                m_minPresaure = presure;
-                                m_maxPresaure = presure;
 
                                 /* 重置波动统计器 */
                                 m_waveStatistician.Reset();
@@ -348,197 +345,66 @@ namespace PulmonaryFunctionLib
         }
 
         /* 计算校准参数 */
-        public void CalcCalibrationParams()
+        public bool CalcCalibrationParams(List<double> sectionKeyList, List<double> paramValList)
         {
-            /* 按最大流速进行分类 */
-            double[,] matrixA = new double[10, 10];
-            int[] classNums = new int[matrixA.GetLength(0)]; // 每个分类的样本数
-            foreach (var info in m_sampleListInfos)
+            sectionKeyList.Clear();
+            paramValList.Clear();
+
+            /* 自动进行分段 */
+            double sectionStep = 0.1;
+            /* 负方向 */
+            double sectionKey = 0;
+            for (; sectionKey > m_minPresaure; sectionKey -= sectionStep)
             {
+                sectionKeyList.Add(sectionKey);
+            }
+            /* 正方向 */
+            sectionKey = sectionStep;
+            for (; sectionKey < m_maxPresaure; sectionKey += sectionStep)
+            {
+                sectionKeyList.Add(sectionKey);
+            }
+            sectionKeyList.Add(m_maxPresaure);
+            sectionKeyList.Sort();
+
+            double[][] matrixA = new double[m_sampleListInfos.Count][];
+            double[] vectorB = new double[matrixA.GetLength(0)];
+            for (int infoIndex = 0; infoIndex < m_sampleListInfos.Count; ++infoIndex)
+            {
+                SampleListInfo info = m_sampleListInfos[infoIndex];
                 int startIndex = (int)info.startIndex;
                 int endIndex = (int)info.endIndex;
-                /* 判断本次测试数据所属分类 */
-                int classIndex = 0;
-                if (info.sum > 0)
-                {
-                    if (info.max > 1.5)
-                    {
-                        classIndex = 9;
-                    }
-                    else if (info.max > 1.0)
-                    {
-                        classIndex = 8;
-                    }
-                    else if (info.max > 0.5)
-                    {
-                        classIndex = 7;
-                    }
-                    else if (info.max > 0.25)
-                    {
-                        classIndex = 6;
-                    }
-                    else //if (info.max > 0)
-                    {
-                        classIndex = 5;
-                    }
-                }
-                else
-                {
-                    if (info.min < -1.0)
-                    {
-                        classIndex = 0;
-                    }
-                    else if (info.min < -0.75)
-                    {
-                        classIndex = 1;
-                    }
-                    else if (info.min < -0.5)
-                    {
-                        classIndex = 2;
-                    }
-                    else if (info.min < -0.25)
-                    {
-                        classIndex = 3;
-                    }
-                    else //if (info.min < 0)
-                    {
-                        classIndex = 4;
-                    }
-                }
+                
                 for (int i = startIndex; i <= endIndex; ++i)
                 {
                     double presure = m_listPresure[i];
-                    /* 计算所属分段Index */
-                    int sectionIndex = 0;
+                    /* 找到所属分段Index */
+                    int sectionIndex = sectionKeyList.BinarySearch(presure);
+                    if (sectionIndex < 0)
+                    {
+                        sectionIndex = ~sectionIndex;
+                    }
+                    
                     if (info.sum > 0)
                     {
-                        if (presure > 1.5)
-                        {
-                            sectionIndex = 9;
-                        }
-                        else if (presure > 1.0)
-                        {
-                            sectionIndex = 8;
-                        }
-                        else if (presure > 0.5)
-                        {
-                            sectionIndex = 7;
-                        }
-                        else if (presure > 0.25)
-                        {
-                            sectionIndex = 6;
-                        }
-                        else //if (presure > 0)
-                        {
-                            sectionIndex = 5;
-                        }
+                        vectorB[infoIndex] = CalVolume * SAMPLE_RATE;
                     }
                     else
                     {
-                        if (presure < -1.0)
-                        {
-                            sectionIndex = 0;
-                        }
-                        else if (presure < -0.75)
-                        {
-                            sectionIndex = 1;
-                        }
-                        else if (presure < -0.5)
-                        {
-                            sectionIndex = 2;
-                        }
-                        else if (presure < -0.25)
-                        {
-                            sectionIndex = 3;
-                        }
-                        else //if (presure < 0)
-                        {
-                            sectionIndex = 4;
-                        }
+                        vectorB[infoIndex] = -CalVolume * SAMPLE_RATE;
                     }
-                    matrixA[classIndex, sectionIndex] += presure; // 累加到对应分段
-                }
-                classNums[classIndex]++;
-            }
-            int midIndex = matrixA.GetLength(0) / 2;
-            double[] vectorB = new double[matrixA.GetLength(0)];
-            for (int i = 0; i < vectorB.Length; ++i)
-            {
-                if (i >= midIndex)
-                {
-                    vectorB[i] = CalVolume * SAMPLE_RATE * classNums[i];
-                }
-                else
-                {
-                    vectorB[i] = -CalVolume * SAMPLE_RATE * classNums[i];
+                    if (null == matrixA[infoIndex])
+                    {
+                        matrixA[infoIndex] = new double[sectionKeyList.Count];
+                    }
+                    matrixA[infoIndex][sectionIndex] += presure; // 累加到对应分段
                 }
             }
 
-            var A = Matrix<double>.Build.DenseOfArray(matrixA);
-            var b = Vector<double>.Build.Dense(vectorB);
+            double[] result = Fit.MultiDim(matrixA, vectorB, false, MathNet.Numerics.LinearRegression.DirectRegressionMethod.Svd);
+            paramValList.AddRange(result);
 
-            // Format matrix output to console
-            var formatProvider = (CultureInfo)CultureInfo.InvariantCulture.Clone();
-            formatProvider.TextInfo.ListSeparator = " ";
-#if true
-            var resultX = A.Solve(b);
-            Console.WriteLine(resultX.ToString());
-
-            // 4. Verify result. Multiply coefficient matrix "A" by result vector "x"
-            var reconstructVecorB = A * resultX;
-            Console.WriteLine(@"4. Multiply coefficient matrix 'A' by result vector 'x'");
-            Console.WriteLine(reconstructVecorB.ToString("#0.00\t", formatProvider));
-            Console.WriteLine();
-
-#else
-            // Create stop criteria to monitor an iterative calculation. There are next available stop criteria:
-            // - DivergenceStopCriterion: monitors an iterative calculation for signs of divergence;
-            // - FailureStopCriterion: monitors residuals for NaN's;
-            // - IterationCountStopCriterion: monitors the numbers of iteration steps;
-            // - ResidualStopCriterion: monitors residuals if calculation is considered converged;
-
-            // Stop calculation if 1000 iterations reached during calculation
-            var iterationCountStopCriterion = new IterationCountStopCriterion<double>(5000);
-
-            // Stop calculation if residuals are below 1E-4 --> the calculation is considered converged
-            var residualStopCriterion = new ResidualStopCriterion<double>(1e-10);
-
-            // Create monitor with defined stop criteria
-            var monitor = new Iterator<double>(iterationCountStopCriterion, residualStopCriterion);
-
-            // Create Multiple-Lanczos Bi-Conjugate Gradient Stabilized solver
-            var solver = new MlkBiCgStab();
-
-            // 1. Solve the matrix equation
-            var resultX = A.SolveIterative(b, solver, monitor);
-            Console.WriteLine(@"1. Solve the matrix equation");
-            Console.WriteLine();
-
-            // 2. Check solver status of the iterations.
-            // Solver has property IterationResult which contains the status of the iteration once the calculation is finished.
-            // Possible values are:
-            // - CalculationCancelled: calculation was cancelled by the user;
-            // - CalculationConverged: calculation has converged to the desired convergence levels;
-            // - CalculationDiverged: calculation diverged;
-            // - CalculationFailure: calculation has failed for some reason;
-            // - CalculationIndetermined: calculation is indetermined, not started or stopped;
-            // - CalculationRunning: calculation is running and no results are yet known;
-            // - CalculationStoppedWithoutConvergence: calculation has been stopped due to reaching the stopping limits, but that convergence was not achieved;
-            Console.WriteLine(@"2. Solver status of the iterations");
-            Console.WriteLine(monitor.Status);
-            Console.WriteLine();
-
-            // 3. Solution result vector of the matrix equation
-            Console.WriteLine(@"3. Solution result vector of the matrix equation");
-            Console.WriteLine(resultX.ToString("#0.00\t", formatProvider));
-            Console.WriteLine();
-
-            // 4. Verify result. Multiply coefficient matrix "A" by result vector "x"
-            var reconstructVecorB = A * resultX;
-            Console.WriteLine(@"4. Multiply coefficient matrix 'A' by result vector 'x'");
-            Console.WriteLine(reconstructVecorB.ToString("#0.00\t", formatProvider));
-            Console.WriteLine();
-#endif
+            return true;
         }
     }
 }

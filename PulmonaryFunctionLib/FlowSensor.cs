@@ -36,6 +36,9 @@ namespace PulmonaryFunctionLib
         public delegate void PresureRecvHandler(byte channel, double presure); // 压差接收代理
         public event PresureRecvHandler PresureRecved; // 压差收取事件
 
+        private List<double> m_calParamSectionKeyList = new List<double>();
+        private List<double> m_calParamValList = new List<double>();
+
         public FlowSensor()
         {
             //FrameDecoder.Test();
@@ -161,9 +164,40 @@ namespace PulmonaryFunctionLib
             }
         }
 
+        public void SetCalibrationParamList(List<double> sectionKeyList, List<double> paramValList)
+        {
+            m_calParamSectionKeyList.Clear();
+            m_calParamValList.Clear();
+            m_calParamSectionKeyList.AddRange(sectionKeyList);
+            m_calParamValList.AddRange(paramValList);
+        }
+
         /* 获取压差对应的压差转流量比例系数 */
         private double GetPresureFlowScale(double presure)
         {
+#if true
+            if (m_calParamSectionKeyList.Count <= 0)
+            {
+                return 1.0;
+            }
+
+            /* 找到所属分段Index */
+            int sectionIndex = m_calParamSectionKeyList.BinarySearch(presure);
+            if (sectionIndex < 0)
+            {
+                /*
+                 如果找到 item，则为已排序的 List<T> 中 item 的从零开始的索引；
+                 否则为一个负数，该负数是大于 item 的下一个元素的索引的按位求补。
+                 如果没有更大的元素，则为 Count 的按位求补。
+                 */
+                sectionIndex = ~sectionIndex;
+            }
+            if (sectionIndex >= m_calParamSectionKeyList.Count)
+            {
+                sectionIndex = (m_calParamSectionKeyList.Count - 1);
+            }
+            return m_calParamValList[sectionIndex];
+#else
             if (presure > 0)
             { // 吸气
                 if (m_inCalibrationParams.Count <= 0)
@@ -244,6 +278,7 @@ namespace PulmonaryFunctionLib
                 
                 return presureFlowScale;
             }
+#endif
         }
 
         /* 压差转流量,单位:L/S */
