@@ -68,8 +68,8 @@ namespace Spirometer
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Bottom,
-                Minimum = -55,
-                Maximum = 55,
+                Minimum = -55 * m_flowCalibrator.CalVolume,
+                Maximum = 55 * m_flowCalibrator.CalVolume,
                 Title = "Sum"
             };
             m_plotModelPS.Axes.Add(xAxisPS);
@@ -90,7 +90,7 @@ namespace Spirometer
             var annotationPS1 = new LineAnnotation()
             {
                 Color = OxyColors.Red,
-                X = -50,
+                X = -44 * m_flowCalibrator.CalVolume - 10,
                 LineStyle = LineStyle.Dash,
                 Type = LineAnnotationType.Vertical,
                 Text = "+10%"
@@ -101,7 +101,7 @@ namespace Spirometer
             var annotationPS2 = new LineAnnotation()
             {
                 Color = OxyColors.Red,
-                X = -40,
+                X = -44 * m_flowCalibrator.CalVolume + 10,
                 LineStyle = LineStyle.Dash,
                 Type = LineAnnotationType.Vertical,
                 Text = "-10%"
@@ -112,7 +112,7 @@ namespace Spirometer
             var annotationPS3 = new LineAnnotation()
             {
                 Color = OxyColors.Red,
-                X = 40,
+                X = 44 * m_flowCalibrator.CalVolume - 10,
                 LineStyle = LineStyle.Dash,
                 Type = LineAnnotationType.Vertical,
                 Text = "-10%"
@@ -123,7 +123,7 @@ namespace Spirometer
             var annotationPS4 = new LineAnnotation()
             {
                 Color = OxyColors.Red,
-                X = 50,
+                X = 44 * m_flowCalibrator.CalVolume + 10,
                 LineStyle = LineStyle.Dash,
                 Type = LineAnnotationType.Vertical,
                 Text = "+10%"
@@ -169,7 +169,7 @@ namespace Spirometer
                 IsPanEnabled = true,
                 Position = AxisPosition.Bottom,
                 Minimum = 0,
-                Maximum = 5 * 1000,
+                Maximum = 30 * 1000,
                 Title = "Time(MS)"
             };
             m_plotModelPT.Axes.Add(xAxisPT);
@@ -352,7 +352,7 @@ namespace Spirometer
         private void UpdatePTPlot(double xBegin)
         {
             /* 在必要时刷新曲线显示并执行自动滚屏 */
-            double xEnd = m_pointsPT.Count > 0 ? m_pointsPT.Last().X : 0;
+            double xEnd = (m_pointsPT.Count > 0) ? m_pointsPT.Last().X : 0;
             double xDelta = xEnd - xBegin;
             if (xDelta > 0)
             {
@@ -394,8 +394,8 @@ namespace Spirometer
             /* 尝试清空数据队列 */
             TryClearDataQueue();
 
-            /* 重置状态 */
-            m_flowCalibrator.Reset();
+            /* 清除 */
+            m_flowCalibrator.Clear();
 
             /* 清空结果列表 */
             ClearResultDataGridView();
@@ -446,7 +446,7 @@ namespace Spirometer
                         continue;
                     }
 
-                    double presure = Convert.ToDouble(strVal); // 压差
+                    double presure = Convert.ToDouble(strVal) / (10 * 1000 * 1000); // 压差
 
                     /* 压差数据存入队列,将在刷新定时器中读取 */
                     m_dataQueue.Enqueue(presure);
@@ -494,12 +494,12 @@ namespace Spirometer
 
                 await LoadCSVFileAsync(openCSVDialog.FileName);
 
-                /* 加载完毕,执行UI相关操作(确保在UI线程执行) */
-                this.BeginInvoke(new Action<FormCalibration>((obj) => {
-                    toolStripButtonLoadPresure.Enabled = true;
-                    toolStripButtonStart.Enabled = true;
-                    toolStripButtonApply.Enabled = true;
-                }), this);
+                /* 加载完毕,执行UI相关操作 */
+                toolStripButtonLoadPresure.Enabled = true;
+                toolStripButtonStart.Enabled = true;
+                toolStripButtonApply.Enabled = true;
+
+                m_flowCalibrator.CalcCalibrationParams();
             }
         }
 

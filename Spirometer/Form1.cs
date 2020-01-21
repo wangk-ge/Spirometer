@@ -762,15 +762,13 @@ namespace Spirometer
 
                 await LoadCSVFileAsync(openCSVDialog.FileName, isFlow);
 
-                /* 加载完毕,执行UI相关操作(确保在UI线程执行) */
-                this.BeginInvoke(new Action<Form1>((obj) => { 
-                    toolStripButtonLoadPresure.Enabled = true; 
-                    toolStripButtonLoadFlow.Enabled = true;
-                    toolStripButtonSaveFlow.Enabled = true;
-                    toolStripButtonConnect.Enabled = true;
-                    toolStripButtonStart.Enabled = true;
-                    toolStripButtonClear.Enabled = true;
-                }), this);
+                /* 加载完毕,执行UI相关操作 */
+                toolStripButtonLoadPresure.Enabled = true; 
+                toolStripButtonLoadFlow.Enabled = true;
+                toolStripButtonSaveFlow.Enabled = true;
+                toolStripButtonConnect.Enabled = true;
+                toolStripButtonStart.Enabled = true;
+                toolStripButtonClear.Enabled = true;
             }
         }
 
