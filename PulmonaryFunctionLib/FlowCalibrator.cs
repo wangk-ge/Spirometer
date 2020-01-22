@@ -32,9 +32,9 @@ namespace PulmonaryFunctionLib
             Expiration, // 呼气
         }
         /* 代理/事件 */
-        public delegate void SampleStartHandler(uint sampleIndex, RespireDirection direction); // 采样开始事件代理
+        public delegate void SampleStartHandler(uint presureIndex, RespireDirection direction); // 采样开始事件代理
         public event SampleStartHandler SampleStarted; // 采样开始事件
-        public delegate void SampleStopHandler(uint sampleIndex, RespireDirection direction); // 采样停止事件代理
+        public delegate void SampleStopHandler(uint presureIndex, RespireDirection direction, uint sampleIndex); // 采样停止事件代理
         public event SampleStopHandler SampleStoped; // 采样停止事件
 
         /* Presure数据列表 */
@@ -284,7 +284,7 @@ namespace PulmonaryFunctionLib
         public void Input(double presure)
         {
             /* 最新Presure数据索引值 */
-            uint sampleIndex = (uint)m_listPresure.Count;
+            uint presureIndex = (uint)m_listPresure.Count;
 
             /* 记录Presure数据到队列 */
             m_listPresure.Add(presure);
@@ -308,17 +308,17 @@ namespace PulmonaryFunctionLib
                             m_waveStatistician.Reset();
 
                             /* 记录结束测试点Index */
-                            m_endIndex = sampleIndex;
+                            m_endIndex = presureIndex;
 
                             /* 统计最大/最小值点 */
                             /* 统计最大/最小值点 */
                             if (presure < m_listPresure[(int)m_minPresureIndex])
                             {
-                                m_minPresureIndex = sampleIndex;
+                                m_minPresureIndex = presureIndex;
                             }
                             if (presure > m_listPresure[(int)m_maxPresureIndex])
                             {
-                                m_maxPresureIndex = sampleIndex;
+                                m_maxPresureIndex = presureIndex;
                             }
 
                             /* 呼吸方向 */
@@ -339,7 +339,8 @@ namespace PulmonaryFunctionLib
                             m_sampleInfoList.Add(info);
 
                             /* 触发测量结束事件 */
-                            SampleStoped?.Invoke(m_endIndex, direction);
+                            uint sampleIndex = (uint)(m_sampleInfoList.Count - 1);
+                            SampleStoped?.Invoke(m_endIndex, direction, sampleIndex);
                         }
                         else
                         {
@@ -380,18 +381,18 @@ namespace PulmonaryFunctionLib
                             if (Math.Abs(delta) > START_PRESURE_DELTA)
                             {
                                 /* 记录启动测试点Index */
-                                m_startIndex = sampleIndex - 1;
+                                m_startIndex = presureIndex - 1;
 
                                 /* 初始化最小/最大值点 */
                                 m_minPresureIndex = m_startIndex;
                                 m_maxPresureIndex = m_startIndex;
                                 if (presure < m_listPresure[(int)m_minPresureIndex])
                                 {
-                                    m_minPresureIndex = sampleIndex;
+                                    m_minPresureIndex = presureIndex;
                                 }
                                 if (presure > m_listPresure[(int)m_maxPresureIndex])
                                 {
-                                    m_maxPresureIndex = sampleIndex;
+                                    m_maxPresureIndex = presureIndex;
                                 }
 
                                 /* 初始化和值 */
@@ -442,11 +443,11 @@ namespace PulmonaryFunctionLib
                         /* 统计最大/最小值点 */
                         if (presure < m_listPresure[(int)m_minPresureIndex])
                         {
-                            m_minPresureIndex = sampleIndex;
+                            m_minPresureIndex = presureIndex;
                         }
                         if (presure > m_listPresure[(int)m_maxPresureIndex])
                         {
-                            m_maxPresureIndex = sampleIndex;
+                            m_maxPresureIndex = presureIndex;
                         }
                         break;
                     }
@@ -455,11 +456,11 @@ namespace PulmonaryFunctionLib
                         /* 统计最大/最小值点 */
                         if (presure < m_listPresure[(int)m_minPresureIndex])
                         {
-                            m_minPresureIndex = sampleIndex;
+                            m_minPresureIndex = presureIndex;
                         }
                         if (presure > m_listPresure[(int)m_maxPresureIndex])
                         {
-                            m_maxPresureIndex = sampleIndex;
+                            m_maxPresureIndex = presureIndex;
                         }
                         break;
                     }
@@ -472,9 +473,9 @@ namespace PulmonaryFunctionLib
         }
 
         /* 返回索引值对应的Time(没有做参数有效性检查) */
-        public double GetTime(uint sampleIendex)
+        public double GetTime(uint presureIendex)
         {
-            return sampleIendex * SAMPLE_TIME;
+            return presureIendex * SAMPLE_TIME;
         }
 
         /* 计算分段数 */
@@ -575,16 +576,17 @@ namespace PulmonaryFunctionLib
 
             /* 构造方程组参数矩阵 */
             double[][] matrixA = new double[sampleNum][];
-            double[] vectorB = new double[matrixA.GetLength(0)];
-            foreach (var infoIndex in sampleIndexList)
+            double[] vectorB = new double[sampleNum];
+            for (int index = 0; index < sampleNum; ++index)
             {
+                var infoIndex = sampleIndexList[index];
                 SampleListInfo info = m_sampleInfoList[(int)infoIndex];
                 int startIndex = (int)info.startIndex;
                 int endIndex = (int)info.endIndex;
                 
-                for (int i = startIndex; i <= endIndex; ++i)
+                for (int presureIndex = startIndex; presureIndex <= endIndex; ++presureIndex)
                 {
-                    double presure = m_listPresure[i];
+                    double presure = m_listPresure[presureIndex];
                     /* 找到所属分段Index */
                     int sectionIndex = sectionKeyList.BinarySearch(presure);
                     if (sectionIndex < 0)
@@ -594,17 +596,17 @@ namespace PulmonaryFunctionLib
                     
                     if (info.sum > 0)
                     {
-                        vectorB[infoIndex] = CalVolume * SAMPLE_RATE;
+                        vectorB[index] = CalVolume * SAMPLE_RATE;
                     }
                     else
                     {
-                        vectorB[infoIndex] = -CalVolume * SAMPLE_RATE;
+                        vectorB[index] = -CalVolume * SAMPLE_RATE;
                     }
-                    if (null == matrixA[infoIndex])
+                    if (null == matrixA[index])
                     {
-                        matrixA[infoIndex] = new double[sectionKeyList.Count];
+                        matrixA[index] = new double[sectionNum];
                     }
-                    matrixA[infoIndex][sectionIndex] += presure; // 累加到对应分段
+                    matrixA[index][sectionIndex] += presure; // 累加到对应分段
                 }
             }
 
