@@ -167,15 +167,37 @@ namespace PulmonaryFunctionLib
             return SampleMaxPresure(info);
         }
 
-        /* 样本的Presure平均值 */
-        public double SamplePresureAvg(SampleListInfo info)
+        /* 样本的Presure个数 */
+        public uint SamplePresureCount(SampleListInfo info)
         {
             if (info.startIndex >= info.endIndex)
             {
+                return 0U;
+            }
+            uint presureNum = info.endIndex - info.startIndex + 1;
+            return presureNum;
+        }
+
+        /* 样本的Presure个数(通过样本索引) */
+        public uint SamplePresureCount(uint sampleIndex)
+        {
+            if (sampleIndex >= m_sampleInfoList.Count)
+            {
+                return 0U;
+            }
+            var info = m_sampleInfoList[(int)sampleIndex];
+            return SamplePresureCount(info);
+        }
+
+        /* 样本的Presure平均值 */
+        public double SamplePresureAvg(SampleListInfo info)
+        {
+            uint presureNum = SamplePresureCount(info);
+            if (presureNum <= 0)
+            {
                 return 0.0;
             }
-            uint sampleNum = info.endIndex - info.startIndex + 1;
-            return info.sum / sampleNum;
+            return info.sum / presureNum;
         }
 
         /* 样本的Presure平均值(通过样本索引) */
@@ -226,11 +248,12 @@ namespace PulmonaryFunctionLib
         /* 样本的Presure转换成Flow的比例系数(均值) */
         public double SamplePresureAvgToFlowScale(SampleListInfo info)
         {
-            if (info.sum <= 0)
+            double absSum = Math.Abs(info.sum);
+            if (absSum < 0.00000001)
             {
                 return 0.0;
             }
-            return (SAMPLE_RATE * CalVolume) / Math.Abs(info.sum);
+            return (SAMPLE_RATE * CalVolume) / absSum;
         }
 
         /* 样本的Presure转换成Flow的比例系数(均值)(通过样本索引) */
