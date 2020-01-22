@@ -255,6 +255,37 @@ namespace PulmonaryFunctionLib
         /* 状态重置 */
         public void Reset()
         {
+            //Time = 0.0;
+            //InFlow = 0.0;
+            //InVolume = 0.0;
+            RespiratoryRate = 0.0;
+            m_state = State.Reset;
+            m_waveStatistician.Reset();
+            //m_peekFlowIndex = 0U;
+            //m_peekVolumeIndex = 0U;
+            m_peekVolumeKeepCount = 0U;
+            m_peekMaxVolumeIndexList.Clear();
+            m_peekMinVolumeIndexList.Clear();
+            m_measureStartIndex = 0U;
+            m_measureStartInspiration = true;
+            m_measureEndIndex = 0U;
+            //RespiratoryCycleCount = 0U;
+            ForceExpirationStartIndex = 0U;
+            ForceExpirationEndIndex = 0U;
+            m_maxVolumeIndex = 0U;
+            m_minVolumeIndex = 0U;
+            m_maxFlowIndex = 0U;
+            m_minFlowIndex = 0U;
+            //m_tvUpperSum = 0.0;
+            //m_tvUpperAvg = 0.0;
+            //m_tvLowerSum = 0.0;
+            //m_tvLowerAvg = 0.0;
+            //m_listFV.Clear();
+        }
+
+        /* 清除所有状态 */
+        public void Clear()
+        {
             Time = 0.0;
             InFlow = 0.0;
             InVolume = 0.0;

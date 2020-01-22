@@ -467,6 +467,9 @@ namespace Spirometer
 
             /* 更新肺功能参数显示 */
             UpdatePulmonaryFunctionParam();
+
+            /* 重置状态,继续等待输入 */
+            m_pulmonaryFunc.Reset();
         }
 
         /* 已接收到一个流量采集数据 */
@@ -599,8 +602,8 @@ namespace Spirometer
             /* 尝试清空数据队列 */
             TryClearDataQueue();
 
-            /* 重置状态 */
-            m_pulmonaryFunc.Reset();
+            /* 清除状态 */
+            m_pulmonaryFunc.Clear();
 
             /* 清除用力呼气6秒指示线 */
             m_6SecAnnotation = null;
@@ -701,7 +704,7 @@ namespace Spirometer
                             continue;
                         }
 
-                        double presure = Convert.ToDouble(strVal); // 压差
+                        double presure = Convert.ToDouble(strVal) / (10 * 1000 * 1000); // 压差
 
                         /* 压差转流量 */
                         double flow = m_flowSensor.PresureToFlow(presure); // 流量

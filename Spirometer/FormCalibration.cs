@@ -328,11 +328,11 @@ namespace Spirometer
             /* 添加校准参数到结果列表 */
             FlowSensor.CalibrationParam p = new FlowSensor.CalibrationParam()
             {
-                presureAvg = m_flowCalibrator.PresureAvg,
-                presureFlowScale = m_flowCalibrator.PresureFlowScale,
-                presureSum = m_flowCalibrator.PresureSum,
-                peekPresure = m_flowCalibrator.PeekPresure,
-                presureVariance = m_flowCalibrator.PresureVariance
+                presureAvg = m_flowCalibrator.SamplePresureAvg,
+                presureFlowScale = m_flowCalibrator.SamplePresureAvgToFlowScale,
+                presureSum = m_flowCalibrator.SamplePresureSum,
+                peekPresure = m_flowCalibrator.SamplePeekPresure,
+                presureVariance = m_flowCalibrator.SamplePresureVariance
             };
             AddParamToResultDataGridView(p, false);
 
@@ -348,7 +348,7 @@ namespace Spirometer
 
             /* 加入数据到对应的曲线 */
             m_pointsPT.Add(new DataPoint(m_flowCalibrator.Time, m_flowCalibrator.Presure));
-            m_pointsPS.Add(new DataPoint(m_flowCalibrator.PresureSum, m_flowCalibrator.Presure));
+            m_pointsPS.Add(new DataPoint(m_flowCalibrator.SamplePresureSum, m_flowCalibrator.Presure));
         }
 
         /* 更新 Presure-Time Plot,并执行自动滚屏 */

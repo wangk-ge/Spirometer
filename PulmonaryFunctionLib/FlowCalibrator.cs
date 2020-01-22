@@ -4,6 +4,7 @@ using MathNet.Numerics.LinearAlgebra.Double.Solvers;
 using MathNet.Numerics.LinearAlgebra.Solvers;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -14,17 +15,22 @@ namespace PulmonaryFunctionLib
     /* 流量校准器 */
     public class FlowCalibrator
     {
-        public double Time { get; private set; } = 0.0; // 时间(ms)
-        public double Presure { get; private set; } = 0.0; // 当前压差
-        public uint SampleCount { get { return (uint)m_listPresure.Count; } } // 已采集的样本数
-        public double PresureSum { get; private set; } = 0.0; // 采集的Presure求和值
-        public double PresureAvg { get; private set; } = 0.0; // 采集的Presure平均值
-        public double PresureVariance { get; private set; } = 0.0; // 采集的Presure方差(代表压差的离散程度,越小表示越集中)
         public double CalVolume { get; private set; } = 0.0; // 定标桶容积(单位: L)
-        public double PeekPresure { get { return (m_peekPresureIndex < m_listPresure.Count) ? m_listPresure[(int)m_peekPresureIndex] : 0.0; } } // Presure极值
-        public double PresureFlowScale { get { return (PresureSum != 0) ? ((SAMPLE_RATE * CalVolume) / Math.Abs(PresureSum)) : 0.0; } } // Presure转换成Flow的比例系数
-        public bool IsValid { get { return true; } } // 本次结果是否有效(自动判断校准结果有效性)[TODO]
 
+        /* 实时Presure数据属性 */
+        public double Time { get { return (m_listPresure.Count > 0) ? GetTime((uint)(m_listPresure.Count - 1)) : 0.0; } } // 当前采样时间点(ms)
+        public double Presure { get { return (m_listPresure.Count > 0) ? m_listPresure[m_listPresure.Count - 1] : 0.0; } } // 当前最新采集的Presure值
+        public uint PresureCount { get { return (uint)m_listPresure.Count; } } // 当前已采集的所有(Presure数据)总个数
+
+        /* 最新采集样本的属性 */
+        public double SamplePresureSum { get; private set; } = 0.0; // 最新采集样本的Presure求和值
+        public double SamplePresureAvg { get; private set; } = 0.0; // 最新采集样本的Presure平均值
+        public double SamplePresureVariance { get; private set; } = 0.0; // 最新采集样本的Presure方差(代表Presure的离散程度,越小表示越集中)
+        public double SamplePeekPresure { get { return (m_peekPresureIndex < m_listPresure.Count) ? m_listPresure[(int)m_peekPresureIndex] : 0.0; } } // 最新采集样本的Presure极值
+        public double SamplePresureAvgToFlowScale { get { return (SamplePresureSum != 0) ? ((SAMPLE_RATE * CalVolume) / Math.Abs(SamplePresureSum)) : 0.0; } } // 最新采集样本的Presure转换成Flow的比例系数(均值)
+        public bool SampleIsValid { get { return (Math.Abs(SamplePresureSum) > (40 * CalVolume)); } } // 最新采集样本是否有效(自动判断校准结果有效性)
+
+        /* 代理/事件 */
         public delegate void InspirationStartHandler(uint sampleIndex); // 吸气开始事件代理
         public event InspirationStartHandler InspirationStarted; // 吸气开始事件
         public delegate void ExpirationStartHandler(uint sampleIndex); // 呼气开始事件代理
@@ -32,16 +38,19 @@ namespace PulmonaryFunctionLib
         public delegate void MeasureStopHandler(uint sampleIndex, uint peekPresureIndex); // 测试停止事件代理
         public event MeasureStopHandler MeasureStoped; // 测试停止事件
 
+        /* 私有成员 */
         private List<double> m_listPresure = new List<double>(); // 压差数据列表
 
+        /* 样本信息类型(一个样本为一起起始和结束之间的所有压差数据) */
         private struct SampleListInfo
         {
             public uint startIndex; // 起始下标
             public uint endIndex; // 结束下标
-            public double sum; // 和值
+            public double sum; // 和值（为正表示吸气/为负表示呼气）
         }
-        private List<SampleListInfo> m_sampleListInfos = new List<SampleListInfo>();
+        private List<SampleListInfo> m_sampleInfoList = new List<SampleListInfo>(); // 样本信息列表
 
+        /* 状态类型 */
         private enum State
         {
             Reset, // 复位状态
@@ -66,8 +75,8 @@ namespace PulmonaryFunctionLib
         private uint m_startIndex = 0U; // 测试启动点Index
         private uint m_endIndex = 0U; // 测试结束点Index
 
-        private double m_minPresaure = double.MaxValue; // 最小值
-        private double m_maxPresaure = double.MinValue; // 最大值
+        private double m_minPresaure = double.MaxValue; // 整个测量范围内的最小值(考察所有样本)
+        private double m_maxPresaure = double.MinValue; // 整个测量范围内的最大值(考察所有样本)
 
         public FlowCalibrator(double sampleRate, double calVolume = 1.0)
         {
@@ -79,11 +88,9 @@ namespace PulmonaryFunctionLib
         /* 状态重置 */
         public void Reset()
         {
-            //Time = 0.0;
-            //Presure = 0.0;
-            PresureSum = 0.0;
-            PresureAvg = 0.0;
-            PresureVariance = 0.0;
+            SamplePresureSum = 0.0;
+            SamplePresureAvg = 0.0;
+            SamplePresureVariance = 0.0;
             //m_listPresure.Clear();
             m_state = State.Reset;
             m_waveStatistician.Reset();
@@ -99,10 +106,8 @@ namespace PulmonaryFunctionLib
         public void Clear()
         {
             Reset();
-            Time = 0.0;
-            Presure = 0.0;
             m_listPresure.Clear();
-            m_sampleListInfos.Clear();
+            m_sampleInfoList.Clear();
             m_minPresaure = double.MaxValue;
             m_maxPresaure = double.MinValue;
         }
@@ -116,7 +121,7 @@ namespace PulmonaryFunctionLib
             }
 
             uint n = m_endIndex - m_startIndex;
-            double avg = PresureSum / n;
+            double avg = SamplePresureSum / n;
             return avg;
         }
 
@@ -127,7 +132,7 @@ namespace PulmonaryFunctionLib
             uint i = 0;
             for (i = m_startIndex; i < m_endIndex; ++i)
             {
-                double d = m_listPresure[(int)i] - PresureAvg;
+                double d = m_listPresure[(int)i] - SamplePresureAvg;
                 varianceSum += (d * d);
             }
             double variance = 0.0;
@@ -154,20 +159,17 @@ namespace PulmonaryFunctionLib
         /* 输入压差数据 */
         public void Input(double presure)
         {
-            /* Presure样本索引值 */
+            /* 最新Presure数据索引值 */
             uint sampleIndex = (uint)m_listPresure.Count;
 
-            /* 样本时间戳 */
-            Time = sampleIndex * SAMPLE_TIME;
-
-            /* 当前压差 */
-            Presure = presure;
+            /* 记录Presure数据到队列 */
+            m_listPresure.Add(presure);
 
             if ((m_state > State.WaitStart)
                 && (m_state < State.Stop))
             {
                 /* 统计和值 */
-                PresureSum += presure;
+                SamplePresureSum += presure;
 
                 /* 检测停止条件 */
                 if (Math.Abs(presure) < STOP_PRESURE_THRESHOLD)
@@ -184,6 +186,7 @@ namespace PulmonaryFunctionLib
                             /* 记录结束测试点Index */
                             m_endIndex = sampleIndex;
 
+                            /* 统计最大/最小值 */
                             if (presure < m_minPresaure)
                             {
                                 m_minPresaure = presure;
@@ -197,17 +200,17 @@ namespace PulmonaryFunctionLib
                             SetState(State.Stop);
 
                             /* 计算均值 */
-                            PresureAvg = CalcPresureAvg();
+                            SamplePresureAvg = CalcPresureAvg();
 
                             /* 计算方差 */
-                            PresureVariance = CalcPresureVariance();
+                            SamplePresureVariance = CalcPresureVariance();
 
-                            /* 记录本次校准过程数据 */
-                            double absSum = Math.Abs(PresureSum);
-                            if (absSum > 40 * CalVolume)
+                            /* 如果当前样本有效 */
+                            if (SampleIsValid)
                             {
-                                SampleListInfo info = new SampleListInfo() { startIndex = m_startIndex, endIndex = m_endIndex, sum = PresureSum };
-                                m_sampleListInfos.Add(info);
+                                /* 记录当前样本信息 */
+                                SampleListInfo info = new SampleListInfo() { startIndex = m_startIndex, endIndex = m_endIndex, sum = SamplePresureSum };
+                                m_sampleInfoList.Add(info);
                             }
 
                             /* 触发测量结束事件 */
@@ -232,9 +235,6 @@ namespace PulmonaryFunctionLib
                 }
             }
 
-            /* 记录Presure数据到队列 */
-            m_listPresure.Add(presure);
-
             switch (m_state)
             {
                 case State.Reset: // 复位状态
@@ -258,7 +258,7 @@ namespace PulmonaryFunctionLib
                                 m_startIndex = sampleIndex - 1;
 
                                 /* 初始化和值 */
-                                PresureSum = (m_listPresure[(int)m_startIndex] + presure);
+                                SamplePresureSum = (m_listPresure[(int)m_startIndex] + presure);
 
                                 /* 重置波动统计器 */
                                 m_waveStatistician.Reset();
@@ -302,6 +302,7 @@ namespace PulmonaryFunctionLib
                             m_peekPresureIndex = sampleIndex;
                         }
 
+                        /* 统计最大/最小值 */
                         if (presure < m_minPresaure)
                         {
                             m_minPresaure = presure;
@@ -320,6 +321,7 @@ namespace PulmonaryFunctionLib
                             m_peekPresureIndex = sampleIndex;
                         }
 
+                        /* 统计最大/最小值 */
                         if (presure < m_minPresaure)
                         {
                             m_minPresaure = presure;
@@ -344,34 +346,66 @@ namespace PulmonaryFunctionLib
             return sampleIendex * SAMPLE_TIME;
         }
 
-        /* 计算校准参数 */
+        /* 计算分段数 */
+        private uint CalcSectionNum(double sectionStep)
+        {
+            /* 负方向分段数 */
+            uint sectionNumN = (uint)((0 - m_minPresaure) / sectionStep) + 1;
+
+            /* 正方向分段数 */
+            uint sectionNumP = (uint)((m_maxPresaure - 0) / sectionStep) + 1;
+
+            /* 总分段数 */
+            uint sectionNum = sectionNumN + sectionNumP;
+
+            return sectionNum;
+        }
+
+        /* 计算校准参数(校准参数列表通过函数参数返回) */
         public bool CalcCalibrationParams(List<double> sectionKeyList, List<double> paramValList)
         {
+            /* 自动分段步进长度 */
+            double sectionStep = 0.1;
+
+            /* 计算分段数量 */
+            uint sectionNum = CalcSectionNum(sectionStep);
+            
+            /* 样本数必须大于参数个数(分段个数) */
+            if (m_sampleInfoList.Count <= sectionNum)
+            {
+                return false;
+            }
+
+            /* 确保结果列表清空状态 */
             sectionKeyList.Clear();
             paramValList.Clear();
 
-            /* 自动进行分段 */
-            double sectionStep = 0.1;
-            /* 负方向 */
+            /* 进行负方向分段 */
             double sectionKey = 0;
             for (; sectionKey > m_minPresaure; sectionKey -= sectionStep)
             {
                 sectionKeyList.Add(sectionKey);
             }
-            /* 正方向 */
+            /* 进行正方向分段 */
             sectionKey = sectionStep;
             for (; sectionKey < m_maxPresaure; sectionKey += sectionStep)
             {
                 sectionKeyList.Add(sectionKey);
             }
             sectionKeyList.Add(m_maxPresaure);
+
+            /* 确保分段算法无误 */
+            Trace.Assert(sectionNum == sectionKeyList.Count);
+
+            /* 分段Key按升序排序 */
             sectionKeyList.Sort();
 
-            double[][] matrixA = new double[m_sampleListInfos.Count][];
+            /* 构造方程组参数矩阵 */
+            double[][] matrixA = new double[m_sampleInfoList.Count][];
             double[] vectorB = new double[matrixA.GetLength(0)];
-            for (int infoIndex = 0; infoIndex < m_sampleListInfos.Count; ++infoIndex)
+            for (int infoIndex = 0; infoIndex < m_sampleInfoList.Count; ++infoIndex)
             {
-                SampleListInfo info = m_sampleListInfos[infoIndex];
+                SampleListInfo info = m_sampleInfoList[infoIndex];
                 int startIndex = (int)info.startIndex;
                 int endIndex = (int)info.endIndex;
                 
@@ -401,10 +435,30 @@ namespace PulmonaryFunctionLib
                 }
             }
 
-            double[] result = Fit.MultiDim(matrixA, vectorB, false, MathNet.Numerics.LinearRegression.DirectRegressionMethod.Svd);
-            paramValList.AddRange(result);
+            bool bRet = false;
+            try
+            {
+                /* 使用多元线性最小二乘法（linear least squares）拟合最优参数集 */
+                double[] result = Fit.MultiDim(matrixA, vectorB, false, MathNet.Numerics.LinearRegression.DirectRegressionMethod.Svd);
 
-            return true;
+                paramValList.AddRange(result);
+                for (int i = 0; i < paramValList.Count; ++i)
+                {
+                    Console.WriteLine($"{sectionKeyList[i]}, {paramValList[i]}");
+                }
+
+                bRet = true;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Exception: {e.Message}");
+
+                sectionKeyList.Clear();
+                paramValList.Clear();
+                bRet = false;
+            }
+
+            return bRet;
         }
     }
 }
