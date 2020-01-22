@@ -217,40 +217,25 @@ namespace Spirometer
                 AddParamToResultDataGridView(p, true);
             }
 
-            /* 开始吸气 */
-            m_flowCalibrator.InspirationStarted += new FlowCalibrator.InspirationStartHandler((uint sampleIndex) =>
+            /* 采样开始 */
+            m_flowCalibrator.SampleStarted += new FlowCalibrator.SampleStartHandler((uint sampleIndex, FlowCalibrator.RespireDirection direction) =>
             {
-                Console.WriteLine($"InspirationStarted: {sampleIndex}");
+                Console.WriteLine($"SampleStarted: {sampleIndex} {direction}");
                 var annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Red,
                     X = m_flowCalibrator.GetTime(sampleIndex),
                     LineStyle = LineStyle.Dash,
                     Type = LineAnnotationType.Vertical,
-                    Text = "吸气"
+                    Text = (direction == FlowCalibrator.RespireDirection.Inspiration) ? "吸气" : "呼气",
                 };
                 m_plotModelPT.Annotations.Add(annotation);
             });
 
-            /* 开始呼气 */
-            m_flowCalibrator.ExpirationStarted += new FlowCalibrator.ExpirationStartHandler((uint sampleIndex) =>
+            /* 采样结束 */
+            m_flowCalibrator.SampleStoped += new FlowCalibrator.SampleStopHandler((uint sampleIndex, FlowCalibrator.RespireDirection direction) =>
             {
-                Console.WriteLine($"ExpirationStarted: {sampleIndex}");
-                var annotation = new LineAnnotation()
-                {
-                    Color = OxyColors.Violet,
-                    X = m_flowCalibrator.GetTime(sampleIndex),
-                    LineStyle = LineStyle.Dash,
-                    Type = LineAnnotationType.Vertical,
-                    Text = $"呼气"
-                };
-                m_plotModelPT.Annotations.Add(annotation);
-            });
-
-            /* 测量结束 */
-            m_flowCalibrator.MeasureStoped += new FlowCalibrator.MeasureStopHandler((uint sampleIndex, uint peekPresureIndex) =>
-            {
-                Console.WriteLine($"MeasureStoped: {sampleIndex}");
+                Console.WriteLine($"SampleStoped: {sampleIndex} {direction}");
                 var annotation = new LineAnnotation()
                 {
                     Color = OxyColors.Red,
@@ -262,7 +247,7 @@ namespace Spirometer
                 m_plotModelPT.Annotations.Add(annotation);
 
                 /* 测量已停止 */
-                OnMeasureStoped();
+                OnMeasureStoped(sampleIndex, direction);
             });
 
             /* 刷新定时器 */
@@ -321,20 +306,18 @@ namespace Spirometer
         }
 
         /* 测量已停止 */
-        private void OnMeasureStoped()
+        private void OnMeasureStoped(uint sampleIndex, FlowCalibrator.RespireDirection direction)
         {
-            //Console.WriteLine($"PresureSum: {m_flowCalibrator.PresureSum} \t PeekPresure: {m_flowCalibrator.PeekPresure} \t PresureAvg: {m_flowCalibrator.PresureAvg} \t K: {m_flowSensor.SAMPLE_RATE / m_flowCalibrator.PresureSum} \t PresureVariance: {m_flowCalibrator.PresureVariance}");
-
             /* 添加校准参数到结果列表 */
             FlowSensor.CalibrationParam p = new FlowSensor.CalibrationParam()
             {
-                presureAvg = m_flowCalibrator.SamplePresureAvg,
-                presureFlowScale = m_flowCalibrator.SamplePresureAvgToFlowScale,
-                presureSum = m_flowCalibrator.SamplePresureSum,
-                peekPresure = m_flowCalibrator.SamplePeekPresure,
-                presureVariance = m_flowCalibrator.SamplePresureVariance
+                presureAvg = m_flowCalibrator.SamplePresureAvg(sampleIndex),
+                presureFlowScale = m_flowCalibrator.SamplePresureAvgToFlowScale(sampleIndex),
+                presureSum = m_flowCalibrator.SamplePresureSum(sampleIndex),
+                peekPresure = (direction == FlowCalibrator.RespireDirection.Inspiration) ? m_flowCalibrator.SampleMaxPresure(sampleIndex) : m_flowCalibrator.SampleMinPresure(sampleIndex),
+                presureVariance = m_flowCalibrator.SamplePresureVariance(sampleIndex)
             };
-            AddParamToResultDataGridView(p, false);
+            AddParamToResultDataGridView(p, m_flowCalibrator.SampleIsValid(sampleIndex));
 
             /* 重置校准器,开始检测下一次校准启动 */
             m_flowCalibrator.Reset();
@@ -348,7 +331,7 @@ namespace Spirometer
 
             /* 加入数据到对应的曲线 */
             m_pointsPT.Add(new DataPoint(m_flowCalibrator.Time, m_flowCalibrator.Presure));
-            m_pointsPS.Add(new DataPoint(m_flowCalibrator.SamplePresureSum, m_flowCalibrator.Presure));
+            m_pointsPS.Add(new DataPoint(m_flowCalibrator.CurrSamplePresureSum, m_flowCalibrator.Presure));
         }
 
         /* 更新 Presure-Time Plot,并执行自动滚屏 */
