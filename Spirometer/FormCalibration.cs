@@ -24,12 +24,14 @@ namespace Spirometer
         private FlowSensor m_flowSensor; // 流量传感器
         private FlowCalibrator m_flowCalibrator; // 流量校准器
         private PlotModel m_plotModelPS; // 压差(Presure)-和值(Sum)图Model
+        private PlotModel m_plotModelAVGPK; // 平均压差(Presure)-K值图Model
         private PlotModel m_plotModelPT; // 压差(Presure)-时间(Time)图Model
 
         private System.Windows.Forms.Timer m_refreshTimer = new System.Windows.Forms.Timer(); // 波形刷新定时器
         private readonly int m_fps = 24; // 帧率
 
         private List<DataPoint> m_pointsPS; // 压差(Presure)-和值(Sum)数据
+        private List<DataPoint> m_pointsAVGPK; // 平均压差(Presure)-K值数据
         private List<DataPoint> m_pointsPT; // 压差(Presure)-时间(Time)数据
 
         private TaskCompletionSource<bool> m_dataPlotTaskComp; // 用于监控数据输出到Plot数据完成事件
@@ -149,6 +151,62 @@ namespace Spirometer
             plotViewPS.Model = m_plotModelPS;
             // 保存数据点列表引用
             m_pointsPS = seriesPS.Points;
+
+            /* 平均压差(Presure)-K值图 */
+            m_plotModelAVGPK = new PlotModel()
+            {
+                Title = "平均压差(Presure)-K值",
+                LegendTitle = "图例",
+                LegendOrientation = LegendOrientation.Horizontal,
+                LegendPlacement = LegendPlacement.Inside,
+                LegendPosition = LegendPosition.TopRight,
+                LegendBackground = OxyColors.Beige,
+                LegendBorder = OxyColors.Blue,
+                IsLegendVisible = false // 隐藏图例
+            };
+
+            //X轴,AVG Presure
+            var xAxisAVGPK = new LinearAxis()
+            {
+                MajorGridlineStyle = LineStyle.Dot,
+                MinorGridlineStyle = LineStyle.Dot,
+                IsZoomEnabled = true,
+                IsPanEnabled = true,
+                Position = AxisPosition.Bottom,
+                //Minimum = -55 * m_flowCalibrator.CalVolume,
+                //Maximum = 55 * m_flowCalibrator.CalVolume,
+                Title = "AVG Presure(inH2O)"
+            };
+            m_plotModelAVGPK.Axes.Add(xAxisAVGPK);
+
+            //Y轴,K值
+            var yAxisAVGPK = new LinearAxis()
+            {
+                MajorGridlineStyle = LineStyle.Dot,
+                MinorGridlineStyle = LineStyle.Dot,
+                IsZoomEnabled = true,
+                IsPanEnabled = true,
+                Position = AxisPosition.Left,
+                Title = "系数"
+            };
+            m_plotModelAVGPK.Axes.Add(yAxisAVGPK);
+
+            // 数据
+            var seriesAVGPK = new LineSeries()
+            {
+                Color = OxyColors.DimGray,
+                StrokeThickness = 1,
+                //MarkerSize = 1,
+                //MarkerStroke = OxyColors.DarkBlue,
+                //MarkerType = MarkerType.Circle,
+                Title = "Data"
+            };
+            m_plotModelAVGPK.Series.Add(seriesAVGPK);
+
+            // 设置View对应的Model
+            plotViewAVGPK.Model = m_plotModelAVGPK;
+            // 保存数据点列表引用
+            m_pointsAVGPK = seriesAVGPK.Points;
 
             /* 压差(Presure)-时间(Time)图 */
             m_plotModelPT = new PlotModel()
@@ -351,6 +409,33 @@ namespace Spirometer
                 /* 设置校准参数到列表 */
                 SetCaliParamToDataGridView(m_calParamSectionKeyList, m_calParamValList);
 
+                /* 显示分段标记 */
+                m_plotModelAVGPK.Annotations.Clear();
+                m_plotModelPS.Annotations.Clear();
+                foreach (var presure in m_calParamSectionKeyList)
+                {
+                    var annotation = new LineAnnotation()
+                    {
+                        Color = OxyColors.Red,
+                        X = presure,
+                        LineStyle = LineStyle.Dash,
+                        Type = LineAnnotationType.Vertical,
+                        Text = $"{presure}"
+                    };
+                    m_plotModelAVGPK.Annotations.Add(annotation);
+                    annotation = new LineAnnotation()
+                    {
+                        Color = OxyColors.Red,
+                        Y = presure,
+                        LineStyle = LineStyle.Dash,
+                        Type = LineAnnotationType.Horizontal,
+                        Text = $"{presure}"
+                    };
+                    m_plotModelPS.Annotations.Add(annotation);
+                }
+                m_plotModelAVGPK.InvalidatePlot(false);
+                m_plotModelPS.InvalidatePlot(false);
+
                 /* 更新状态栏(参数个数) */
                 toolStripStatusLabelParamCount.Text = m_calParamSectionKeyList.Count.ToString();
             }
@@ -358,9 +443,37 @@ namespace Spirometer
             return bRet;
         }
 
+        /* 添加数据点到平均压差(Presure)-K值图并刷新显示 */
+        private void AddPointToPlotAVGPK(double avgPresure, double k)
+        {
+            /* 插入对应位置，使列表保持按avgPresure递增顺序 */
+            int i = 0;
+            for (; i < m_pointsAVGPK.Count; ++i)
+            {
+                if (avgPresure <= m_pointsAVGPK[i].X)
+                {
+                    break;
+                }
+            }
+
+            if (i < m_pointsAVGPK.Count)
+            {
+                m_pointsAVGPK.Insert(i, new DataPoint(avgPresure, k));
+            }
+            else
+            {
+                m_pointsAVGPK.Add(new DataPoint(avgPresure, k));
+            }
+
+            /* 刷新显示 */
+            m_plotModelAVGPK.InvalidatePlot(true);
+        }
+
         /* 采样已停止 */
         private void OnSampleStoped(uint sampleIndex, FlowCalibrator.RespireDirection direction)
         {
+            bool bIsSampleValid = m_flowCalibrator.SampleIsValid(sampleIndex);
+
             /* 添加样本信息到列表 */
             FlowSensor.CalibrationParam p = new FlowSensor.CalibrationParam()
             {
@@ -370,7 +483,13 @@ namespace Spirometer
                 peekPresure = (direction == FlowCalibrator.RespireDirection.Inspiration) ? m_flowCalibrator.SampleMaxPresure(sampleIndex) : m_flowCalibrator.SampleMinPresure(sampleIndex),
                 presureVariance = m_flowCalibrator.SamplePresureVariance(sampleIndex)
             };
-            AddSampleInfoToDataGridView(p, m_flowCalibrator.SampleIsValid(sampleIndex));
+            AddSampleInfoToDataGridView(p, bIsSampleValid);
+
+            if (bIsSampleValid)
+            {
+                /* 添加数据点到平均压差(Presure)-K值图并刷新显示 */
+                AddPointToPlotAVGPK(p.peekPresure, p.presureFlowScale);
+            }
 
             /* 尝试计算校准参数并更新显示 */
             TryCalcAndUpdateCaliParam();

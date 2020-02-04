@@ -501,19 +501,50 @@ namespace PulmonaryFunctionLib
             return presureIendex * SAMPLE_TIME;
         }
 
-        /* 计算分段数 */
-        private uint CalcSectionNum(double minPresure, double maxPresure, double sectionStep)
+        /* 自动对Presure进行分段 */
+        private uint AutoDividePresureSections(double minPresure, double maxPresure, List<double> presureSectionList)
         {
-            /* 负方向分段数 */
-            uint sectionNumN = (uint)((0 - minPresure) / sectionStep) + 1;
+            /* 先清空 */
+            presureSectionList.Clear();
 
-            /* 正方向分段数 */
-            uint sectionNumP = (uint)((maxPresure - 0) / sectionStep) + 1;
+            /* 分段步进长度 */
+            double sectionStep1 = 0.1;
+            double sectionStep2 = 0.15;
 
-            /* 总分段数 */
-            uint sectionNum = sectionNumN + sectionNumP;
+            /* 进行负方向分段 */
+            double sectionPos = 0.0; // [0,-0.5)
+            for (; sectionPos > Math.Max(minPresure + sectionStep1, -0.5); sectionPos -= sectionStep1)
+            {
+                presureSectionList.Add(sectionPos);
+            }
+            if (sectionPos > (minPresure + sectionStep1))
+            {
+                sectionPos = -0.5; // [-0.5, min)
+                for (; sectionPos > (minPresure + sectionStep2); sectionPos -= sectionStep2)
+                {
+                    presureSectionList.Add(sectionPos);
+                }
+            }
+            /* 进行正方向分段 */
+            sectionPos = sectionStep1; // (0,0.5)
+            for (; sectionPos < Math.Min(maxPresure - sectionStep1, 0.5); sectionPos += sectionStep1)
+            {
+                presureSectionList.Add(sectionPos);
+            }
+            if (sectionPos < (maxPresure - sectionStep1))
+            {
+                sectionPos = 0.5; // [0.5,max)
+                for (; sectionPos < (maxPresure - sectionStep2); sectionPos += sectionStep2)
+                {
+                    presureSectionList.Add(sectionPos);
+                }
+            }
+            presureSectionList.Add(maxPresure);
 
-            return sectionNum;
+            /* 分段Key按升序排序 */
+            presureSectionList.Sort();
+
+            return (uint)presureSectionList.Count;
         }
 
         /* 计算校准参数(校准参数列表通过函数参数返回) */
@@ -561,41 +592,17 @@ namespace PulmonaryFunctionLib
             /* 样本数量 */
             uint sampleNum = (uint)sampleIndexList.Count;
 
-            /* 自动分段步进长度 */
-            double sectionStep = 0.1;
+            /* 确保结果列表清空状态 */
+            sectionKeyList.Clear();
+            paramValList.Clear();
 
-            /* 计算分段数量 */
-            uint sectionNum = CalcSectionNum(minPresureInAll, maxPresureInAll, sectionStep);
-
+            /* 自动对Presure进行分段 */
+            uint sectionNum = AutoDividePresureSections(minPresureInAll, maxPresureInAll, sectionKeyList);
             /* 样本数必须大于参数个数(分段个数) */
             if (sampleNum <= sectionNum)
             {
                 return false;
             }
-
-            /* 确保结果列表清空状态 */
-            sectionKeyList.Clear();
-            paramValList.Clear();
-
-            /* 进行负方向分段 */
-            double sectionKey = 0;
-            for (; sectionKey > minPresureInAll; sectionKey -= sectionStep)
-            {
-                sectionKeyList.Add(sectionKey);
-            }
-            /* 进行正方向分段 */
-            sectionKey = sectionStep;
-            for (; sectionKey < maxPresureInAll; sectionKey += sectionStep)
-            {
-                sectionKeyList.Add(sectionKey);
-            }
-            sectionKeyList.Add(maxPresureInAll);
-
-            /* 确保分段算法无误 */
-            Trace.Assert(sectionNum == sectionKeyList.Count);
-
-            /* 分段Key按升序排序 */
-            sectionKeyList.Sort();
 
             /* 构造方程组参数矩阵 */
             double[][] matrixA = new double[sampleNum][];
