@@ -647,10 +647,10 @@ namespace PulmonaryFunctionLib
                 double[] result = Fit.MultiDim(matrixA, vectorB, false, MathNet.Numerics.LinearRegression.DirectRegressionMethod.Svd);
 
                 paramValList.AddRange(result);
-                for (int i = 0; i < paramValList.Count; ++i)
-                {
-                    Console.WriteLine($"{sectionKeyList[i]}, {paramValList[i]}");
-                }
+                //for (int i = 0; i < paramValList.Count; ++i)
+                //{
+                //    Console.WriteLine($"{sectionKeyList[i]}, {paramValList[i]}");
+                //}
 
                 bRet = true;
             }

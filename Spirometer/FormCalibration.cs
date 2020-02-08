@@ -264,19 +264,6 @@ namespace Spirometer
             // 保存数据点列表引用
             m_pointsPT = seriesPT.Points;
 
-#if false
-            /* 加载现有的吸气校准参数到结果列表 */
-            foreach (var p in m_flowSensor.InCalibrationParams())
-            {
-                AddSampleInfoToDataGridView(p, true);
-            }
-            /* 加载现有的呼气校准参数到结果列表 */
-            foreach (var p in m_flowSensor.EnCalibrationParams())
-            {
-                AddSampleInfoToDataGridView(p, true);
-            }
-#endif
-
             /* 采样开始 */
             m_flowCalibrator.SampleStarted += new FlowCalibrator.SampleStartHandler((uint presureIndex, FlowCalibrator.RespireDirection direction) =>
             {
@@ -350,19 +337,6 @@ namespace Spirometer
         private void ClearResultDataGridView()
         {
             dataGridViewSampleInfo.Rows.Clear();
-        }
-
-        /* 添加样本信息到列表显示 */
-        private void AddSampleInfoToDataGridView(FlowSensor.CalibrationParam p, bool bApply)
-        {
-            int index = dataGridViewSampleInfo.Rows.Add();
-            dataGridViewSampleInfo.Rows[index].Cells[0].Value = (p.presureAvg > 0) ? "吸气" : "呼气";
-            dataGridViewSampleInfo.Rows[index].Cells[1].Value = p.presureFlowScale;
-            dataGridViewSampleInfo.Rows[index].Cells[2].Value = p.presureAvg;
-            dataGridViewSampleInfo.Rows[index].Cells[3].Value = p.presureSum;
-            dataGridViewSampleInfo.Rows[index].Cells[4].Value = p.peekPresure;
-            dataGridViewSampleInfo.Rows[index].Cells[5].Value = p.presureVariance;
-            dataGridViewSampleInfo.Rows[index].Cells[6].Value = bApply;
         }
 
         /* 设置校准参数到列表显示 */
@@ -472,23 +446,27 @@ namespace Spirometer
         /* 采样已停止 */
         private void OnSampleStoped(uint sampleIndex, FlowCalibrator.RespireDirection direction)
         {
+            double presureAvg = m_flowCalibrator.SamplePresureAvg(sampleIndex);
+            double presureFlowScale = m_flowCalibrator.SamplePresureAvgToFlowScale(sampleIndex);
+            double presureSum = m_flowCalibrator.SamplePresureSum(sampleIndex);
+            double peekPresure = (direction == FlowCalibrator.RespireDirection.Inspiration) ? m_flowCalibrator.SampleMaxPresure(sampleIndex) : m_flowCalibrator.SampleMinPresure(sampleIndex);
+            double presureVariance = m_flowCalibrator.SamplePresureVariance(sampleIndex);
             bool bIsSampleValid = m_flowCalibrator.SampleIsValid(sampleIndex);
 
             /* 添加样本信息到列表 */
-            FlowSensor.CalibrationParam p = new FlowSensor.CalibrationParam()
-            {
-                presureAvg = m_flowCalibrator.SamplePresureAvg(sampleIndex),
-                presureFlowScale = m_flowCalibrator.SamplePresureAvgToFlowScale(sampleIndex),
-                presureSum = m_flowCalibrator.SamplePresureSum(sampleIndex),
-                peekPresure = (direction == FlowCalibrator.RespireDirection.Inspiration) ? m_flowCalibrator.SampleMaxPresure(sampleIndex) : m_flowCalibrator.SampleMinPresure(sampleIndex),
-                presureVariance = m_flowCalibrator.SamplePresureVariance(sampleIndex)
-            };
-            AddSampleInfoToDataGridView(p, bIsSampleValid);
+            int index = dataGridViewSampleInfo.Rows.Add();
+            dataGridViewSampleInfo.Rows[index].Cells[0].Value = (presureAvg > 0) ? "吸气" : "呼气";
+            dataGridViewSampleInfo.Rows[index].Cells[1].Value = presureFlowScale;
+            dataGridViewSampleInfo.Rows[index].Cells[2].Value = presureAvg;
+            dataGridViewSampleInfo.Rows[index].Cells[3].Value = presureSum;
+            dataGridViewSampleInfo.Rows[index].Cells[4].Value = peekPresure;
+            dataGridViewSampleInfo.Rows[index].Cells[5].Value = presureVariance;
+            dataGridViewSampleInfo.Rows[index].Cells[6].Value = bIsSampleValid;
 
             if (bIsSampleValid)
             {
                 /* 添加数据点到平均压差(Presure)-K值图并刷新显示 */
-                AddPointToPlotAVGPK(p.peekPresure, p.presureFlowScale);
+                AddPointToPlotAVGPK(peekPresure, presureFlowScale);
             }
 
             /* 尝试计算校准参数并更新显示 */
@@ -686,8 +664,6 @@ namespace Spirometer
                         toolStripButtonStart.Text = "停止";
                         toolStripButtonLoadPresure.Enabled = false;
                         //ClearAll();
-                        /* 清除旧的校准数据 */
-                        m_flowSensor.ClearCalibrationParams();
                         /* 尝试清空数据队列 */
                         TryClearDataQueue();
                         /* 监听流量传感器数据收取事件 */
@@ -724,7 +700,6 @@ namespace Spirometer
                 return;
             }
 
-#if true
             bool bRet = TryCalcAndUpdateCaliParam();
             if (bRet)
             {
@@ -742,58 +717,6 @@ namespace Spirometer
             {
                 MessageBox.Show("应用校准参数【失败】!");
             }
-#else
-            uint inCalCount = 0; // 吸气校准项目个数
-            uint exCalCount = 0; // 呼气校准项目个数
-
-            /* 取得挑选的校准结果列表 */
-            List<FlowSensor.CalibrationParam> calParamsList = new List<FlowSensor.CalibrationParam>();
-            for (int i = 0; i < dataGridViewSampleInfo.Rows.Count; ++i)
-            {
-                bool bApply = (bool)dataGridViewSampleInfo.Rows[i].Cells[6].Value;
-                if (bApply)
-                {
-                    double presureFlowScale = (double)dataGridViewSampleInfo.Rows[i].Cells[1].Value;
-                    double presureAvg = (double)dataGridViewSampleInfo.Rows[i].Cells[2].Value;
-                    double presureSum = (double)dataGridViewSampleInfo.Rows[i].Cells[3].Value;
-                    double peekPresure = (double)dataGridViewSampleInfo.Rows[i].Cells[4].Value;
-                    double presureVariance = (double)dataGridViewSampleInfo.Rows[i].Cells[5].Value;
-
-                    FlowSensor.CalibrationParam p = new FlowSensor.CalibrationParam() { 
-                        presureAvg = presureAvg, 
-                        presureFlowScale = presureFlowScale,
-                        presureSum = presureSum,
-                        peekPresure = peekPresure,
-                        presureVariance = presureVariance
-                    };
-                    calParamsList.Add(p);
-
-                    if (presureAvg > 0)
-                    {
-                        ++inCalCount;
-                    }
-                    else if (presureAvg < 0)
-                    {
-                        ++exCalCount;
-                    }
-                }
-            }
-
-            /* 挑选的校准结果列表中必须要同时包含吸气和呼气的校准条目 */
-            if ((inCalCount > 0) 
-                && (exCalCount > 0))
-            {
-                /* 将挑选的校准结果设置到流量传感器 */
-                m_flowSensor.ClearCalibrationParams();
-                m_flowSensor.AddCalibrationParams(calParamsList.ToArray());
-
-                MessageBox.Show("应用校准参数成功");
-            }
-            else
-            {
-                MessageBox.Show($"应用校准参数失败：请确保至少包含一项吸气校准和一项呼气校准。吸气参数{inCalCount}项、呼气参数{exCalCount}项！");
-            }
-#endif
         }
 
         private void toolStripButtonLoadPresure_Click(object sender, EventArgs e)

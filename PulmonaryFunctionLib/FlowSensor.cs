@@ -13,48 +13,22 @@ namespace PulmonaryFunctionLib
         private ConcurrentQueue<TaskCompletionSource<string>> m_cmdRespTaskCompQue = new ConcurrentQueue<TaskCompletionSource<string>>();
         private FrameDecoder m_frameDecoder = new FrameDecoder(); // 串口数据帧解码器
         private KalmanFilter m_kalmanFilter = new KalmanFilter(0.01f/*Q*/, 0.1f/*R*/, 10.0f/*P*/, 0); // 卡尔曼滤波器
-        /* 吸气(正压差)流量校准参数列表,按presure升序排列 */
-        private List<CalibrationParam> m_inCalibrationParams = new List<CalibrationParam>();
-        /* 呼气(负压差)流量校准参数列表,按presure降序排列 */
-        private List<CalibrationParam> m_exCalibrationParams = new List<CalibrationParam>();
 
         /* 采样率,单位:HZ */
         public readonly double SAMPLE_RATE = 330;
         /* 采样时间,单位:MS */
         public double SAMPLE_TIME { get { return (1000 / SAMPLE_RATE); } }
 
-        /* 校准参数类型定义 */
-        public struct CalibrationParam
-        {
-            public double presureAvg; // 校准压差数据的平均值(inH2O)
-            public double presureFlowScale; // 压差转流量比例系数(Flow=presureFlowScale*Presure)
-            public double presureSum; // 校准压差数据的求和值
-            public double peekPresure; // 校准压差数据的极值
-            public double presureVariance; // 校准压差数据的方差
-        }
-
         public delegate void PresureRecvHandler(byte channel, double presure); // 压差接收代理
         public event PresureRecvHandler PresureRecved; // 压差收取事件
 
+        /* 校准参数列表 */
         private List<double> m_calParamSectionKeyList = new List<double>();
         private List<double> m_calParamValList = new List<double>();
 
         public FlowSensor()
         {
             //FrameDecoder.Test();
-
-            /* 初始化使用默认校准参数 */
-            m_inCalibrationParams.Add(new CalibrationParam() { presureAvg = 213510.197103527, presureFlowScale = SAMPLE_RATE / 446022801.749268 });
-            m_inCalibrationParams.Add(new CalibrationParam() { presureAvg = 604662.05452032, presureFlowScale = SAMPLE_RATE / 442612623.908875 });
-            m_inCalibrationParams.Add(new CalibrationParam() { presureAvg = 1136892.5545729, presureFlowScale = SAMPLE_RATE / 427471600.519409 });
-            m_inCalibrationParams.Add(new CalibrationParam() { presureAvg = 1343683.27862993, presureFlowScale = SAMPLE_RATE / 424603916.047058 });
-            m_inCalibrationParams.Add(new CalibrationParam() { presureAvg = 2727034.35010543, presureFlowScale = SAMPLE_RATE / 428144392.966553 });
-
-            m_exCalibrationParams.Add(new CalibrationParam() { presureAvg = -265858.391053973, presureFlowScale = SAMPLE_RATE / 460466733.305481 });
-            m_exCalibrationParams.Add(new CalibrationParam() { presureAvg = -516188.103814442, presureFlowScale = SAMPLE_RATE / 455794095.668152 });
-            m_exCalibrationParams.Add(new CalibrationParam() { presureAvg = -1062427.31172462, presureFlowScale = SAMPLE_RATE / 448344325.547791 });
-            m_exCalibrationParams.Add(new CalibrationParam() { presureAvg = -1220163.68925883, presureFlowScale = SAMPLE_RATE / 452680728.7150274 });
-            m_exCalibrationParams.Add(new CalibrationParam() { presureAvg = -2030649.94736844, presureFlowScale = SAMPLE_RATE / 456896238.157898 });
 
             m_frameDecoder.CmdRespRecved += new FrameDecoder.CmdRespRecvHandler((string cmdResp) => {
                 Console.WriteLine($"CmdRespRecved: {cmdResp}");
@@ -74,96 +48,6 @@ namespace PulmonaryFunctionLib
             });
         }
 
-        /* 添加校准参数(自动插入到对应的校准参数列表中) */
-        public void AddCalibrationParam(CalibrationParam calParam)
-        {
-            if (calParam.presureAvg > 0)
-            { // 吸气
-                /* 插入m_inCalibrationParams且保证列表仍按presure升序排列 */
-                int i = 0;
-                for (; i < m_inCalibrationParams.Count; ++i)
-                {
-                    if (calParam.presureAvg < m_inCalibrationParams[i].presureAvg)
-                    {
-                        /* 按序插入 */
-                        m_inCalibrationParams.Insert(i, calParam);
-                        break;
-                    }
-                    else if (calParam.presureAvg == m_inCalibrationParams[i].presureAvg)
-                    {
-                        /* 替换 */
-                        m_inCalibrationParams[i] = calParam;
-                        break;
-                    }
-                }
-
-                if (i >= m_inCalibrationParams.Count)
-                {
-                    m_inCalibrationParams.Add(calParam);
-                }
-            }
-            else
-            { // 呼气
-                /* 插入m_exCalibrationParams且保证列表仍按presure降序排列 */
-                int i = 0;
-                for (; i < m_exCalibrationParams.Count; ++i)
-                {
-                    if (calParam.presureAvg > m_exCalibrationParams[i].presureAvg)
-                    {
-                        /* 按序插入 */
-                        m_inCalibrationParams.Insert(i, calParam);
-                        break;
-                    }
-                    else if (calParam.presureAvg == m_exCalibrationParams[i].presureAvg)
-                    {
-                        /* 替换 */
-                        m_exCalibrationParams[i] = calParam;
-                        break;
-                    }
-                }
-
-                if (i >= m_exCalibrationParams.Count)
-                {
-                    m_exCalibrationParams.Add(calParam);
-                }
-            }
-        }
-
-        /* 清空校准参数列表 */
-        public void ClearCalibrationParams()
-        {
-            m_inCalibrationParams.Clear();
-            m_exCalibrationParams.Clear();
-        }
-
-        /* 添加校准参数 */
-        public void AddCalibrationParams(params CalibrationParam[] calParams)
-        {
-            /* 添加新的校准参数 */
-            foreach (var p in calParams)
-            {
-                AddCalibrationParam(p);
-            }
-        }
-
-        /* 枚举吸气校准参数列表 */
-        public IEnumerable<CalibrationParam> InCalibrationParams()
-        {
-            foreach(var p in m_inCalibrationParams)
-            {
-                yield return p;
-            }
-        }
-
-        /* 枚举呼气校准参数列表 */
-        public IEnumerable<CalibrationParam> EnCalibrationParams()
-        {
-            foreach (var p in m_exCalibrationParams)
-            {
-                yield return p;
-            }
-        }
-
         public void SetCalibrationParamList(List<double> sectionKeyList, List<double> paramValList)
         {
             m_calParamSectionKeyList.Clear();
@@ -172,17 +56,16 @@ namespace PulmonaryFunctionLib
             m_calParamValList.AddRange(paramValList);
         }
 
-        /* 获取压差对应的压差转流量比例系数 */
-        private double GetPresureFlowScale(double presure)
+        /* 根据指定校准参数列表,获取压差对应的压差转流量比例系数 */
+        private static double GetPresureFlowScale(double presure, List<double> calParamSectionKeyList, List<double> calParamValList)
         {
-#if true
-            if (m_calParamSectionKeyList.Count <= 0)
+            if (calParamSectionKeyList.Count <= 0)
             {
                 return 1.0;
             }
 
             /* 找到所属分段Index */
-            int sectionIndex = m_calParamSectionKeyList.BinarySearch(presure);
+            int sectionIndex = calParamSectionKeyList.BinarySearch(presure);
             if (sectionIndex < 0)
             {
                 /*
@@ -192,101 +75,28 @@ namespace PulmonaryFunctionLib
                  */
                 sectionIndex = ~sectionIndex;
             }
-            if (sectionIndex >= m_calParamSectionKeyList.Count)
+            if (sectionIndex >= calParamSectionKeyList.Count)
             {
-                sectionIndex = (m_calParamSectionKeyList.Count - 1);
+                sectionIndex = (calParamSectionKeyList.Count - 1);
             }
-            return m_calParamValList[sectionIndex];
-#else
-            if (presure > 0)
-            { // 吸气
-                if (m_inCalibrationParams.Count <= 0)
-                {
-                    return 1.0;
-                }
-
-                /* 搜索presure所属区间(i-1, i) */
-                int i = 0;
-                for (; i < m_inCalibrationParams.Count; ++i)
-                {
-                    var param = m_inCalibrationParams[i];
-                    if (presure <= param.presureAvg)
-                    {
-                        break;
-                    }
-                }
-
-                /* 计算presureFlowScale值 */
-                double presureFlowScale = 1.0;
-                if (i <= 0)
-                {
-                    var param = m_inCalibrationParams[i];
-                    presureFlowScale = param.presureFlowScale;
-                }
-                else if (i >= m_inCalibrationParams.Count)
-                {
-                    var param = m_inCalibrationParams[m_inCalibrationParams.Count - 1];
-                    presureFlowScale = param.presureFlowScale;
-                }
-                else
-                {
-                    /* 使用相邻的k值线性插值 */
-                    var paramPrev = m_inCalibrationParams[i - 1];
-                    var param = m_inCalibrationParams[i];
-                    presureFlowScale = ((param.presureFlowScale - paramPrev.presureFlowScale) * (presure - paramPrev.presureAvg) / (param.presureAvg - paramPrev.presureAvg)) + paramPrev.presureFlowScale;
-                }
-                
-                return presureFlowScale;
-            }
-            else
-            { // 呼气
-                if (m_exCalibrationParams.Count <= 0)
-                {
-                    return 1.0;
-                }
-
-                /* 搜索presure所属区间(i-1, i) */
-                int i = 0;
-                for (; i < m_exCalibrationParams.Count; ++i)
-                {
-                    var param = m_exCalibrationParams[i];
-                    if (presure >= param.presureAvg)
-                    {
-                        break;
-                    }
-                }
-
-                /* 计算K值 */
-                double presureFlowScale = 1.0;
-                if (i <= 0)
-                {
-                    var param = m_exCalibrationParams[i];
-                    presureFlowScale = param.presureFlowScale;
-                }
-                else if (i >= m_exCalibrationParams.Count)
-                {
-                    var param = m_exCalibrationParams[m_exCalibrationParams.Count - 1];
-                    presureFlowScale = param.presureFlowScale;
-                }
-                else
-                {
-                    /* 使用相邻的k值线性插值 */
-                    var paramPrev = m_exCalibrationParams[i - 1];
-                    var param = m_exCalibrationParams[i];
-                    presureFlowScale = ((param.presureFlowScale - paramPrev.presureFlowScale) * (presure - paramPrev.presureAvg) / (param.presureAvg - paramPrev.presureAvg)) + paramPrev.presureFlowScale;
-                }
-                
-                return presureFlowScale;
-            }
-#endif
+            return calParamValList[sectionIndex];
         }
 
-        /* 压差转流量,单位:L/S */
+        /* 根据指定校准参数列表,执行压差转流量(单位:L/S) */
+        public static double PresureToFlow(double presure, List<double> calParamSectionKeyList, List<double> calParamValList)
+        {
+            /* 压差转流量 */
+            double presureFlowScale = GetPresureFlowScale(presure, calParamSectionKeyList, calParamValList);
+            double flow = presureFlowScale * presure;
+            return flow;
+        }
+
+        /* 执行压差转流量(单位:L/S) */
         public double PresureToFlow(double presure)
         {
             //presure = m_kalmanFilter.Input((float)presure); // 执行滤波
             /* 压差转流量 */
-            double presureFlowScale = GetPresureFlowScale(presure);
+            double presureFlowScale = GetPresureFlowScale(presure, m_calParamSectionKeyList, m_calParamValList);
             double flow = presureFlowScale * presure;
             return flow;
         }

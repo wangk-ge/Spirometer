@@ -343,7 +343,7 @@ namespace PulmonaryFunctionLib
                 && (m_state < State.Stop))
             {
                 /* 更新当前吸气容积 */
-                InVolume += InFlow * SAMPLE_TIME / 1000;
+                InVolume += InFlow * (SAMPLE_TIME / 1000);
 
                 /* 是否开启了自动停止检测 */
                 if (m_autoStop)
