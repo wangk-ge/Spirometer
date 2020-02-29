@@ -9,6 +9,7 @@ namespace PulmonaryFunctionLib
     /* 流速传感器 */
     public class FlowSensor
     {
+        private string m_portName = null;
         private SerialPort m_serialPort = null;
         private ConcurrentQueue<TaskCompletionSource<string>> m_cmdRespTaskCompQue = new ConcurrentQueue<TaskCompletionSource<string>>();
         private FrameDecoder m_frameDecoder = new FrameDecoder(); // 串口数据帧解码器
@@ -18,6 +19,9 @@ namespace PulmonaryFunctionLib
         public readonly double SAMPLE_RATE = 330;
         /* 采样时间,单位:MS */
         public double SAMPLE_TIME { get { return (1000 / SAMPLE_RATE); } }
+
+        public delegate void DataRecvHandler(byte[] data); // 数据接收代理
+        public event DataRecvHandler DataRecved; // 数据收取事件
 
         public delegate void PresureRecvHandler(byte channel, double presure); // 压差接收代理
         public event PresureRecvHandler PresureRecved; // 压差收取事件
@@ -44,7 +48,7 @@ namespace PulmonaryFunctionLib
             m_frameDecoder.WaveDataRecved += new FrameDecoder.WaveDataRecvHandler((byte channel, double presure) => {
                 //Console.WriteLine($"WaveDataRespRecved: {channel} {presure}");
 
-                PresureRecved?.Invoke(channel, presure / (10 * 1000 * 1000)); // 触发压差收取事件
+                PresureRecved?.Invoke(channel, presure); // 触发压差收取事件
             });
         }
 
@@ -101,7 +105,7 @@ namespace PulmonaryFunctionLib
             return flow;
         }
 
-        public bool Open(string portName)
+        public bool Open(string portName = null)
         {
             try
             {
@@ -110,14 +114,20 @@ namespace PulmonaryFunctionLib
             catch (Exception e)
             {
                 Console.WriteLine(e);
-
-                return false;
             }
 
             m_serialPort?.Dispose();
 
             try
             {
+                if (portName == null)
+                {
+                    portName = m_portName;
+                }
+                else
+                {
+                    m_portName = portName;
+                }
                 m_serialPort = new SerialPort(portName);
             }
             catch (Exception e)
@@ -162,6 +172,9 @@ namespace PulmonaryFunctionLib
             int dataLen = sp.BytesToRead;
             byte[] dataBuf = new byte[dataLen];
             sp.Read(dataBuf, 0, dataLen);
+
+            DataRecved?.Invoke(dataBuf);
+
             m_frameDecoder.FrameDecode(dataBuf);
         }
 
@@ -204,6 +217,12 @@ namespace PulmonaryFunctionLib
                     break;
                 }
             }
+        }
+
+        /* 发送数据 */
+        public void SendData(byte[] data)
+        {
+            m_serialPort?.Write(data, 0, data.Length);
         }
 
         /* 创建CMD Task */
@@ -275,90 +294,90 @@ namespace PulmonaryFunctionLib
         }
 
         /* 请求启动采集(异步版本) */
-        public async Task<bool> StartAsync()
+        public async Task<bool> StartAsync(int timeOut = 2000)
         {
             string cmd = "[ADC_START]"; // 启动采集
-            string cmdResp = await ExcuteCmdAsync(cmd, 2000);
+            string cmdResp = await ExcuteCmdAsync(cmd, timeOut);
             return cmdResp == "[OK]";
         }
 
         /* 请求启动采集(同步版本) */
-        public bool Start()
+        public bool Start(int timeOut = 2000)
         {
             string cmd = "[ADC_START]"; // 启动采集
-            string cmdResp = ExcuteCmd(cmd, 2000);
+            string cmdResp = ExcuteCmd(cmd, timeOut);
             return cmdResp == "[OK]";
         }
 
         /* 请求停止采集(异步版本) */
-        public async Task<bool> StopAsync()
+        public async Task<bool> StopAsync(int timeOut = 2000)
         {
             string cmd = "[ADC_STOP]"; // 启动采集
-            string cmdResp = await ExcuteCmdAsync(cmd, 2000);
+            string cmdResp = await ExcuteCmdAsync(cmd, timeOut);
             return cmdResp == "[OK]";
         }
 
         /* 请求停止采集(同步版本) */
-        public bool Stop()
+        public bool Stop(int timeOut = 2000)
         {
             string cmd = "[ADC_STOP]"; // 启动采集
-            string cmdResp = ExcuteCmd(cmd, 2000);
+            string cmdResp = ExcuteCmd(cmd, timeOut);
             return cmdResp == "[OK]";
         }
 
         /* 请求执行归零(异步版本) */
-        public async Task<bool> ZeroingAsync()
+        public async Task<bool> ZeroingAsync(int timeOut = 2000)
         {
             string cmd = "[ADC_CAL]"; // 归零
-            string cmdResp = await ExcuteCmdAsync(cmd, 2000);
+            string cmdResp = await ExcuteCmdAsync(cmd, timeOut);
             return cmdResp == "[OK]";
         }
 
         /* 请求执行归零(同步版本) */
-        public bool Zeroing()
+        public bool Zeroing(int timeOut = 2000)
         {
             string cmd = "[ADC_CAL]"; // 归零
-            string cmdResp = ExcuteCmd(cmd, 2000);
+            string cmdResp = ExcuteCmd(cmd, timeOut);
             return cmdResp == "[OK]";
         }
 
         /* 取得下位机版本号(异步版本) */
-        public async Task<string> BoardVersionAsync()
+        public async Task<string> BoardVersionAsync(int timeOut = 2000)
         {
             string cmd = "[VER]"; // 取得版本号
-            string cmdResp = await ExcuteCmdAsync(cmd, 2000);
+            string cmdResp = await ExcuteCmdAsync(cmd, timeOut);
             return cmdResp;
         }
 
         /* 取得下位机版本号(同步版本) */
-        public string BoardVersion()
+        public string BoardVersion(int timeOut = 2000)
         {
             string cmd = "[VER]"; // 取得版本号
-            string cmdResp = ExcuteCmd(cmd, 2000);
+            string cmdResp = ExcuteCmd(cmd, timeOut);
             return cmdResp;
         }
 
         /* 取得下位机固件编译时间(异步版本) */
-        public async Task<string> BoardBuildTimeAsync()
+        public async Task<string> BoardBuildTimeAsync(int timeOut = 2000)
         {
             string cmd = "[BUILD]"; // 取得固件编译时间
-            string cmdResp = await ExcuteCmdAsync(cmd, 2000);
+            string cmdResp = await ExcuteCmdAsync(cmd, timeOut);
             return cmdResp;
         }
 
         /* 取得下位机固件编译时间(同步版本) */
-        public string BoardBuildTime()
+        public string BoardBuildTime(int timeOut = 2000)
         {
             string cmd = "[BUILD]"; // 取得固件编译时间
-            string cmdResp = ExcuteCmd(cmd, 2000);
+            string cmdResp = ExcuteCmd(cmd, timeOut);
             return cmdResp;
         }
 
         /* 取得环境温度(异步版本) */
-        public async Task<double> AmbientTemperatureAsync()
+        public async Task<double> AmbientTemperatureAsync(int timeOut = 2000)
         {
             string cmd = "[BME280_TEMP]"; // 取得环境温度
-            string cmdResp = await ExcuteCmdAsync(cmd, 2000);
+            string cmdResp = await ExcuteCmdAsync(cmd, timeOut);
             if (cmdResp != string.Empty)
             {
                 return Convert.ToDouble(cmdResp);
@@ -367,10 +386,10 @@ namespace PulmonaryFunctionLib
         }
 
         /* 取得环境温度(同步版本) */
-        public double AmbientTemperature()
+        public double AmbientTemperature(int timeOut = 2000)
         {
             string cmd = "[BME280_TEMP]"; // 取得环境温度
-            string cmdResp = ExcuteCmd(cmd, 2000);
+            string cmdResp = ExcuteCmd(cmd, timeOut);
             if (cmdResp != string.Empty)
             {
                 return Convert.ToDouble(cmdResp);
@@ -379,10 +398,10 @@ namespace PulmonaryFunctionLib
         }
 
         /* 取得环境湿度(异步版本) */
-        public async Task<double> AmbientHumidityAsync()
+        public async Task<double> AmbientHumidityAsync(int timeOut = 2000)
         {
             string cmd = "[BME280_HUMI]"; // 取得环境湿度
-            string cmdResp = await ExcuteCmdAsync(cmd, 2000);
+            string cmdResp = await ExcuteCmdAsync(cmd, timeOut);
             if (cmdResp != string.Empty)
             {
                 return Convert.ToDouble(cmdResp);
@@ -391,10 +410,10 @@ namespace PulmonaryFunctionLib
         }
 
         /* 取得环境湿度(同步版本) */
-        public double AmbientHumidity()
+        public double AmbientHumidity(int timeOut = 2000)
         {
             string cmd = "[BME280_HUMI]"; // 取得环境湿度
-            string cmdResp = ExcuteCmd(cmd, 2000);
+            string cmdResp = ExcuteCmd(cmd, timeOut);
             if (cmdResp != string.Empty)
             {
                 return Convert.ToDouble(cmdResp);
@@ -403,10 +422,10 @@ namespace PulmonaryFunctionLib
         }
 
         /* 取得大气压(异步版本) */
-        public async Task<double> BarometricAsync()
+        public async Task<double> BarometricAsync(int timeOut = 2000)
         {
             string cmd = "[BME280_BARO]"; // 取得大气压
-            string cmdResp = await ExcuteCmdAsync(cmd, 2000);
+            string cmdResp = await ExcuteCmdAsync(cmd, timeOut);
             if (cmdResp != string.Empty)
             {
                 return Convert.ToDouble(cmdResp);
@@ -415,15 +434,47 @@ namespace PulmonaryFunctionLib
         }
 
         /* 取得大气压(同步版本) */
-        public double Barometric()
+        public double Barometric(int timeOut = 2000)
         {
             string cmd = "[BME280_BARO]"; // 取得大气压
-            string cmdResp = ExcuteCmd(cmd, 2000);
+            string cmdResp = ExcuteCmd(cmd, timeOut);
             if (cmdResp != string.Empty)
             {
                 return Convert.ToDouble(cmdResp);
             }
             return 0.0;   
+        }
+
+        /* 启动OTA下载(异步版本) */
+        public async Task<bool> StartOTADownloadAsync(int timeOut = 2000)
+        {
+            string cmd = "[OTA_DOWNLOAD]"; // 启动OTA下载
+            string cmdResp = await ExcuteCmdAsync(cmd, timeOut);
+            return cmdResp == "[OK]";
+        }
+
+        /* 启动OTA下载(同步版本) */
+        public bool StartOTADownload(int timeOut = 2000)
+        {
+            string cmd = "[OTA_DOWNLOAD]"; // 启动OTA下载
+            string cmdResp = ExcuteCmd(cmd, timeOut);
+            return cmdResp == "[OK]";
+        }
+
+        /* 启动OTA重启(异步版本) */
+        public async Task<bool> StartOTARebootAsync(int timeOut = 2000)
+        {
+            string cmd = "[OTA_REBOOT]"; // 启动OTA重启
+            string cmdResp = await ExcuteCmdAsync(cmd, timeOut);
+            return cmdResp == "[OK]";
+        }
+
+        /* 启动OTA重启(同步版本) */
+        public bool StartOTAReboot(int timeOut = 2000)
+        {
+            string cmd = "[OTA_REBOOT]"; // 启动OTA重启
+            string cmdResp = ExcuteCmd(cmd, timeOut);
+            return cmdResp == "[OK]";
         }
     }
 }

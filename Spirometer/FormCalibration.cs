@@ -585,7 +585,7 @@ namespace Spirometer
                         continue;
                     }
 
-                    double presure = Convert.ToDouble(strVal) / (10 * 1000 * 1000); // 压差
+                    double presure = Convert.ToDouble(strVal); // 压差
 
                     /* 压差数据存入队列,将在刷新定时器中读取 */
                     m_dataQueue.Enqueue(presure);
@@ -611,6 +611,63 @@ namespace Spirometer
             m_dataPlotTaskComp = null;
         }
 
+        /* 显示保存对话框,保存Flow数据为CSV文件 */
+        private void ShowSaveCSVDialog()
+        {
+            /* 弹出文件保存对话框 */
+            SaveFileDialog saveCSVDialog = new SaveFileDialog();
+            saveCSVDialog.Filter = "CSV File (*.csv;)|*.csv";
+            //saveCSVDialog.Multiselect = false;
+            saveCSVDialog.FileName = $"calibbration_{DateTime.Now.ToString("yyyyMMdd_hhmmss")}.csv";
+
+            if (saveCSVDialog.ShowDialog() == DialogResult.OK)
+            {
+                if (String.IsNullOrEmpty(saveCSVDialog.FileName))
+                {
+                    return;
+                }
+
+                /* 保存过程中暂时不允许点击工具按钮 */
+                toolStripButtonStart.Enabled = false;
+                toolStripButtonSavePresure.Enabled = false;
+                toolStripButtonLoadPresure.Enabled = false;
+                toolStripButtonClear.Enabled = false;
+                toolStripButtonCalcCaliParam.Enabled = false;
+                toolStripButtonApply.Enabled = false;
+
+                /* 启动任务执行异步保存(防止阻塞UI线程) */
+                Task.Factory.StartNew(() =>
+                {
+                    /* 在内存中将Flow数据组装称CSV格式字符串 */
+                    StringBuilder strData = new StringBuilder();
+                    foreach (var point in m_pointsPT)
+                    {
+                        strData.Append(point.Y);
+                        strData.Append(",");
+                    }
+
+                    /* 保存为CSV文件 */
+                    using (StreamWriter writer = new StreamWriter(saveCSVDialog.FileName, false, Encoding.UTF8))
+                    {
+                        writer.Write(strData);
+                        writer.Close();
+
+                        MessageBox.Show("保存成功.");
+                    }
+
+                    /* 保存完毕恢复工具按钮使能状态(确保在UI线程执行) */
+                    this.BeginInvoke(new Action<FormCalibration>((obj) => {
+                        toolStripButtonStart.Enabled = true;
+                        toolStripButtonSavePresure.Enabled = true;
+                        toolStripButtonLoadPresure.Enabled = true;
+                        toolStripButtonClear.Enabled = true;
+                        toolStripButtonCalcCaliParam.Enabled = true;
+                        toolStripButtonApply.Enabled = true;
+                    }), this);
+                });
+            }
+        }
+
         /* 显示加载对话框,加载Preaure数据 */
         private async void ShowLoadCSVDialog()
         {
@@ -626,16 +683,22 @@ namespace Spirometer
                     return;
                 }
 
-                /* 加载过程中暂时不允许再次点击 */
-                toolStripButtonLoadPresure.Enabled = false;
+                /* 加载过程中暂时不允许点击工具按钮 */
                 toolStripButtonStart.Enabled = false;
+                toolStripButtonSavePresure.Enabled = false;
+                toolStripButtonLoadPresure.Enabled = false;
+                toolStripButtonClear.Enabled = false;
+                toolStripButtonCalcCaliParam.Enabled = false;
                 toolStripButtonApply.Enabled = false;
 
                 await LoadCSVFileAsync(openCSVDialog.FileName);
 
-                /* 加载完毕,执行UI相关操作 */
-                toolStripButtonLoadPresure.Enabled = true;
+                /* 加载完毕恢复工具按钮使能状态 */
                 toolStripButtonStart.Enabled = true;
+                toolStripButtonSavePresure.Enabled = true;
+                toolStripButtonLoadPresure.Enabled = true;
+                toolStripButtonClear.Enabled = true;
+                toolStripButtonCalcCaliParam.Enabled = true;
                 toolStripButtonApply.Enabled = true;
             }
         }
@@ -717,6 +780,11 @@ namespace Spirometer
             {
                 MessageBox.Show("应用校准参数【失败】!");
             }
+        }
+
+        private void toolStripButtonSavePresure_Click(object sender, EventArgs e)
+        {
+            ShowSaveCSVDialog();
         }
 
         private void toolStripButtonLoadPresure_Click(object sender, EventArgs e)

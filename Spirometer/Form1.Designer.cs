@@ -68,6 +68,8 @@
             this.toolStripStatusLabel9 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabelFEF75 = new System.Windows.Forms.ToolStripStatusLabel();
             this.panel1 = new System.Windows.Forms.Panel();
+            this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripButtonFirmwareUpdate = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -173,7 +175,9 @@
             this.toolStripButtonClear,
             this.toolStripSeparator3,
             this.toolStripButtonCalibration1L,
-            this.toolStripButtonCalibration3L});
+            this.toolStripButtonCalibration3L,
+            this.toolStripSeparator4,
+            this.toolStripButtonFirmwareUpdate});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1372, 25);
@@ -436,6 +440,22 @@
             this.panel1.Size = new System.Drawing.Size(1372, 54);
             this.panel1.TabIndex = 3;
             // 
+            // toolStripSeparator4
+            // 
+            this.toolStripSeparator4.Name = "toolStripSeparator4";
+            this.toolStripSeparator4.Size = new System.Drawing.Size(6, 25);
+            // 
+            // toolStripButtonFirmwareUpdate
+            // 
+            this.toolStripButtonFirmwareUpdate.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButtonFirmwareUpdate.Enabled = false;
+            this.toolStripButtonFirmwareUpdate.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonFirmwareUpdate.Image")));
+            this.toolStripButtonFirmwareUpdate.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonFirmwareUpdate.Name = "toolStripButtonFirmwareUpdate";
+            this.toolStripButtonFirmwareUpdate.Size = new System.Drawing.Size(60, 22);
+            this.toolStripButtonFirmwareUpdate.Text = "固件升级";
+            this.toolStripButtonFirmwareUpdate.Click += new System.EventHandler(this.toolStripButtonFirmwareUpdate_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -447,6 +467,7 @@
             this.Controls.Add(this.statusStrip1);
             this.Name = "Form1";
             this.Text = "Form1";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
@@ -506,6 +527,8 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
         private System.Windows.Forms.ToolStripButton toolStripButtonCalibration1L;
         private System.Windows.Forms.ToolStripButton toolStripButtonCalibration3L;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator4;
+        private System.Windows.Forms.ToolStripButton toolStripButtonFirmwareUpdate;
     }
 }
 
