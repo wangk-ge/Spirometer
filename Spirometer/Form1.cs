@@ -128,8 +128,26 @@ namespace Spirometer
 #endif
         }
 
+        /* 加载校准参数 */
+        private void LoadCaliParam()
+        {
+            Console.WriteLine(Properties.Settings.Default.caliKeyList);
+            Console.WriteLine(Properties.Settings.Default.caliValList);
+
+            string[] strCaliKeys = Properties.Settings.Default.caliKeyList.Split(new char[] { ',' });
+            var calParamSectionKeyList = strCaliKeys.Select(x => Convert.ToDouble(x)).ToList();
+
+            string[] strCaliVals = Properties.Settings.Default.caliValList.Split(new char[] { ',' });
+            var calParamValList = strCaliVals.Select(x => Convert.ToDouble(x)).ToList();
+
+            m_flowSensor.SetCalibrationParamList(calParamSectionKeyList, calParamValList);
+        }
+
         private void Form1_Load(object sender, EventArgs e)
         {
+            /* 加载校准参数 */
+            LoadCaliParam();
+
             /* 枚举可用串口并更新列表控件 */
             EnumSerialPorts();
 
@@ -894,7 +912,7 @@ namespace Spirometer
                 /* 尝试清空数据队列 */
                 TryClearDataQueue();
             }
-            else
+            else //if ("断开" == toolStripButtonConnect.Text)
             {
                 /* 关闭流速传感器 */
                 m_flowSensor.Close();
@@ -1039,7 +1057,17 @@ namespace Spirometer
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            m_flowSensor.Close();
+            if ("停止" == toolStripButtonStart.Text)
+            {
+                /* 停止流速传感器 */
+                m_flowSensor.Stop();
+            }
+
+            if ("断开" == toolStripButtonConnect.Text)
+            {
+                /* 关闭流速传感器 */
+                m_flowSensor.Close();
+            }
         }
     }
 }

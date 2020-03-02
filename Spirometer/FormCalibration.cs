@@ -769,6 +769,10 @@ namespace Spirometer
                 if (m_calParamSectionKeyList.Count > 0)
                 {
                     m_flowSensor.SetCalibrationParamList(m_calParamSectionKeyList, m_calParamValList);
+                    /* 保存校准参数 */
+                    Properties.Settings.Default.caliKeyList = string.Join(",", m_calParamSectionKeyList.ToArray());
+                    Properties.Settings.Default.caliValList = string.Join(",", m_calParamValList.ToArray());
+                    Properties.Settings.Default.Save();
                     MessageBox.Show("应用校准参数【成功】!");
                 }
                 else
