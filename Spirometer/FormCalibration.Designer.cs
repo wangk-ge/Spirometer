@@ -32,7 +32,7 @@
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.plotViewPS = new OxyPlot.WindowsForms.PlotView();
-            this.plotViewAVGPK = new OxyPlot.WindowsForms.PlotView();
+            this.plotViewKP = new OxyPlot.WindowsForms.PlotView();
             this.plotViewPT = new OxyPlot.WindowsForms.PlotView();
             this.panel1 = new System.Windows.Forms.Panel();
             this.dataGridViewSampleInfo = new System.Windows.Forms.DataGridView();
@@ -49,6 +49,7 @@
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.toolStripButtonStart = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripButtonSavePresure = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonLoadPresure = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonClear = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
@@ -59,7 +60,6 @@
             this.toolStripStatusLabelSampleCount = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabelParamCount = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripButtonSavePresure = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -108,7 +108,7 @@
             // 
             // splitContainer2.Panel2
             // 
-            this.splitContainer2.Panel2.Controls.Add(this.plotViewAVGPK);
+            this.splitContainer2.Panel2.Controls.Add(this.plotViewKP);
             this.splitContainer2.Size = new System.Drawing.Size(1372, 229);
             this.splitContainer2.SplitterDistance = 698;
             this.splitContainer2.SplitterWidth = 1;
@@ -127,18 +127,18 @@
             this.plotViewPS.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
             this.plotViewPS.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
             // 
-            // plotViewAVGPK
+            // plotViewKP
             // 
-            this.plotViewAVGPK.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.plotViewAVGPK.Location = new System.Drawing.Point(0, 0);
-            this.plotViewAVGPK.Name = "plotViewAVGPK";
-            this.plotViewAVGPK.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewAVGPK.Size = new System.Drawing.Size(669, 225);
-            this.plotViewAVGPK.TabIndex = 0;
-            this.plotViewAVGPK.Text = "plotView1";
-            this.plotViewAVGPK.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
-            this.plotViewAVGPK.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
-            this.plotViewAVGPK.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
+            this.plotViewKP.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.plotViewKP.Location = new System.Drawing.Point(0, 0);
+            this.plotViewKP.Name = "plotViewKP";
+            this.plotViewKP.PanCursor = System.Windows.Forms.Cursors.Hand;
+            this.plotViewKP.Size = new System.Drawing.Size(669, 225);
+            this.plotViewKP.TabIndex = 0;
+            this.plotViewKP.Text = "plotView1";
+            this.plotViewKP.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
+            this.plotViewKP.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
+            this.plotViewKP.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
             // 
             // plotViewPT
             // 
@@ -298,6 +298,16 @@
             this.toolStripSeparator1.Name = "toolStripSeparator1";
             this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
             // 
+            // toolStripButtonSavePresure
+            // 
+            this.toolStripButtonSavePresure.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButtonSavePresure.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonSavePresure.Image")));
+            this.toolStripButtonSavePresure.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonSavePresure.Name = "toolStripButtonSavePresure";
+            this.toolStripButtonSavePresure.Size = new System.Drawing.Size(84, 22);
+            this.toolStripButtonSavePresure.Text = "保存压差数据";
+            this.toolStripButtonSavePresure.Click += new System.EventHandler(this.toolStripButtonSavePresure_Click);
+            // 
             // toolStripButtonLoadPresure
             // 
             this.toolStripButtonLoadPresure.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
@@ -381,16 +391,6 @@
             this.toolStripStatusLabelParamCount.Size = new System.Drawing.Size(15, 17);
             this.toolStripStatusLabelParamCount.Text = "0";
             // 
-            // toolStripButtonSavePresure
-            // 
-            this.toolStripButtonSavePresure.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripButtonSavePresure.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonSavePresure.Image")));
-            this.toolStripButtonSavePresure.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButtonSavePresure.Name = "toolStripButtonSavePresure";
-            this.toolStripButtonSavePresure.Size = new System.Drawing.Size(84, 22);
-            this.toolStripButtonSavePresure.Text = "保存压差数据";
-            this.toolStripButtonSavePresure.Click += new System.EventHandler(this.toolStripButtonSavePresure_Click);
-            // 
             // FormCalibration
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -402,7 +402,7 @@
             this.Controls.Add(this.statusStrip1);
             this.Name = "FormCalibration";
             this.Text = "校准";
-            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.FormCalibration_FormClosed);
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormCalibration_FormClosing);
             this.Load += new System.EventHandler(this.FormCalibration_Load);
             this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
@@ -455,7 +455,7 @@
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelParamCount;
         private System.Windows.Forms.ToolStripButton toolStripButtonCalcCaliParam;
         private System.Windows.Forms.SplitContainer splitContainer2;
-        private OxyPlot.WindowsForms.PlotView plotViewAVGPK;
+        private OxyPlot.WindowsForms.PlotView plotViewKP;
         private System.Windows.Forms.ToolStripButton toolStripButtonSavePresure;
     }
 }

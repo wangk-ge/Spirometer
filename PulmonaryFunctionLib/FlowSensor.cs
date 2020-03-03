@@ -48,6 +48,8 @@ namespace PulmonaryFunctionLib
             m_frameDecoder.WaveDataRecved += new FrameDecoder.WaveDataRecvHandler((byte channel, double presure) => {
                 //Console.WriteLine($"WaveDataRespRecved: {channel} {presure}");
 
+                presure = m_kalmanFilter.Input((float)presure); // 执行滤波
+
                 PresureRecved?.Invoke(channel, presure); // 触发压差收取事件
             });
         }
@@ -98,7 +100,6 @@ namespace PulmonaryFunctionLib
         /* 执行压差转流量(单位:L/S) */
         public double PresureToFlow(double presure)
         {
-            //presure = m_kalmanFilter.Input((float)presure); // 执行滤波
             /* 压差转流量 */
             double presureFlowScale = GetPresureFlowScale(presure, m_calParamSectionKeyList, m_calParamValList);
             double flow = presureFlowScale * presure;
@@ -228,6 +229,8 @@ namespace PulmonaryFunctionLib
         /* 创建CMD Task */
         private Task<string> ExcuteCmdTask(string cmd)
         {
+            Console.WriteLine($"ExcuteCmdTask: {cmd}");
+
             /* 将CMD Task记录到完成队列 */
             var cmdRespTaskComp = new TaskCompletionSource<string>();
             m_cmdRespTaskCompQue.Enqueue(cmdRespTaskComp);

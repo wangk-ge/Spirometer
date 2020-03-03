@@ -507,9 +507,32 @@ namespace PulmonaryFunctionLib
             /* 先清空 */
             presureSectionList.Clear();
 
+#if true
             /* 分段步进长度 */
-            double sectionStep1 = 0.1;
-            double sectionStep2 = 0.15;
+            double sectionStep = 0.02;
+            double stepStep = 0.002;
+
+            /* 进行负方向分段 */
+            sectionStep = 0.02;
+            double sectionPos = 0.0; // [0,minPresure)
+            for (; sectionPos > (minPresure + sectionStep); sectionPos -= sectionStep)
+            {
+                presureSectionList.Add(sectionPos);
+                sectionStep += stepStep;
+            }
+            /* 进行正方向分段 */
+            sectionStep = 0.02;
+            sectionPos = sectionStep; // (0,maxPresure)
+            for (; sectionPos < (maxPresure - sectionStep); sectionPos += sectionStep)
+            {
+                presureSectionList.Add(sectionPos);
+                sectionStep += stepStep;
+            }
+            presureSectionList.Add(maxPresure);
+#else
+            /* 分段步进长度 */
+            double sectionStep1 = 0.05;
+            double sectionStep2 = 0.2;
 
             /* 进行负方向分段 */
             double sectionPos = 0.0; // [0,-0.5)
@@ -540,6 +563,7 @@ namespace PulmonaryFunctionLib
                 }
             }
             presureSectionList.Add(maxPresure);
+#endif
 
             /* 分段Key按升序排序 */
             presureSectionList.Sort();

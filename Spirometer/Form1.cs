@@ -134,13 +134,17 @@ namespace Spirometer
             Console.WriteLine(Properties.Settings.Default.caliKeyList);
             Console.WriteLine(Properties.Settings.Default.caliValList);
 
-            string[] strCaliKeys = Properties.Settings.Default.caliKeyList.Split(new char[] { ',' });
-            var calParamSectionKeyList = strCaliKeys.Select(x => Convert.ToDouble(x)).ToList();
+            if ((Properties.Settings.Default.caliKeyList != string.Empty) &&
+                    (Properties.Settings.Default.caliValList != string.Empty))
+            {
+                string[] strCaliKeys = Properties.Settings.Default.caliKeyList.Split(new char[] { ',' });
+                var calParamSectionKeyList = strCaliKeys.Select(x => Convert.ToDouble(x)).ToList();
 
-            string[] strCaliVals = Properties.Settings.Default.caliValList.Split(new char[] { ',' });
-            var calParamValList = strCaliVals.Select(x => Convert.ToDouble(x)).ToList();
+                string[] strCaliVals = Properties.Settings.Default.caliValList.Split(new char[] { ',' });
+                var calParamValList = strCaliVals.Select(x => Convert.ToDouble(x)).ToList();
 
-            m_flowSensor.SetCalibrationParamList(calParamSectionKeyList, calParamValList);
+                m_flowSensor.SetCalibrationParamList(calParamSectionKeyList, calParamValList);
+            }
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -726,62 +730,69 @@ namespace Spirometer
             /* 启动任务执行异步加载(防止阻塞UI线程) */
             Task loadTask = Task.Factory.StartNew((Action)(() =>
             {
-                /* 所有数据先加载到内存 */
-                string strData = string.Empty;
-                using (StreamReader reader = new StreamReader(filePath, Encoding.UTF8))
+                try
                 {
-                    strData = reader.ReadToEnd();
-                    reader.Close();
-                }
-
-                /* 是否是加载流量数据 */
-                if (isFlow)
-                {
-                    /* 解析CSV中的流量数据 */
-                    string[] strDataArray = strData.Split(new char[] { ',' });
-                    foreach (var strVal in strDataArray)
+                    /* 所有数据先加载到内存 */
+                    string strData = string.Empty;
+                    using (StreamReader reader = new StreamReader(filePath, Encoding.UTF8))
                     {
-                        if (string.Empty == strVal)
-                        {
-                            continue;
-                        }
-
-                        double flow = Convert.ToDouble(strVal); // 流量
-
-                        /* 数据存入队列,将在刷新定时器中读取 */
-                        m_dataQueue.Enqueue(flow);
-
-                        /* 模拟采样率 */
-                        Thread.Sleep((int)m_flowSensor.SAMPLE_TIME);
+                        strData = reader.ReadToEnd();
+                        reader.Close();
                     }
-                }
-                else
-                {
-                    /* 解析CSV中的压差数据 */
-                    string[] strDataArray = strData.Split(new char[] { ',' });
-                    foreach (var strVal in strDataArray)
+
+                    /* 是否是加载流量数据 */
+                    if (isFlow)
                     {
-                        if (string.Empty == strVal)
+                        /* 解析CSV中的流量数据 */
+                        string[] strDataArray = strData.Split(new char[] { ',' });
+                        foreach (var strVal in strDataArray)
                         {
-                            continue;
+                            if (string.Empty == strVal)
+                            {
+                                continue;
+                            }
+
+                            double flow = Convert.ToDouble(strVal); // 流量
+
+                            /* 数据存入队列,将在刷新定时器中读取 */
+                            m_dataQueue.Enqueue(flow);
+
+                            /* 模拟采样率 */
+                            Thread.Sleep((int)m_flowSensor.SAMPLE_TIME);
                         }
-
-                        double presure = Convert.ToDouble(strVal); // 压差
-
-                        /* 压差转流量 */
-                        double flow = m_flowSensor.PresureToFlow(presure); // 流量
-
-                        /* 数据存入队列,将在刷新定时器中读取 */
-                        m_dataQueue.Enqueue(flow);
-
-                        /* 模拟采样率 */
-                        Thread.Sleep((int)m_flowSensor.SAMPLE_TIME);
                     }
-                }
-                /* 数据已加载完毕 */
+                    else
+                    {
+                        /* 解析CSV中的压差数据 */
+                        string[] strDataArray = strData.Split(new char[] { ',' });
+                        foreach (var strVal in strDataArray)
+                        {
+                            if (string.Empty == strVal)
+                            {
+                                continue;
+                            }
 
-                /* 建Task完成事件对象(用于监测数据是否已全部输出到Plot) */
-                m_dataPlotTaskComp = new TaskCompletionSource<bool>();
+                            double presure = Convert.ToDouble(strVal); // 压差
+
+                            /* 压差转流量 */
+                            double flow = m_flowSensor.PresureToFlow(presure); // 流量
+
+                            /* 数据存入队列,将在刷新定时器中读取 */
+                            m_dataQueue.Enqueue(flow);
+
+                            /* 模拟采样率 */
+                            Thread.Sleep((int)m_flowSensor.SAMPLE_TIME);
+                        }
+                    }
+                    /* 数据已加载完毕 */
+
+                    /* 创建Task完成事件对象(用于监测数据是否已全部输出到Plot) */
+                    m_dataPlotTaskComp = new TaskCompletionSource<bool>();
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show($"加载失败!{e.ToString()}");
+                }
             }));
 
             /* 异步等待完成对象被触发(数据加载完毕并且已全部输出到Plot) */
@@ -789,17 +800,17 @@ namespace Spirometer
             if (null != m_dataPlotTaskComp)
             {
                 await m_dataPlotTaskComp.Task; // 然后确保数据已全部输出到Plot
-            }
 
-            /* 清除完成对象 */
-            m_dataPlotTaskComp = null;
+                /* 清除完成对象 */
+                m_dataPlotTaskComp = null;
 
-            /* 处理在数据中未检测到停止条件的情况 */
-            if (!m_pulmonaryFunc.IsStoped)
-            {
-                /* 数据已加载完毕,认为测量已停止 */
-                OnMeasureStoped();
-            }
+                /* 处理在数据中未检测到停止条件的情况 */
+                if (!m_pulmonaryFunc.IsStoped)
+                {
+                    /* 数据已加载完毕,认为测量已停止 */
+                    OnMeasureStoped();
+                }
+            }  
         }
 
         /* 显示加载对话框,加载Flow数据或Preaure数据 */
@@ -863,32 +874,41 @@ namespace Spirometer
                 /* 启动任务执行异步保存(防止阻塞UI线程) */
                 Task.Factory.StartNew(() =>
                 {
-                    /* 在内存中将Flow数据组装称CSV格式字符串 */
-                    StringBuilder strData = new StringBuilder();
-                    foreach (var point in m_pointsVFTFlow)
+                    try
                     {
-                        strData.Append(point.Y);
-                        strData.Append(",");
-                    }
+                        /* 在内存中将Flow数据组装称CSV格式字符串 */
+                        StringBuilder strData = new StringBuilder();
+                        foreach (var point in m_pointsVFTFlow)
+                        {
+                            strData.Append(point.Y);
+                            strData.Append(",");
+                        }
 
-                    /* 保存为CSV文件 */
-                    using (StreamWriter writer = new StreamWriter(saveCSVDialog.FileName, false, Encoding.UTF8))
+                        /* 保存为CSV文件 */
+                        using (StreamWriter writer = new StreamWriter(saveCSVDialog.FileName, false, Encoding.UTF8))
+                        {
+                            writer.Write(strData);
+                            writer.Close();
+
+                            MessageBox.Show("保存成功.");
+                        }
+                    }
+                    catch (Exception e)
                     {
-                        writer.Write(strData);
-                        writer.Close();
-
-                        MessageBox.Show("保存成功.");
+                        MessageBox.Show($"保存失败!{e.ToString()}");
                     }
-
-                    /* 保存完毕恢复按钮使能状态(确保在UI线程执行) */
-                    this.BeginInvoke(new Action<Form1>((obj) => {
-                        toolStripButtonLoadPresure.Enabled = true;
-                        toolStripButtonLoadFlow.Enabled = true;
-                        toolStripButtonSaveFlow.Enabled = true;
-                        toolStripButtonConnect.Enabled = true;
-                        toolStripButtonStart.Enabled = true;
-                        toolStripButtonClear.Enabled = true;
-                    }), this);
+                    finally
+                    {
+                        /* 恢复按钮使能状态(确保在UI线程执行) */
+                        this.BeginInvoke(new Action<Form1>((obj) => {
+                            toolStripButtonLoadPresure.Enabled = true;
+                            toolStripButtonLoadFlow.Enabled = true;
+                            toolStripButtonSaveFlow.Enabled = true;
+                            toolStripButtonConnect.Enabled = true;
+                            toolStripButtonStart.Enabled = true;
+                            toolStripButtonClear.Enabled = true;
+                        }), this);
+                    }
                 });
             }
         }
