@@ -829,22 +829,54 @@ namespace Spirometer
                 }
 
                 /* 加载过程中暂时不允许再次点击 */
+                bool toolStripButtonLoadPresureEnabled = toolStripButtonLoadPresure.Enabled;
                 toolStripButtonLoadPresure.Enabled = false;
+
+                bool toolStripButtonLoadFlowEnabled = toolStripButtonLoadFlow.Enabled;
                 toolStripButtonLoadFlow.Enabled = false;
+
+                bool toolStripButtonSaveFlowEnabled = toolStripButtonSaveFlow.Enabled;
                 toolStripButtonSaveFlow.Enabled = false;
+
+                bool toolStripButtonConnectEnabled = toolStripButtonConnect.Enabled;
                 toolStripButtonConnect.Enabled = false;
+
+                bool toolStripButtonStartEnabled = toolStripButtonStart.Enabled;
                 toolStripButtonStart.Enabled = false;
+                
+                bool toolStripButtonClearEnabled = toolStripButtonClear.Enabled;
                 toolStripButtonClear.Enabled = false;
 
+                bool toolStripButtonCalibration1LEnabled = toolStripButtonCalibration1L.Enabled;
+                toolStripButtonCalibration1L.Enabled = false;
+
+                bool toolStripButtonCalibration3LEnabled = toolStripButtonCalibration3L.Enabled;
+                toolStripButtonCalibration3L.Enabled = false;
+
+                bool toolStripButtonVerification1LEnabled = toolStripButtonVerification1L.Enabled;
+                toolStripButtonVerification1L.Enabled = false;
+
+                bool toolStripButtonVerification3LEnabled = toolStripButtonVerification3L.Enabled;
+                toolStripButtonVerification3L.Enabled = false;
+
+                bool toolStripButtonFirmwareUpdateEnabled = toolStripButtonFirmwareUpdate.Enabled;
+                toolStripButtonFirmwareUpdate.Enabled = false;
+
+                /* 加载CSV文件中的数据 */
                 await LoadCSVFileAsync(openCSVDialog.FileName, isFlow);
 
-                /* 加载完毕,执行UI相关操作 */
-                toolStripButtonLoadPresure.Enabled = true; 
-                toolStripButtonLoadFlow.Enabled = true;
-                toolStripButtonSaveFlow.Enabled = true;
-                toolStripButtonConnect.Enabled = true;
-                toolStripButtonStart.Enabled = true;
-                toolStripButtonClear.Enabled = true;
+                /* 加载完毕恢复工具按钮使能状态 */
+                toolStripButtonLoadPresure.Enabled = toolStripButtonLoadPresureEnabled; 
+                toolStripButtonLoadFlow.Enabled = toolStripButtonLoadFlowEnabled;
+                toolStripButtonSaveFlow.Enabled = toolStripButtonSaveFlowEnabled;
+                toolStripButtonConnect.Enabled = toolStripButtonConnectEnabled;
+                toolStripButtonStart.Enabled = toolStripButtonStartEnabled;
+                toolStripButtonClear.Enabled = toolStripButtonClearEnabled;
+                toolStripButtonCalibration1L.Enabled = toolStripButtonCalibration1LEnabled;
+                toolStripButtonCalibration3L.Enabled = toolStripButtonCalibration3LEnabled;
+                toolStripButtonVerification1L.Enabled = toolStripButtonVerification1LEnabled;
+                toolStripButtonVerification3L.Enabled = toolStripButtonVerification3LEnabled;
+                toolStripButtonFirmwareUpdate.Enabled = toolStripButtonFirmwareUpdateEnabled;
             }
         }
 
@@ -864,12 +896,38 @@ namespace Spirometer
                 }
 
                 /* 保存过程中暂时不允许再次点击 */
+                bool toolStripButtonLoadPresureEnabled = toolStripButtonLoadPresure.Enabled;
                 toolStripButtonLoadPresure.Enabled = false;
+
+                bool toolStripButtonLoadFlowEnabled = toolStripButtonLoadFlow.Enabled;
                 toolStripButtonLoadFlow.Enabled = false;
+
+                bool toolStripButtonSaveFlowEnabled = toolStripButtonSaveFlow.Enabled;
                 toolStripButtonSaveFlow.Enabled = false;
+
+                bool toolStripButtonConnectEnabled = toolStripButtonConnect.Enabled;
                 toolStripButtonConnect.Enabled = false;
+
+                bool toolStripButtonStartEnabled = toolStripButtonStart.Enabled;
                 toolStripButtonStart.Enabled = false;
+
+                bool toolStripButtonClearEnabled = toolStripButtonClear.Enabled;
                 toolStripButtonClear.Enabled = false;
+
+                bool toolStripButtonCalibration1LEnabled = toolStripButtonCalibration1L.Enabled;
+                toolStripButtonCalibration1L.Enabled = false;
+
+                bool toolStripButtonCalibration3LEnabled = toolStripButtonCalibration3L.Enabled;
+                toolStripButtonCalibration3L.Enabled = false;
+
+                bool toolStripButtonVerification1LEnabled = toolStripButtonVerification1L.Enabled;
+                toolStripButtonVerification1L.Enabled = false;
+
+                bool toolStripButtonVerification3LEnabled = toolStripButtonVerification3L.Enabled;
+                toolStripButtonVerification3L.Enabled = false;
+
+                bool toolStripButtonFirmwareUpdateEnabled = toolStripButtonFirmwareUpdate.Enabled;
+                toolStripButtonFirmwareUpdate.Enabled = false;
 
                 /* 启动任务执行异步保存(防止阻塞UI线程) */
                 Task.Factory.StartNew(() =>
@@ -901,12 +959,17 @@ namespace Spirometer
                     {
                         /* 恢复按钮使能状态(确保在UI线程执行) */
                         this.BeginInvoke(new Action<Form1>((obj) => {
-                            toolStripButtonLoadPresure.Enabled = true;
-                            toolStripButtonLoadFlow.Enabled = true;
-                            toolStripButtonSaveFlow.Enabled = true;
-                            toolStripButtonConnect.Enabled = true;
-                            toolStripButtonStart.Enabled = true;
-                            toolStripButtonClear.Enabled = true;
+                            toolStripButtonLoadPresure.Enabled = toolStripButtonLoadPresureEnabled;
+                            toolStripButtonLoadFlow.Enabled = toolStripButtonLoadFlowEnabled;
+                            toolStripButtonSaveFlow.Enabled = toolStripButtonSaveFlowEnabled;
+                            toolStripButtonConnect.Enabled = toolStripButtonConnectEnabled;
+                            toolStripButtonStart.Enabled = toolStripButtonStartEnabled;
+                            toolStripButtonClear.Enabled = toolStripButtonClearEnabled;
+                            toolStripButtonCalibration1L.Enabled = toolStripButtonCalibration1LEnabled;
+                            toolStripButtonCalibration3L.Enabled = toolStripButtonCalibration3LEnabled;
+                            toolStripButtonVerification1L.Enabled = toolStripButtonVerification1LEnabled;
+                            toolStripButtonVerification3L.Enabled = toolStripButtonVerification3LEnabled;
+                            toolStripButtonFirmwareUpdate.Enabled = toolStripButtonFirmwareUpdateEnabled;
                         }), this);
                     }
                 });
@@ -920,7 +983,8 @@ namespace Spirometer
                 /* 开启流速传感器 */
                 bool bRet = m_flowSensor.Open(toolStripComboBoxCom.Text);
                 toolStripButtonStart.Enabled = bRet;
-                //toolStripButtonLoad.Enabled = !bRet;
+                //toolStripButtonLoadPresure.Enabled = !bRet;
+                //toolStripButtonLoadFlow.Enabled = !bRet;
                 //toolStripButtonSave.Enabled = !bRet;
                 //toolStripButtonClear.Enabled = !bRet;
                 toolStripButtonScan.Enabled = !bRet;
@@ -928,6 +992,8 @@ namespace Spirometer
                 toolStripButtonConnect.Text = bRet ? "断开" : "连接";
                 toolStripButtonCalibration1L.Enabled = bRet;
                 toolStripButtonCalibration3L.Enabled = bRet;
+                toolStripButtonVerification1L.Enabled = bRet;
+                toolStripButtonVerification3L.Enabled = bRet;
                 toolStripButtonFirmwareUpdate.Enabled = bRet;
                 /* 尝试清空数据队列 */
                 TryClearDataQueue();
@@ -938,15 +1004,20 @@ namespace Spirometer
                 m_flowSensor.Close();
                 toolStripButtonStart.Enabled = false;
                 toolStripButtonLoadPresure.Enabled = true;
+                toolStripButtonLoadFlow.Enabled = true;
                 toolStripButtonSaveFlow.Enabled = true;
                 toolStripButtonClear.Enabled = true;
                 toolStripButtonScan.Enabled = true;
                 toolStripComboBoxCom.Enabled = true;
                 toolStripButtonCalibration1L.Enabled = false;
                 toolStripButtonCalibration3L.Enabled = false;
+                toolStripButtonVerification1L.Enabled = false;
+                toolStripButtonVerification3L.Enabled = false;
                 toolStripButtonFirmwareUpdate.Enabled = false;
                 toolStripButtonConnect.Text = "连接";
                 toolStripButtonStart.Text = "开始";
+                /* 取消监听流量传感器数据收取事件 */
+                m_flowSensor.PresureRecved -= OnPresureRecved;
                 /* 停止刷新定时器 */
                 m_refreshTimer.Stop();
                 /* 尝试清空数据队列 */
@@ -982,11 +1053,14 @@ namespace Spirometer
                     if (bRet)
                     { // 归零成功
                         toolStripButtonStart.Text = "停止";
-                        toolStripButtonClear.Enabled = false;
                         toolStripButtonLoadPresure.Enabled = false;
+                        toolStripButtonLoadFlow.Enabled = false;
                         toolStripButtonSaveFlow.Enabled = false;
+                        toolStripButtonClear.Enabled = false;
                         toolStripButtonCalibration1L.Enabled = false;
                         toolStripButtonCalibration3L.Enabled = false;
+                        toolStripButtonVerification1L.Enabled = false;
+                        toolStripButtonVerification3L.Enabled = false;
                         toolStripButtonFirmwareUpdate.Enabled = false;
                         //ClearAll();
                         /* 尝试清空数据队列 */
@@ -1000,11 +1074,14 @@ namespace Spirometer
                 else // if ("停止" == toolStripButtonStart.Text)
                 {
                     toolStripButtonStart.Text = "开始";
-                    toolStripButtonClear.Enabled = true;
                     toolStripButtonLoadPresure.Enabled = true;
+                    toolStripButtonLoadFlow.Enabled = true;
                     toolStripButtonSaveFlow.Enabled = true;
+                    toolStripButtonClear.Enabled = true;
                     toolStripButtonCalibration1L.Enabled = true;
                     toolStripButtonCalibration3L.Enabled = true;
+                    toolStripButtonVerification1L.Enabled = true;
+                    toolStripButtonVerification3L.Enabled = true;
                     toolStripButtonFirmwareUpdate.Enabled = true;
                     /* 取消监听流量传感器数据收取事件 */
                     m_flowSensor.PresureRecved -= OnPresureRecved;
@@ -1087,6 +1164,32 @@ namespace Spirometer
             {
                 /* 关闭流速传感器 */
                 m_flowSensor.Close();
+            }
+        }
+
+        private void toolStripButtonVerification1L_Click(object sender, EventArgs e)
+        {
+            /* 取消监听流量传感器数据收取事件 */
+            m_flowSensor.PresureRecved -= OnPresureRecved;
+
+            /* 弹出验证对话框 */
+            using (FormVerification veriDialog = new FormVerification(m_flowSensor, 1))
+            {
+                veriDialog.ShowDialog();
+                veriDialog.Close();
+            }
+        }
+
+        private void toolStripButtonVerification3L_Click(object sender, EventArgs e)
+        {
+            /* 取消监听流量传感器数据收取事件 */
+            m_flowSensor.PresureRecved -= OnPresureRecved;
+
+            /* 弹出验证对话框 */
+            using (FormVerification veriDialog = new FormVerification(m_flowSensor, 3))
+            {
+                veriDialog.ShowDialog();
+                veriDialog.Close();
             }
         }
     }

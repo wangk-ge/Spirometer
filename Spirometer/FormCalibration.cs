@@ -36,12 +36,16 @@ namespace Spirometer
 
         private TaskCompletionSource<bool> m_dataPlotTaskComp; // 用于监控数据输出到Plot数据完成事件
 
+        private bool m_calParamAviable = false; // 是否已计算得到校准参数
+
         private List<double> m_calParamSectionKeyList = new List<double>();
         private List<double> m_calParamValList = new List<double>();
 
         public FormCalibration(FlowSensor flowSensor, double calVolume = 1.0)
         {
+            /* 流量传感器 */
             m_flowSensor = flowSensor;
+
             /* 流量校准器 */
             m_flowCalibrator = new FlowCalibrator(m_flowSensor.SAMPLE_RATE, calVolume);
 
@@ -305,7 +309,7 @@ namespace Spirometer
                 // 尝试读取队列中的数据并添加到曲线
                 while (m_dataQueue.Count > 0)
                 {
-                    /* 尝试读取队列中的数 */
+                    /* 尝试读取队列中的数据 */
                     bool bRet = m_dataQueue.TryDequeue(out double presure); // 压差
                     if (!bRet)
                     {
@@ -434,13 +438,14 @@ namespace Spirometer
             double presureAvg = m_flowCalibrator.SamplePresureAvg(sampleIndex);
             double presureFlowScale = m_flowCalibrator.SamplePresureAvgToFlowScale(sampleIndex);
             double presureSum = m_flowCalibrator.SamplePresureSum(sampleIndex);
-            double peekPresure = (direction == FlowCalibrator.RespireDirection.Inspiration) ? m_flowCalibrator.SampleMaxPresure(sampleIndex) : m_flowCalibrator.SampleMinPresure(sampleIndex);
+            double peekPresure = (direction == FlowCalibrator.RespireDirection.Inspiration) ? 
+                m_flowCalibrator.SampleMaxPresure(sampleIndex) : m_flowCalibrator.SampleMinPresure(sampleIndex);
             double presureVariance = m_flowCalibrator.SamplePresureVariance(sampleIndex);
             bool bIsSampleValid = m_flowCalibrator.SampleIsValid(sampleIndex);
 
             /* 添加样本信息到列表 */
             int index = dataGridViewSampleInfo.Rows.Add();
-            dataGridViewSampleInfo.Rows[index].Cells[0].Value = (presureAvg > 0) ? "吸气" : "呼气";
+            dataGridViewSampleInfo.Rows[index].Cells[0].Value = (direction == FlowCalibrator.RespireDirection.Inspiration) ? "吸气" : "呼气";
             dataGridViewSampleInfo.Rows[index].Cells[1].Value = presureFlowScale;
             dataGridViewSampleInfo.Rows[index].Cells[2].Value = presureAvg;
             dataGridViewSampleInfo.Rows[index].Cells[3].Value = presureSum;
@@ -449,7 +454,7 @@ namespace Spirometer
             dataGridViewSampleInfo.Rows[index].Cells[6].Value = bIsSampleValid;
 
             /* 尝试计算校准参数并更新显示 */
-            TryCalcAndUpdateCaliParam();
+            m_calParamAviable = TryCalcAndUpdateCaliParam();
 
             /* 重置校准器,开始检测下一次校准启动 */
             m_flowCalibrator.Reset();
@@ -458,7 +463,7 @@ namespace Spirometer
         /* 已接收到一个压差采集数据 */
         private void OnPresureRecved(double presure)
         {
-            /* 执行肺功能参数计算 */
+            /* 输入到流量校准器 */
             m_flowCalibrator.Input(presure);
 
             /* 加入数据到对应的曲线 */
@@ -515,10 +520,10 @@ namespace Spirometer
             /* 清除 */
             m_flowCalibrator.Clear();
 
-            /* 清空样本信息列表 */
+            /* 清空结果列表 */
             ClearResultDataGridView();
 
-            /* 清空结果列表 */
+            /* 清空样本信息列表 */
             ClearSampleInfoDataGridView();
 
             /* Clear Presure-Time Plot */
@@ -624,11 +629,19 @@ namespace Spirometer
                 }
 
                 /* 保存过程中暂时不允许点击工具按钮 */
+                bool toolStripButtonStartEnabled = toolStripButtonStart.Enabled;
                 toolStripButtonStart.Enabled = false;
+
+                bool toolStripButtonSavePresureEnabled = toolStripButtonSavePresure.Enabled;
                 toolStripButtonSavePresure.Enabled = false;
+
+                bool toolStripButtonLoadPresureEnabled = toolStripButtonLoadPresure.Enabled;
                 toolStripButtonLoadPresure.Enabled = false;
+
+                bool toolStripButtonClearEnabled = toolStripButtonClear.Enabled;
                 toolStripButtonClear.Enabled = false;
-                toolStripButtonCalcCaliParam.Enabled = false;
+
+                bool toolStripButtonApplyEnabled = toolStripButtonApply.Enabled;
                 toolStripButtonApply.Enabled = false;
 
                 /* 启动任务执行异步保存(防止阻塞UI线程) */
@@ -661,12 +674,11 @@ namespace Spirometer
                     {
                         /* 恢复工具按钮使能状态(确保在UI线程执行) */
                         this.BeginInvoke(new Action<FormCalibration>((obj) => {
-                            toolStripButtonStart.Enabled = true;
-                            toolStripButtonSavePresure.Enabled = true;
-                            toolStripButtonLoadPresure.Enabled = true;
-                            toolStripButtonClear.Enabled = true;
-                            toolStripButtonCalcCaliParam.Enabled = true;
-                            toolStripButtonApply.Enabled = true;
+                            toolStripButtonStart.Enabled = toolStripButtonStartEnabled;
+                            toolStripButtonSavePresure.Enabled = toolStripButtonSavePresureEnabled;
+                            toolStripButtonLoadPresure.Enabled = toolStripButtonLoadPresureEnabled;
+                            toolStripButtonClear.Enabled = toolStripButtonClearEnabled;
+                            toolStripButtonApply.Enabled = toolStripButtonApplyEnabled;
                         }), this);
                     }
                 });
@@ -689,22 +701,30 @@ namespace Spirometer
                 }
 
                 /* 加载过程中暂时不允许点击工具按钮 */
+                bool toolStripButtonStartEnabled = toolStripButtonStart.Enabled;
                 toolStripButtonStart.Enabled = false;
+
+                bool toolStripButtonSavePresureEnabled = toolStripButtonSavePresure.Enabled;
                 toolStripButtonSavePresure.Enabled = false;
+
+                bool toolStripButtonLoadPresureEnabled = toolStripButtonLoadPresure.Enabled;
                 toolStripButtonLoadPresure.Enabled = false;
+
+                bool toolStripButtonClearEnabled = toolStripButtonClear.Enabled;
                 toolStripButtonClear.Enabled = false;
-                toolStripButtonCalcCaliParam.Enabled = false;
+
+                bool toolStripButtonApplyEnabled = toolStripButtonApply.Enabled;
                 toolStripButtonApply.Enabled = false;
 
+                /* 加载CSV文件中的数据 */
                 await LoadCSVFileAsync(openCSVDialog.FileName);
 
                 /* 加载完毕恢复工具按钮使能状态 */
-                toolStripButtonStart.Enabled = true;
-                toolStripButtonSavePresure.Enabled = true;
-                toolStripButtonLoadPresure.Enabled = true;
-                toolStripButtonClear.Enabled = true;
-                toolStripButtonCalcCaliParam.Enabled = true;
-                toolStripButtonApply.Enabled = true;
+                toolStripButtonStart.Enabled = toolStripButtonStartEnabled;
+                toolStripButtonSavePresure.Enabled = toolStripButtonSavePresureEnabled;
+                toolStripButtonLoadPresure.Enabled = toolStripButtonLoadPresureEnabled;
+                toolStripButtonClear.Enabled = toolStripButtonClearEnabled;
+                toolStripButtonApply.Enabled = toolStripButtonApplyEnabled;
             }
         }
 
@@ -730,7 +750,10 @@ namespace Spirometer
                     if (bRet)
                     { // 归零成功
                         toolStripButtonStart.Text = "停止";
+                        toolStripButtonSavePresure.Enabled = false;
                         toolStripButtonLoadPresure.Enabled = false;
+                        toolStripButtonClear.Enabled = false;
+                        toolStripButtonApply.Enabled = false;
                         //ClearAll();
                         /* 尝试清空数据队列 */
                         TryClearDataQueue();
@@ -743,7 +766,10 @@ namespace Spirometer
                 else // if ("停止" == toolStripButtonStart.Text)
                 {
                     toolStripButtonStart.Text = "开始";
+                    toolStripButtonSavePresure.Enabled = true;
                     toolStripButtonLoadPresure.Enabled = true;
+                    toolStripButtonClear.Enabled = true;
+                    toolStripButtonApply.Enabled = m_calParamAviable;
                     /* 取消监听流量传感器数据收取事件 */
                     m_flowSensor.PresureRecved -= OnPresureRecved;
                     /* 停止刷新定时器 */
@@ -756,14 +782,13 @@ namespace Spirometer
 
         private void toolStripButtonApply_Click(object sender, EventArgs e)
         {
-            DialogResult dialogResult = MessageBox.Show("将替换现有校准参数,是否继续？", "选择", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
+            DialogResult dialogResult = MessageBox.Show("将替换现有校准参数,是否继续？", "确认", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
             if (dialogResult != DialogResult.Yes)
             {
                 return;
             }
 
-            bool bRet = TryCalcAndUpdateCaliParam();
-            if (bRet)
+            if (m_calParamAviable)
             {
                 if (m_calParamSectionKeyList.Count > 0)
                 {
@@ -798,12 +823,6 @@ namespace Spirometer
         private void toolStripButtonClear_Click(object sender, EventArgs e)
         {
             ClearAll();
-        }
-
-        private void toolStripButtonCalcCaliParam_Click(object sender, EventArgs e)
-        {
-            /* 尝试计算校准参数并更新显示 */
-            TryCalcAndUpdateCaliParam();
         }
 
         private void FormCalibration_FormClosing(object sender, FormClosingEventArgs e)

@@ -53,7 +53,6 @@
             this.toolStripButtonLoadPresure = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonClear = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
-            this.toolStripButtonCalcCaliParam = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonApply = new System.Windows.Forms.ToolStripButton();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
@@ -275,7 +274,6 @@
             this.toolStripButtonLoadPresure,
             this.toolStripButtonClear,
             this.toolStripSeparator2,
-            this.toolStripButtonCalcCaliParam,
             this.toolStripButtonApply});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
@@ -333,16 +331,6 @@
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
             this.toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
-            // 
-            // toolStripButtonCalcCaliParam
-            // 
-            this.toolStripButtonCalcCaliParam.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripButtonCalcCaliParam.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonCalcCaliParam.Image")));
-            this.toolStripButtonCalcCaliParam.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButtonCalcCaliParam.Name = "toolStripButtonCalcCaliParam";
-            this.toolStripButtonCalcCaliParam.Size = new System.Drawing.Size(84, 22);
-            this.toolStripButtonCalcCaliParam.Text = "计算校准参数";
-            this.toolStripButtonCalcCaliParam.Click += new System.EventHandler(this.toolStripButtonCalcCaliParam_Click);
             // 
             // toolStripButtonApply
             // 
@@ -453,7 +441,6 @@
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelSampleCount;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel2;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelParamCount;
-        private System.Windows.Forms.ToolStripButton toolStripButtonCalcCaliParam;
         private System.Windows.Forms.SplitContainer splitContainer2;
         private OxyPlot.WindowsForms.PlotView plotViewKP;
         private System.Windows.Forms.ToolStripButton toolStripButtonSavePresure;

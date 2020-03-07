@@ -48,6 +48,8 @@
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripButtonCalibration1L = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonCalibration3L = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripButtonFirmwareUpdate = new System.Windows.Forms.ToolStripButton();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabelRespiratoryRate = new System.Windows.Forms.ToolStripStatusLabel();
@@ -68,8 +70,8 @@
             this.toolStripStatusLabel9 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripStatusLabelFEF75 = new System.Windows.Forms.ToolStripStatusLabel();
             this.panel1 = new System.Windows.Forms.Panel();
-            this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
-            this.toolStripButtonFirmwareUpdate = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButtonVerification1L = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButtonVerification3L = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -176,6 +178,8 @@
             this.toolStripSeparator3,
             this.toolStripButtonCalibration1L,
             this.toolStripButtonCalibration3L,
+            this.toolStripButtonVerification1L,
+            this.toolStripButtonVerification3L,
             this.toolStripSeparator4,
             this.toolStripButtonFirmwareUpdate});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
@@ -207,6 +211,7 @@
             this.toolStripButtonScan.Name = "toolStripButtonScan";
             this.toolStripButtonScan.Size = new System.Drawing.Size(36, 22);
             this.toolStripButtonScan.Text = "刷新";
+            this.toolStripButtonScan.ToolTipText = "重新扫描可用端口";
             this.toolStripButtonScan.Click += new System.EventHandler(this.toolStripButtonScan_Click);
             // 
             // toolStripSeparator1
@@ -296,6 +301,22 @@
             this.toolStripButtonCalibration3L.Size = new System.Drawing.Size(57, 22);
             this.toolStripButtonCalibration3L.Text = "校准(3L)";
             this.toolStripButtonCalibration3L.Click += new System.EventHandler(this.toolStripButtonCalibration3L_Click);
+            // 
+            // toolStripSeparator4
+            // 
+            this.toolStripSeparator4.Name = "toolStripSeparator4";
+            this.toolStripSeparator4.Size = new System.Drawing.Size(6, 25);
+            // 
+            // toolStripButtonFirmwareUpdate
+            // 
+            this.toolStripButtonFirmwareUpdate.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButtonFirmwareUpdate.Enabled = false;
+            this.toolStripButtonFirmwareUpdate.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonFirmwareUpdate.Image")));
+            this.toolStripButtonFirmwareUpdate.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonFirmwareUpdate.Name = "toolStripButtonFirmwareUpdate";
+            this.toolStripButtonFirmwareUpdate.Size = new System.Drawing.Size(60, 22);
+            this.toolStripButtonFirmwareUpdate.Text = "固件升级";
+            this.toolStripButtonFirmwareUpdate.Click += new System.EventHandler(this.toolStripButtonFirmwareUpdate_Click);
             // 
             // statusStrip1
             // 
@@ -440,21 +461,27 @@
             this.panel1.Size = new System.Drawing.Size(1372, 54);
             this.panel1.TabIndex = 3;
             // 
-            // toolStripSeparator4
+            // toolStripButtonVerification1L
             // 
-            this.toolStripSeparator4.Name = "toolStripSeparator4";
-            this.toolStripSeparator4.Size = new System.Drawing.Size(6, 25);
+            this.toolStripButtonVerification1L.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButtonVerification1L.Enabled = false;
+            this.toolStripButtonVerification1L.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonVerification1L.Image")));
+            this.toolStripButtonVerification1L.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonVerification1L.Name = "toolStripButtonVerification1L";
+            this.toolStripButtonVerification1L.Size = new System.Drawing.Size(57, 22);
+            this.toolStripButtonVerification1L.Text = "验证(1L)";
+            this.toolStripButtonVerification1L.Click += new System.EventHandler(this.toolStripButtonVerification1L_Click);
             // 
-            // toolStripButtonFirmwareUpdate
+            // toolStripButtonVerification3L
             // 
-            this.toolStripButtonFirmwareUpdate.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            this.toolStripButtonFirmwareUpdate.Enabled = false;
-            this.toolStripButtonFirmwareUpdate.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonFirmwareUpdate.Image")));
-            this.toolStripButtonFirmwareUpdate.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButtonFirmwareUpdate.Name = "toolStripButtonFirmwareUpdate";
-            this.toolStripButtonFirmwareUpdate.Size = new System.Drawing.Size(60, 22);
-            this.toolStripButtonFirmwareUpdate.Text = "固件升级";
-            this.toolStripButtonFirmwareUpdate.Click += new System.EventHandler(this.toolStripButtonFirmwareUpdate_Click);
+            this.toolStripButtonVerification3L.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButtonVerification3L.Enabled = false;
+            this.toolStripButtonVerification3L.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonVerification3L.Image")));
+            this.toolStripButtonVerification3L.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonVerification3L.Name = "toolStripButtonVerification3L";
+            this.toolStripButtonVerification3L.Size = new System.Drawing.Size(57, 22);
+            this.toolStripButtonVerification3L.Text = "验证(3L)";
+            this.toolStripButtonVerification3L.Click += new System.EventHandler(this.toolStripButtonVerification3L_Click);
             // 
             // Form1
             // 
@@ -529,6 +556,8 @@
         private System.Windows.Forms.ToolStripButton toolStripButtonCalibration3L;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator4;
         private System.Windows.Forms.ToolStripButton toolStripButtonFirmwareUpdate;
+        private System.Windows.Forms.ToolStripButton toolStripButtonVerification1L;
+        private System.Windows.Forms.ToolStripButton toolStripButtonVerification3L;
     }
 }
 

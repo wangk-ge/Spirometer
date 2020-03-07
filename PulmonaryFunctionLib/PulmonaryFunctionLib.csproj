@@ -52,10 +52,12 @@
     <Compile Include="ComPortEnumerator.cs" />
     <Compile Include="FlowCalibrator.cs" />
     <Compile Include="FlowSensor.cs" />
+    <Compile Include="FlowValidator.cs" />
     <Compile Include="FrameDecoder.cs" />
     <Compile Include="KalmanFilter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PulmonaryFunction.cs" />
+    <Compile Include="WaveAnalyzer.cs" />
     <Compile Include="WaveStatistician.cs" />
   </ItemGroup>
   <ItemGroup>
