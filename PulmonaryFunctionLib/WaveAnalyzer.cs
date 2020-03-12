@@ -24,6 +24,7 @@ namespace PulmonaryFunctionLib
         public uint DataCount { get { return (uint)m_listData.Count; } } // 当前已采集的所有[数据]总个数
         public uint SampleCount { get { return (uint)m_sampleInfoList.Count; } } // 已采集的[样本]个数
         public double CurrSampleDataSum { get { return m_dataSum; } } // 当前正在采集[样本的数据]求和值
+        public bool StartSampling { get { return (m_state > State.WaitStartSample) && (m_state < State.SampleStop); } } // 当前是否已启动采样状态
 
         /* 事件 */
         public event WaveSampleStartHandler SampleStarted; // 采样开始事件
@@ -231,6 +232,28 @@ namespace PulmonaryFunctionLib
             return SampleDataCount(info);
         }
 
+        /* 样本时间(ms) */
+        private double SampleTime(WaveSampleInfo info)
+        {
+            if (info.startIndex >= info.endIndex)
+            {
+                return 0U;
+            }
+            uint dataNum = info.endIndex - info.startIndex + 1;
+            return SAMPLE_TIME * dataNum;
+        }
+
+        /* 样本时间(ms)(通过样本索引) */
+        public double SampleTime(uint sampleIndex)
+        {
+            if (sampleIndex >= m_sampleInfoList.Count)
+            {
+                return 0U;
+            }
+            var info = m_sampleInfoList[(int)sampleIndex];
+            return SampleTime(info);
+        }
+
         /* 样本的平均值 */
         private double SampleDataAvg(WaveSampleInfo info)
         {
@@ -367,7 +390,8 @@ namespace PulmonaryFunctionLib
                             }
 
                             /* 样本方向 */
-                            WaveSampleDirection direction = (m_state == State.PositiveSample) ? WaveSampleDirection.PositiveSample : WaveSampleDirection.NegativeSample;
+                            WaveSampleDirection direction = (m_state == State.PositiveSample) ?
+                                WaveSampleDirection.PositiveSample : WaveSampleDirection.NegativeSample;
 
                             /* 进入[采样停止]状态 */
                             SetState(State.SampleStop);

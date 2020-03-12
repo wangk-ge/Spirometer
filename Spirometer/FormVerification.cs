@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -319,7 +320,10 @@ namespace Spirometer
 
             /* 加入数据到对应的曲线 */
             m_pointsFT.Add(new DataPoint(m_flowValidator.Time, m_flowValidator.Flow));
-            m_pointsFV.Add(new DataPoint(m_flowValidator.CurrSampleVolume, m_flowValidator.Flow));
+            if (m_flowValidator.StartSampling)
+            {
+                m_pointsFV.Add(new DataPoint(m_flowValidator.CurrSampleVolume, m_flowValidator.Flow));
+            }
         }
 
         /* 更新 Flow-Time Plot,并执行自动滚屏 */
@@ -391,6 +395,107 @@ namespace Spirometer
             plotViewFV.InvalidatePlot(true);
         }
 
+        /* 异步加载CSV文件 */
+        private async Task LoadCSVFileAsync(string filePath)
+        {
+            /* 先清空所有图表数据和缓存数据,并刷新显示 */
+            ClearAll();
+
+            /* 启动刷新定时器 */
+            m_refreshTimer.Start();
+
+            /* 启动任务执行异步加载(防止阻塞UI线程) */
+            Task loadTask = Task.Factory.StartNew((Action)(() =>
+            {
+                try
+                {
+                    /* 所有数据先加载到内存 */
+                    string strData = string.Empty;
+                    using (StreamReader reader = new StreamReader(filePath, Encoding.UTF8))
+                    {
+                        strData = reader.ReadToEnd();
+                        reader.Close();
+                    }
+
+
+                    /* 解析CSV中的压差数据 */
+                    string[] strDataArray = strData.Split(new char[] { ',' });
+                    foreach (var strVal in strDataArray)
+                    {
+                        if (string.Empty == strVal)
+                        {
+                            continue;
+                        }
+
+                        double presure = Convert.ToDouble(strVal); // 压差
+
+                        /* 压差转流量 */
+                        double flow = m_flowSensor.PresureToFlow(presure); // 流量
+
+                        /* 流量数据存入队列,将在刷新定时器中读取 */
+                        m_dataQueue.Enqueue(flow);
+
+                        /* 模拟采样率 */
+                        //Thread.Sleep((int)m_flowSensor.SAMPLE_TIME);
+                    }
+
+                    /* 数据已加载完毕 */
+
+                    /* 建Task完成事件对象(用于监测数据是否已全部输出到Plot) */
+                    m_dataPlotTaskComp = new TaskCompletionSource<bool>();
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show($"加载失败!{e.ToString()}");
+                }
+            }));
+
+            /* 异步等待完成对象被触发(数据加载完毕并且已全部输出到Plot) */
+            await loadTask; // 先确保数据已加载完毕(只有此时m_dataPlotTaskComp才非空)
+            if (null != m_dataPlotTaskComp)
+            {
+                await m_dataPlotTaskComp.Task; // 然后确保数据已全部输出到Plot
+
+                /* 清除完成对象 */
+                m_dataPlotTaskComp = null;
+            }
+        }
+
+        /* 显示加载对话框,加载Preaure数据 */
+        private async void ShowLoadCSVDialog()
+        {
+            /* 弹出文件打开对话框 */
+            OpenFileDialog openCSVDialog = new OpenFileDialog();
+            openCSVDialog.Filter = "CSV File (*.csv;)|*.csv";
+            openCSVDialog.Multiselect = false;
+
+            if (openCSVDialog.ShowDialog() == DialogResult.OK)
+            {
+                if (String.IsNullOrEmpty(openCSVDialog.FileName))
+                {
+                    return;
+                }
+
+                /* 加载过程中暂时不允许点击工具按钮 */
+                bool toolStripButtonStartEnabled = toolStripButtonStart.Enabled;
+                toolStripButtonStart.Enabled = false;
+
+                bool toolStripButtonLoadPresureEnabled = toolStripButtonLoadPresure.Enabled;
+                toolStripButtonLoadPresure.Enabled = false;
+
+                bool toolStripButtonClearEnabled = toolStripButtonClear.Enabled;
+                toolStripButtonClear.Enabled = false;
+
+                /* 加载CSV文件中的数据 */
+                await LoadCSVFileAsync(openCSVDialog.FileName);
+
+                /* 加载完毕恢复工具按钮使能状态 */
+                toolStripButtonStart.Enabled = toolStripButtonStartEnabled;
+                toolStripButtonLoadPresure.Enabled = toolStripButtonLoadPresureEnabled;
+                toolStripButtonClear.Enabled = toolStripButtonClearEnabled;
+            }
+        }
+
         private async void toolStripButtonStart_Click(object sender, EventArgs e)
         {
             bool bRet = false;
@@ -413,6 +518,7 @@ namespace Spirometer
                     if (bRet)
                     { // 归零成功
                         toolStripButtonStart.Text = "停止";
+                        toolStripButtonLoadPresure.Enabled = false;
                         toolStripButtonClear.Enabled = false;
                         //ClearAll();
                         /* 尝试清空数据队列 */
@@ -426,6 +532,7 @@ namespace Spirometer
                 else // if ("停止" == toolStripButtonStart.Text)
                 {
                     toolStripButtonStart.Text = "开始";
+                    toolStripButtonLoadPresure.Enabled = true;
                     toolStripButtonClear.Enabled = true;
                     /* 取消监听流量传感器数据收取事件 */
                     m_flowSensor.PresureRecved -= OnPresureRecved;
@@ -435,6 +542,11 @@ namespace Spirometer
                     TryClearDataQueue();
                 }
             }
+        }
+
+        private void toolStripButtonLoadPresure_Click(object sender, EventArgs e)
+        {
+            ShowLoadCSVDialog();
         }
 
         private void toolStripButtonClear_Click(object sender, EventArgs e)

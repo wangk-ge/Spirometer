@@ -23,6 +23,7 @@ namespace PulmonaryFunctionLib
         public uint PresureCount { get { return m_waveAnalyzer.DataCount; } } // 当前已采集的所有(Presure数据)总个数
         public uint SampleCount { get { return m_waveAnalyzer.SampleCount; } } // 已采集的样本个数
         public double CurrSamplePresureSum { get { return m_waveAnalyzer.CurrSampleDataSum; } } // 当前正在采集的样本Presure求和值
+        public bool StartSampling { get { return m_waveAnalyzer.StartSampling; } } // 当前是否已启动采样状态
 
         /* 呼吸方向类型 */
         public enum RespireDirection
@@ -43,6 +44,8 @@ namespace PulmonaryFunctionLib
         /* 参数 */
         private readonly double SAMPLE_TIME = 3.03; // 采样时间(ms)
         private readonly double SAMPLE_RATE = 330; // 采样率
+        private readonly double SECTION_STEP = 0.01; // 参数分段的步长
+        private readonly double SECTION_STEP_STEP = 0.001; // 参数分段的步长增长步长
 
         /* 阈值(用于检测采样启动和停止条件) */
         private readonly int START_SAMPLE_COUNT = 2; // 启动检测,波动统计采样次数
@@ -144,7 +147,32 @@ namespace PulmonaryFunctionLib
             return m_waveAnalyzer.SampleDataCount(sampleIndex);
         }
 
-        /* 样本的Presure平均值(通过样本索引) */
+        /* 样本的平均流量 */
+        public double SampleFlowAvg(uint sampleIndex)
+        {
+            /* ms */
+            double sampleTime = m_waveAnalyzer.SampleTime(sampleIndex);
+            if (sampleTime < 0.00000001)
+            {
+                return 0.0;
+            }
+
+            /* 转换单位为S */
+            sampleTime /= 1000;
+
+            /* 定标桶容积 */
+            double calVol = CalVolume;
+            double sum = m_waveAnalyzer.SampleDataSum(sampleIndex);
+            if (sum < 0)
+            {
+                calVol = -calVol;
+            }
+
+            /* 平均流量 */
+            return calVol / sampleTime;
+        }
+
+        /* 样本的Presure平均值 */
         public double SamplePresureAvg(uint sampleIndex)
         {
             return m_waveAnalyzer.SampleDataAvg(sampleIndex);
@@ -209,11 +237,11 @@ namespace PulmonaryFunctionLib
 
 #if true
             /* 分段步进长度 */
-            double sectionStep = 0.02;
-            double stepStep = 0.002;
+            double sectionStep = SECTION_STEP;
+            double stepStep = SECTION_STEP_STEP;
 
             /* 进行负方向分段 */
-            sectionStep = 0.02;
+            sectionStep = SECTION_STEP;
             double sectionPos = 0.0; // [0,minPresure)
             for (; sectionPos > (minPresure + sectionStep); sectionPos -= sectionStep)
             {
@@ -221,7 +249,7 @@ namespace PulmonaryFunctionLib
                 sectionStep += stepStep;
             }
             /* 进行正方向分段 */
-            sectionStep = 0.02;
+            sectionStep = SECTION_STEP;
             sectionPos = sectionStep; // (0,maxPresure)
             for (; sectionPos < (maxPresure - sectionStep); sectionPos += sectionStep)
             {

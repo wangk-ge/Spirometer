@@ -370,7 +370,7 @@ namespace Spirometer
             List<uint> sampleList = new List<uint>();
             for (int i = 0; i < dataGridViewSampleInfo.Rows.Count; ++i)
             {
-                bool bApply = (bool)dataGridViewSampleInfo.Rows[i].Cells[6].Value;
+                bool bApply = (bool)dataGridViewSampleInfo.Rows[i].Cells[7].Value;
                 if (bApply)
                 {
                     sampleList.Add((uint)i);
@@ -435,6 +435,7 @@ namespace Spirometer
         /* 采样已停止 */
         private void OnSampleStoped(uint sampleIndex, FlowCalibrator.RespireDirection direction)
         {
+            double flowAvg = m_flowCalibrator.SampleFlowAvg(sampleIndex);
             double presureAvg = m_flowCalibrator.SamplePresureAvg(sampleIndex);
             double presureFlowScale = m_flowCalibrator.SamplePresureAvgToFlowScale(sampleIndex);
             double presureSum = m_flowCalibrator.SamplePresureSum(sampleIndex);
@@ -447,11 +448,12 @@ namespace Spirometer
             int index = dataGridViewSampleInfo.Rows.Add();
             dataGridViewSampleInfo.Rows[index].Cells[0].Value = (direction == FlowCalibrator.RespireDirection.Inspiration) ? "吸气" : "呼气";
             dataGridViewSampleInfo.Rows[index].Cells[1].Value = presureFlowScale;
-            dataGridViewSampleInfo.Rows[index].Cells[2].Value = presureAvg;
-            dataGridViewSampleInfo.Rows[index].Cells[3].Value = presureSum;
-            dataGridViewSampleInfo.Rows[index].Cells[4].Value = peekPresure;
-            dataGridViewSampleInfo.Rows[index].Cells[5].Value = presureVariance;
-            dataGridViewSampleInfo.Rows[index].Cells[6].Value = bIsSampleValid;
+            dataGridViewSampleInfo.Rows[index].Cells[2].Value = flowAvg;
+            dataGridViewSampleInfo.Rows[index].Cells[3].Value = presureAvg;
+            dataGridViewSampleInfo.Rows[index].Cells[4].Value = presureSum;
+            dataGridViewSampleInfo.Rows[index].Cells[5].Value = peekPresure;
+            dataGridViewSampleInfo.Rows[index].Cells[6].Value = presureVariance;
+            dataGridViewSampleInfo.Rows[index].Cells[7].Value = bIsSampleValid;
 
             /* 尝试计算校准参数并更新显示 */
             m_calParamAviable = TryCalcAndUpdateCaliParam();
@@ -468,7 +470,10 @@ namespace Spirometer
 
             /* 加入数据到对应的曲线 */
             m_pointsPT.Add(new DataPoint(m_flowCalibrator.Time, m_flowCalibrator.Presure));
-            m_pointsPS.Add(new DataPoint(m_flowCalibrator.CurrSamplePresureSum, m_flowCalibrator.Presure));
+            if (m_flowCalibrator.StartSampling)
+            {
+                m_pointsPS.Add(new DataPoint(m_flowCalibrator.CurrSamplePresureSum, m_flowCalibrator.Presure));
+            }
         }
 
         /* 更新 Presure-Time Plot,并执行自动滚屏 */

@@ -23,6 +23,7 @@ namespace PulmonaryFunctionLib
         public uint FlowCount { get { return m_waveAnalyzer.DataCount; } } // 当前已采集的所有(Flow数据)总个数
         public uint SampleCount { get { return m_waveAnalyzer.SampleCount; } } // 已采集的样本个数
         public double CurrSampleVolume { get { return m_waveAnalyzer.CurrSampleDataSum * (SAMPLE_TIME / 1000); } } // 当前正在采集的样本容积
+        public bool StartSampling { get { return m_waveAnalyzer.StartSampling; } } // 当前是否已启动采样状态
 
         /* 呼吸方向类型 */
         public enum RespireDirection

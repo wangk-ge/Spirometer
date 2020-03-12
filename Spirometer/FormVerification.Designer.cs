@@ -46,6 +46,7 @@
             this.Column4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column6 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.toolStripButtonLoadPresure = new System.Windows.Forms.ToolStripButton();
             this.toolStrip1.SuspendLayout();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridViewSampleInfo)).BeginInit();
@@ -60,6 +61,7 @@
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripButtonStart,
             this.toolStripSeparator1,
+            this.toolStripButtonLoadPresure,
             this.toolStripButtonClear});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
@@ -226,6 +228,16 @@
             this.Column6.Name = "Column6";
             this.Column6.ReadOnly = true;
             // 
+            // toolStripButtonLoadPresure
+            // 
+            this.toolStripButtonLoadPresure.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButtonLoadPresure.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButtonLoadPresure.Image")));
+            this.toolStripButtonLoadPresure.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonLoadPresure.Name = "toolStripButtonLoadPresure";
+            this.toolStripButtonLoadPresure.Size = new System.Drawing.Size(84, 22);
+            this.toolStripButtonLoadPresure.Text = "加载压差数据";
+            this.toolStripButtonLoadPresure.Click += new System.EventHandler(this.toolStripButtonLoadPresure_Click);
+            // 
             // FormVerification
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -271,5 +283,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn Column4;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column5;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column6;
+        private System.Windows.Forms.ToolStripButton toolStripButtonLoadPresure;
     }
 }
