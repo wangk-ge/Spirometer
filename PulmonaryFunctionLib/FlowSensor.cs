@@ -85,7 +85,34 @@ namespace PulmonaryFunctionLib
             {
                 sectionIndex = (calParamSectionKeyList.Count - 1);
             }
-            return calParamValList[sectionIndex];
+
+#if false
+            double k = calParamValList[sectionIndex];
+#else
+            double k = 1.0;
+            if ((0 == sectionIndex) 
+                || ((calParamSectionKeyList.Count - 1) == sectionIndex))
+            {
+                k = calParamValList[sectionIndex];
+            }
+            else
+            {
+                double x0 = calParamSectionKeyList[sectionIndex - 1];
+                double y0 = calParamValList[sectionIndex - 1];
+                double x1 = calParamSectionKeyList[sectionIndex];
+                double y1 = calParamValList[sectionIndex];
+
+                if ((x1 - x0) < 0.000001)
+                {
+                    k = y1;
+                }
+                else
+                {
+                    k = ((y1 - y0) * (presure - x0)) / (x1 - x0) + y0;
+                }
+            }
+#endif
+            return k;
         }
 
         /* 根据指定校准参数列表,执行压差转流量(单位:L/S) */

@@ -32,7 +32,7 @@
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.plotViewPS = new OxyPlot.WindowsForms.PlotView();
-            this.plotViewKP = new OxyPlot.WindowsForms.PlotView();
+            this.plotViewKFP = new OxyPlot.WindowsForms.PlotView();
             this.plotViewPT = new OxyPlot.WindowsForms.PlotView();
             this.panel1 = new System.Windows.Forms.Panel();
             this.dataGridViewSampleInfo = new System.Windows.Forms.DataGridView();
@@ -108,7 +108,7 @@
             // 
             // splitContainer2.Panel2
             // 
-            this.splitContainer2.Panel2.Controls.Add(this.plotViewKP);
+            this.splitContainer2.Panel2.Controls.Add(this.plotViewKFP);
             this.splitContainer2.Size = new System.Drawing.Size(1372, 229);
             this.splitContainer2.SplitterDistance = 698;
             this.splitContainer2.SplitterWidth = 1;
@@ -127,18 +127,18 @@
             this.plotViewPS.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
             this.plotViewPS.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
             // 
-            // plotViewKP
+            // plotViewKFP
             // 
-            this.plotViewKP.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.plotViewKP.Location = new System.Drawing.Point(0, 0);
-            this.plotViewKP.Name = "plotViewKP";
-            this.plotViewKP.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewKP.Size = new System.Drawing.Size(669, 225);
-            this.plotViewKP.TabIndex = 0;
-            this.plotViewKP.Text = "plotView1";
-            this.plotViewKP.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
-            this.plotViewKP.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
-            this.plotViewKP.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
+            this.plotViewKFP.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.plotViewKFP.Location = new System.Drawing.Point(0, 0);
+            this.plotViewKFP.Name = "plotViewKFP";
+            this.plotViewKFP.PanCursor = System.Windows.Forms.Cursors.Hand;
+            this.plotViewKFP.Size = new System.Drawing.Size(669, 225);
+            this.plotViewKFP.TabIndex = 0;
+            this.plotViewKFP.Text = "plotView1";
+            this.plotViewKFP.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
+            this.plotViewKFP.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
+            this.plotViewKFP.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
             // 
             // plotViewPT
             // 
@@ -387,6 +387,7 @@
             this.Column6.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.Column6.HeaderText = "使用样本";
             this.Column6.Name = "Column6";
+            this.Column6.ReadOnly = true;
             // 
             // FormCalibration
             // 
@@ -444,7 +445,7 @@
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel2;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelParamCount;
         private System.Windows.Forms.SplitContainer splitContainer2;
-        private OxyPlot.WindowsForms.PlotView plotViewKP;
+        private OxyPlot.WindowsForms.PlotView plotViewKFP;
         private System.Windows.Forms.ToolStripButton toolStripButtonSavePresure;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column0;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column1;

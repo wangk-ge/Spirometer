@@ -6,15 +6,11 @@ using PulmonaryFunctionLib;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
-using System.Threading;
 
 namespace Spirometer
 {
@@ -24,14 +20,16 @@ namespace Spirometer
         private FlowSensor m_flowSensor; // 流量传感器
         private FlowCalibrator m_flowCalibrator; // 流量校准器
         private PlotModel m_plotModelPS; // 压差(Presure)-和值(Sum)图Model
-        private PlotModel m_plotModelKP; // K值-压差(Presure)图Model
+        private PlotModel m_plotModelKFP; // K值/Flow-压差(Presure)图Model
         private PlotModel m_plotModelPT; // 压差(Presure)-时间(Time)图Model
 
         private System.Windows.Forms.Timer m_refreshTimer = new System.Windows.Forms.Timer(); // 波形刷新定时器
-        private readonly int m_fps = 24; // 帧率
+        private readonly int PLOT_REFRESH_FPS = 24; // 帧率
 
         private List<DataPoint> m_pointsPS; // 压差(Presure)-和值(Sum)数据
         private List<DataPoint> m_pointsKP; // K值-压差(Presure)数据
+        private List<DataPoint> m_pointsFP; // 流量(Flow)-压差(Presure)数据
+        private List<DataPoint> m_pointsFPResult; // 流量(Flow)-压差(Presure)数据(校准结果)
         private List<DataPoint> m_pointsPT; // 压差(Presure)-时间(Time)数据
 
         private TaskCompletionSource<bool> m_dataPlotTaskComp; // 用于监控数据输出到Plot数据完成事件
@@ -156,10 +154,10 @@ namespace Spirometer
             // 保存数据点列表引用
             m_pointsPS = seriesPS.Points;
 
-            /* K值-压差(Presure)图 */
-            m_plotModelKP = new PlotModel()
+            /* K值/Flow-压差(Presure)图 */
+            m_plotModelKFP = new PlotModel()
             {
-                Title = "K值-压差(Presure)",
+                Title = "K值/Flow-压差(Presure)",
                 LegendTitle = "图例",
                 LegendOrientation = LegendOrientation.Horizontal,
                 LegendPlacement = LegendPlacement.Inside,
@@ -170,7 +168,7 @@ namespace Spirometer
             };
 
             //X轴,Presure
-            var xAxisKP = new LinearAxis()
+            var xAxisKFP = new LinearAxis()
             {
                 MajorGridlineStyle = LineStyle.Dot,
                 MinorGridlineStyle = LineStyle.Dot,
@@ -181,21 +179,35 @@ namespace Spirometer
                 //Maximum = 55 * m_flowCalibrator.CalVolume,
                 Title = "Presure(inH2O)"
             };
-            m_plotModelKP.Axes.Add(xAxisKP);
+            m_plotModelKFP.Axes.Add(xAxisKFP);
 
-            //Y轴,K值
-            var yAxisKP = new LinearAxis()
+            //左侧Y轴,K值
+            var yAxisKFPLeft = new LinearAxis()
             {
                 MajorGridlineStyle = LineStyle.Dot,
                 MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Left,
-                Title = "K值"
+                Title = "K值",
+                Key = "yAxisKFPLeft"
             };
-            m_plotModelKP.Axes.Add(yAxisKP);
+            m_plotModelKFP.Axes.Add(yAxisKFPLeft);
 
-            // 数据
+            //右侧Y轴,Flow
+            var yAxisKFPRight = new LinearAxis()
+            {
+                //MajorGridlineStyle = LineStyle.Dot,
+                //MinorGridlineStyle = LineStyle.Dot,
+                IsZoomEnabled = true,
+                IsPanEnabled = true,
+                Position = AxisPosition.Right,
+                Title = "Flow(L/S)",
+                Key = "yAxisKFPRight"
+            };
+            m_plotModelKFP.Axes.Add(yAxisKFPRight);
+
+            // K-Presure数据
             var seriesKP = new LineSeries()
             {
                 Color = OxyColors.DimGray,
@@ -203,14 +215,43 @@ namespace Spirometer
                 //MarkerSize = 1,
                 //MarkerStroke = OxyColors.DarkBlue,
                 //MarkerType = MarkerType.Circle,
-                Title = "Data"
+                YAxisKey = yAxisKFPLeft.Key,
+                Title = "K-Presure"
             };
-            m_plotModelKP.Series.Add(seriesKP);
+            m_plotModelKFP.Series.Add(seriesKP);
+
+            // Flow-Presure数据
+            var seriesFP = new LineSeries()
+            {
+                Color = OxyColors.Gray,
+                StrokeThickness = 0,
+                MarkerSize = 1,
+                MarkerStroke = OxyColors.Gray,
+                MarkerType = MarkerType.Circle,
+                YAxisKey = yAxisKFPRight.Key,
+                Title = "Flow-Presure"
+            };
+            m_plotModelKFP.Series.Add(seriesFP);
+
+            // 校准结果
+            var seriesFPResult = new LineSeries()
+            {
+                Color = OxyColors.Red,
+                StrokeThickness = 1,
+                //MarkerSize = 1,
+                //MarkerStroke = OxyColors.DarkRed,
+                //MarkerType = MarkerType.Circle,
+                YAxisKey = yAxisKFPRight.Key,
+                Title = "Result"
+            };
+            m_plotModelKFP.Series.Add(seriesFPResult);
 
             // 设置View对应的Model
-            plotViewKP.Model = m_plotModelKP;
+            plotViewKFP.Model = m_plotModelKFP;
             // 保存数据点列表引用
             m_pointsKP = seriesKP.Points;
+            m_pointsFP = seriesFP.Points;
+            m_pointsFPResult = seriesFPResult.Points;
 
             /* 压差(Presure)-时间(Time)图 */
             m_plotModelPT = new PlotModel()
@@ -302,7 +343,7 @@ namespace Spirometer
             });
 
             /* 刷新定时器 */
-            m_refreshTimer.Interval = 1000 / m_fps; // 设置定时器超时时间为帧间隔
+            m_refreshTimer.Interval = 1000 / PLOT_REFRESH_FPS; // 设置定时器超时时间为帧间隔
             m_refreshTimer.Tick += new EventHandler((timer, arg) => {
                 // 保存数据添加前的曲线最右端X坐标的位置(用于实现自动滚屏)
                 double xBegin = m_pointsPT.Count > 0 ? m_pointsPT.Last().X : 0;
@@ -363,6 +404,61 @@ namespace Spirometer
             }
         }
 
+        /* 更新Flow-Presure Plot */
+        private void UpdateFPPlot(double presure, double flow)
+        {
+            double x = presure;
+            double y = flow;
+            /* 按presure升序插入(presure重复项,flow求均值) */
+            int i = 0;
+            for (i = 0; i < m_pointsFP.Count; ++i)
+            {
+                if (x >= m_pointsFP[i].X)
+                {
+                    break;
+                }
+            }
+            if (i < m_pointsFP.Count)
+            {
+                if (x == m_pointsFP[i].X)
+                {
+                    y = (y + m_pointsFP[i].Y) / 2.0;
+                    m_pointsFP[i] = new DataPoint(x, y); // 替换
+                }
+                else
+                {
+                    m_pointsFP.Insert(i, new DataPoint(x, y)); // 插入
+                }
+            }
+            else
+            {
+                m_pointsFP.Add(new DataPoint(x, y));
+            }
+
+            /* 更新校准结果 */
+            if (m_calParamAviable)
+            {
+                m_pointsFPResult.Clear();
+
+#if false
+                for (i = 0; i < m_calParamSectionKeyList.Count; ++i)
+                {
+                    x = m_calParamSectionKeyList[i];
+                    y = FlowSensor.PresureToFlow(x, m_calParamSectionKeyList, m_calParamValList);
+                    m_pointsFPResult.Add(new DataPoint(x, y));
+                }
+#else
+                for (double p = -5.0; p < 5.0; p += 0.001)
+                {
+                    double f = FlowSensor.PresureToFlow(p, m_calParamSectionKeyList, m_calParamValList);
+                    m_pointsFPResult.Add(new DataPoint(p, f));
+                }
+#endif
+            }
+
+            plotViewKFP.InvalidatePlot(true);
+        }
+
         /* 尝试计算校准参数并更新显示 */
         private bool TryCalcAndUpdateCaliParam()
         {
@@ -395,7 +491,6 @@ namespace Spirometer
 
                 /* 更新K值-压差(Presure)图并显示分段标记 */
                 m_pointsKP.Clear();
-                m_plotModelKP.Annotations.Clear();
                 m_plotModelPS.Annotations.Clear();
                 for (int i = 0; i < m_calParamSectionKeyList.Count; ++i)
                 {
@@ -406,23 +501,14 @@ namespace Spirometer
                     var annotation = new LineAnnotation()
                     {
                         Color = OxyColors.Red,
-                        X = presure,
-                        LineStyle = LineStyle.Dash,
-                        Type = LineAnnotationType.Vertical,
-                        Text = $"{presure}"
-                    };
-                    m_plotModelKP.Annotations.Add(annotation);
-                    annotation = new LineAnnotation()
-                    {
-                        Color = OxyColors.Red,
                         Y = presure,
                         LineStyle = LineStyle.Dash,
                         Type = LineAnnotationType.Horizontal,
-                        Text = $"{presure}"
+                        Text = $"{presure.ToString("f3")}"
                     };
                     m_plotModelPS.Annotations.Add(annotation);
                 }
-                m_plotModelKP.InvalidatePlot(true);
+                m_plotModelKFP.InvalidatePlot(true);
                 m_plotModelPS.InvalidatePlot(false);
 
                 /* 更新状态栏(参数个数) */
@@ -454,6 +540,12 @@ namespace Spirometer
             dataGridViewSampleInfo.Rows[index].Cells[5].Value = peekPresure;
             dataGridViewSampleInfo.Rows[index].Cells[6].Value = presureVariance;
             dataGridViewSampleInfo.Rows[index].Cells[7].Value = bIsSampleValid;
+
+            /* 数据加入Flow-Presure Plot并更新显示 */
+            if (bIsSampleValid)
+            {
+                UpdateFPPlot(presureAvg, flowAvg);
+            }
 
             /* 尝试计算校准参数并更新显示 */
             m_calParamAviable = TryCalcAndUpdateCaliParam();
@@ -524,6 +616,7 @@ namespace Spirometer
 
             /* 清除 */
             m_flowCalibrator.Clear();
+            m_calParamAviable = false;
 
             /* 清空结果列表 */
             ClearResultDataGridView();
@@ -534,24 +627,32 @@ namespace Spirometer
             /* Clear Presure-Time Plot */
             m_pointsPT.Clear();
             m_plotModelPT.Annotations.Clear();
-            var xAxisFV = m_plotModelPT.Axes[0];
-            xAxisFV.Reset();
+            var xAxisPT = m_plotModelPT.Axes[0];
+            xAxisPT.Reset();
+            var yAxisPT = m_plotModelPT.Axes[1];
+            yAxisPT.Reset();
 
             /* Clear K-Presure Plot */
             m_pointsKP.Clear();
-            m_plotModelKP.Annotations.Clear();
-            var xAxisKP = m_plotModelKP.Axes[0];
-            xAxisKP.Reset();
+            m_pointsFP.Clear();
+            m_pointsFPResult.Clear();
+            m_plotModelKFP.Annotations.Clear();
+            var xAxisKFP = m_plotModelKFP.Axes[0];
+            xAxisKFP.Reset();
+            var yAxisKFP = m_plotModelKFP.Axes[1];
+            yAxisKFP.Reset();
 
             /* Clear Presure-Sum Plot */
             m_pointsPS.Clear();
             m_plotModelPS.Annotations.Clear();
-            var xAxisVT = m_plotModelPS.Axes[0];
-            xAxisVT.Reset();
+            var xAxisPS = m_plotModelPS.Axes[0];
+            xAxisPS.Reset();
+            var yAxisPS = m_plotModelPS.Axes[1];
+            yAxisPS.Reset();
 
             /* 刷新曲线显示 */
             plotViewPT.InvalidatePlot(true);
-            plotViewKP.InvalidatePlot(true);
+            plotViewKFP.InvalidatePlot(true);
             plotViewPS.InvalidatePlot(true);
         }
 
@@ -576,7 +677,6 @@ namespace Spirometer
                         reader.Close();
                     }
 
-
                     /* 解析CSV中的压差数据 */
                     string[] strDataArray = strData.Split(new char[] { ',' });
                     foreach (var strVal in strDataArray)
@@ -588,8 +688,7 @@ namespace Spirometer
 
                         double presure = Convert.ToDouble(strVal); // 压差
 
-                        /* 压差数据存入队列,将在刷新定时器中读取 */
-                        m_dataQueue.Enqueue(presure);
+                        OnPresureRecved(0, presure);
 
                         /* 模拟采样率 */
                         //Thread.Sleep((int)m_flowSensor.SAMPLE_TIME);
@@ -617,7 +716,7 @@ namespace Spirometer
             }
         }
 
-        /* 显示保存对话框,保存Flow数据为CSV文件 */
+        /* 显示保存对话框,保存Presure数据为CSV文件 */
         private void ShowSaveCSVDialog()
         {
             /* 弹出文件保存对话框 */
@@ -654,7 +753,7 @@ namespace Spirometer
                 {
                     try
                     {
-                        /* 在内存中将Flow数据组装称CSV格式字符串 */
+                        /* 在内存中将Presure数据组装称CSV格式字符串 */
                         StringBuilder strData = new StringBuilder();
                         foreach (var point in m_pointsPT)
                         {

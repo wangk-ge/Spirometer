@@ -44,13 +44,13 @@ namespace PulmonaryFunctionLib
         /* 参数 */
         private readonly double SAMPLE_TIME = 3.03; // 采样时间(ms)
         private readonly double SAMPLE_RATE = 330; // 采样率
-        private readonly double SECTION_STEP = 0.01; // 参数分段的步长
+        private readonly double SECTION_STEP = 0.02; // 参数分段的步长
         private readonly double SECTION_STEP_STEP = 0.001; // 参数分段的步长增长步长
 
         /* 阈值(用于检测采样启动和停止条件) */
         private readonly int START_SAMPLE_COUNT = 2; // 启动检测,波动统计采样次数
         private readonly int STOP_SAMPLE_COUNT = 20; // 停止检测,波动统计采样次数
-        private readonly double START_PRESURE_DELTA = 0.0015; // 斜度绝对值超过该阈值将识别为启动测试(斜度为正表示吸气启动、为负表示吹气开始)
+        private readonly double START_PRESURE_DELTA = 0.0005; // 斜度绝对值超过该阈值将识别为启动测试(斜度为正表示吸气启动、为负表示吹气开始)
         private readonly double STOP_PRESURE_THRESHOLD = 0.002; // 停止检测压差阈值,当启动测试后如果压差绝对值小于阈值,则开始检测停止条件
 
         public FlowCalibrator(double sampleRate, double calVolume = 1.0)
@@ -198,7 +198,7 @@ namespace PulmonaryFunctionLib
             return (SAMPLE_RATE * CalVolume) / absSum;
         }
 
-        /* 样本是否有效(自动判断校准结果有效性) */
+        /* 样本是否有效(自动判断样本有效性) */
         public bool SampleIsValid(uint sampleIndex)
         {
             if (!m_waveAnalyzer.SampleIsValid(sampleIndex))
@@ -409,6 +409,95 @@ namespace PulmonaryFunctionLib
 
                 sectionKeyList.Clear();
                 paramValList.Clear();
+                bRet = false;
+            }
+
+            return bRet;
+        }
+
+        /* 计算Flow-Presure多项式拟合参数(通过函数参数返回) */
+        public bool CalcPolynomialParams(List<double> polynomialParamList, List<uint> sampleIndexList = null)
+        {
+            /* 是否指定了样本列表 */
+            if (sampleIndexList == null)
+            {
+                /* 自动选择样本进行计算 */
+                sampleIndexList = new List<uint>();
+                for (uint i = 0; i < m_waveAnalyzer.SampleCount; ++i)
+                {
+                    /* 只选择有效的样本 */
+                    if (m_waveAnalyzer.SampleIsValid(i))
+                    {
+                        /* 加入选择列表 */
+                        sampleIndexList.Add(i);
+                    }
+                }
+            }
+            // else /* 用已选择的的样本进行计算 */
+
+            /* 确保结果列表清空状态 */
+            polynomialParamList.Clear();
+
+            /* 样本数量 */
+            uint sampleNum = (uint)sampleIndexList.Count;
+            /* 多项式阶数 */
+            int orderNum = 7;
+
+            /* 构造方程组参数矩阵 */
+            double[][] matrixA = new double[sampleNum][];
+            double[] vectorB = new double[sampleNum];
+            for (int i = 0; i < sampleNum; ++i)
+            {
+                if (null == matrixA[i])
+                {
+                    matrixA[i] = new double[orderNum + 1];
+                }
+
+                var sampleIndex = sampleIndexList[i];
+                var sampleDataSum = m_waveAnalyzer.SampleDataSum(sampleIndex);
+
+                /* 遍历处理样本所有数据 */
+                var sampleDataIterator = m_waveAnalyzer.SampleDataIterator(sampleIndex);
+                foreach (double presure in sampleDataIterator)
+                {
+                    double xn = 1.0;
+                    for (int j = 0; j < (orderNum + 1); j++)
+                    {
+                        matrixA[i][j] += xn;
+                        xn *= presure;
+                    }
+                }
+
+                /* 按正负方向分别处理 */
+                if (sampleDataSum > 0)
+                { // 正方向
+                    vectorB[i] = CalVolume * SAMPLE_RATE;
+                }
+                else
+                { // 负方向
+                    vectorB[i] = -CalVolume * SAMPLE_RATE;
+                }
+            }
+
+            bool bRet = false;
+            try
+            {
+                /* 使用多元线性最小二乘法（linear least squares）拟合最优参数集 */
+                double[] result = Fit.MultiDim(matrixA, vectorB, false, MathNet.Numerics.LinearRegression.DirectRegressionMethod.Svd);
+
+                for (int i = 0; i < result.Length; ++i)
+                {
+                    Console.WriteLine($"{result[i]}");
+                }
+
+                polynomialParamList.AddRange(result);
+
+                bRet = true;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Exception: {e.Message}");
+
                 bRet = false;
             }
 

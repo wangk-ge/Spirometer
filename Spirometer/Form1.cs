@@ -28,7 +28,7 @@ namespace Spirometer
         private LineAnnotation m_6SecAnnotation; // 用力呼气6秒指示线
 
         private System.Windows.Forms.Timer m_refreshTimer = new System.Windows.Forms.Timer(); // 波形刷新定时器
-        private readonly int m_fps = 24; // 帧率
+        private readonly int PLOT_REFRESH_FPS = 24; // 帧率
 
         private List<DataPoint> m_pointsFV; // 流量(Flow)-容积(Volume)数据
         private List<DataPoint> m_pointsVT; // 容积(Volume)-时间(Time)数据
@@ -45,6 +45,8 @@ namespace Spirometer
             m_pulmonaryFunc = new PulmonaryFunction(m_flowSensor.SAMPLE_TIME);
 
             InitializeComponent();
+
+            this.Text = $"{Application.ProductName} {Application.ProductVersion}";
         }
 
         /* 枚举可用串口并更新列表控件 */
@@ -484,7 +486,7 @@ namespace Spirometer
             });
 
             /* 刷新定时器 */
-            m_refreshTimer.Interval = 1000 / m_fps; // 设置定时器超时时间为帧间隔
+            m_refreshTimer.Interval = 1000 / PLOT_REFRESH_FPS; // 设置定时器超时时间为帧间隔
             m_refreshTimer.Tick += new EventHandler((timer, arg) => {
                 // 保存数据添加前的曲线最右端X坐标的位置(用于实现自动滚屏)
                 double xBegin = m_pointsVFTFlow.Count > 0 ? m_pointsVFTFlow.Last().X : 0;

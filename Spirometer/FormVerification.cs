@@ -6,9 +6,6 @@ using PulmonaryFunctionLib;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -19,7 +16,8 @@ namespace Spirometer
 {
     public partial class FormVerification : Form
     {
-        private ConcurrentQueue<double> m_dataQueue = new ConcurrentQueue<double>(); // 数据队列
+        private List<double> m_presureList = new List<double>(); // 压差数据列表
+        private ConcurrentQueue<double> m_flowQueue = new ConcurrentQueue<double>(); // 流量数据队列
         private FlowSensor m_flowSensor; // 流量传感器
         private FlowValidator m_flowValidator; // 流量验证器
         private PlotModel m_plotModelFV; // 流量(Flow)-容积(Volume)图Model
@@ -28,18 +26,23 @@ namespace Spirometer
         private TaskCompletionSource<bool> m_dataPlotTaskComp; // 用于监控数据输出到Plot数据完成事件
 
         private System.Windows.Forms.Timer m_refreshTimer = new System.Windows.Forms.Timer(); // 波形刷新定时器
-        private readonly int m_fps = 24; // 帧率
+        private readonly int PLOT_REFRESH_FPS = 24; // 图表刷新率
 
         private List<DataPoint> m_pointsFV; // 流量(Flow)-容积(Volume)数据
         private List<DataPoint> m_pointsFT; // 流量(Flow)-时间(Time)数据
 
-        private double m_calVolume = 1.0; // 定标桶容积
+        private readonly double ALLOW_ERROR_RATE = 3.0; // 允许的误差率(+-3%)
+        private uint m_sampleCount = 0; // 参与验证的样本个数
+        private uint m_passCount = 0; // 通过验证的样本个数
+        private double m_errorRateMaxP = 0.0; // 正误差率最大值
+        private double m_errorRateMaxN = 0.0; // 负误差率最大值
+        private double m_errorRateAbsSum = 0.0; // 误差率绝对值求和值
 
-        public FormVerification(FlowSensor flowSensor, double calVolume = 1.0)
+        public FormVerification(FlowSensor flowSensor, double calVolume = 1.0, double allowErrorRate = 3.0)
         {
-            /* 定标桶容积 */
-            m_calVolume = calVolume;
-
+            /* 允许的误差率 */
+            ALLOW_ERROR_RATE = allowErrorRate;
+            
             /* 流量传感器 */
             m_flowSensor = flowSensor;
 
@@ -243,15 +246,15 @@ namespace Spirometer
             });
 
             /* 刷新定时器 */
-            m_refreshTimer.Interval = 1000 / m_fps; // 设置定时器超时时间为帧间隔
+            m_refreshTimer.Interval = 1000 / PLOT_REFRESH_FPS; // 设置定时器超时时间为帧间隔
             m_refreshTimer.Tick += new EventHandler((timer, arg) => {
                 // 保存数据添加前的曲线最右端X坐标的位置(用于实现自动滚屏)
                 double xBegin = m_pointsFT.Count > 0 ? m_pointsFT.Last().X : 0;
                 // 尝试读取队列中的数据并添加到曲线
-                while (m_dataQueue.Count > 0)
+                while (m_flowQueue.Count > 0)
                 {
                     /* 尝试读取队列中的数据 */
-                    bool bRet = m_dataQueue.TryDequeue(out double flow); // 流量
+                    bool bRet = m_flowQueue.TryDequeue(out double flow); // 流量
                     if (!bRet)
                     {
                         break;
@@ -274,17 +277,58 @@ namespace Spirometer
         {
             //Console.WriteLine($"OnPresureRecved: {channel} {presure}");
 
+            /* 压差数据存入队列 */
+            lock(m_presureList)
+            {
+                m_presureList.Add(presure);
+            }
+
             /* 压差转流量 */
             double flow = m_flowSensor.PresureToFlow(presure); // 流量
 
             /* 流量数据存入队列,将在刷新定时器中读取 */
-            m_dataQueue.Enqueue(flow);
+            m_flowQueue.Enqueue(flow);
         }
 
         /* 样本信息列表 */
         private void ClearSampleInfoDataGridView()
         {
             dataGridViewSampleInfo.Rows.Clear();
+        }
+
+        /* 统计误差数据(并更新状态栏信息显示) */
+        private void StatisticalErrorInfo(double errRate)
+        {
+            m_sampleCount++;
+            if (Math.Abs(errRate) < ALLOW_ERROR_RATE)
+            { // 误差率在允许范围内
+                m_passCount++;
+            }
+
+            /* 统计+-最大误差率 */
+            if (errRate > 0)
+            {
+                if (errRate > m_errorRateMaxP)
+                {
+                    m_errorRateMaxP = errRate;
+                }
+            }
+            else if (errRate < 0)
+            {
+                if (errRate < m_errorRateMaxN)
+                {
+                    m_errorRateMaxN = errRate;
+                }
+            }
+
+            /* 统计误差率绝对值求和值 */
+            m_errorRateAbsSum += Math.Abs(errRate);
+
+            toolStripStatusLabelSampleCount.Text = m_sampleCount.ToString(); // 样本个数
+            toolStripStatusLabelPassRate.Text = $"{(m_passCount * 100.0 / m_sampleCount).ToString("f2")}%"; // 通过率
+            toolStripStatusLabelErrRateMaxP.Text = $"{m_errorRateMaxP.ToString("f2")}%"; // 最大误差率(正)
+            toolStripStatusLabelErrRateMaxN.Text = $"{m_errorRateMaxN.ToString("f2")}%"; // 最大误差率(负)
+            toolStripStatusLabelErrRateAbsAvg.Text = $"{(m_errorRateAbsSum / m_sampleCount).ToString("f2")}%"; // 误差率(绝对值)平均值
         }
 
         /* 采样已停止 */
@@ -297,6 +341,7 @@ namespace Spirometer
             double volume = m_flowValidator.SampleVolume(sampleIndex);
             double volumeError = m_flowValidator.SampleVolumeError(sampleIndex);
             double volumeErrorRate = m_flowValidator.SampleVolumeErrorRate(sampleIndex);
+            bool bIsSampleValid = m_flowValidator.SampleIsValid(sampleIndex);
 
             /* 添加样本信息到列表 */
             int index = dataGridViewSampleInfo.Rows.Add();
@@ -307,6 +352,14 @@ namespace Spirometer
             dataGridViewSampleInfo.Rows[index].Cells[4].Value = volume;
             dataGridViewSampleInfo.Rows[index].Cells[5].Value = volumeError;
             dataGridViewSampleInfo.Rows[index].Cells[6].Value = volumeErrorRate;
+            dataGridViewSampleInfo.Rows[index].Cells[7].Value = bIsSampleValid;
+
+            /* 统计误差数据 */
+            if (bIsSampleValid)
+            {
+                /* 统计误差数据(并更新状态栏信息显示) */
+                StatisticalErrorInfo(volumeErrorRate);
+            }
 
             /* 重置校准器,开始检测下一次校准启动 */
             m_flowValidator.Reset();
@@ -353,10 +406,10 @@ namespace Spirometer
         {
             bool bRet = true;
 
-            /* 尝试清空队列 */
-            while (m_dataQueue.Count > 0)
+            /* 尝试清空流量队列 */
+            while (m_flowQueue.Count > 0)
             {
-                bRet = m_dataQueue.TryDequeue(out _);
+                bRet = m_flowQueue.TryDequeue(out _);
                 if (!bRet)
                 {
                     break;
@@ -371,6 +424,12 @@ namespace Spirometer
         {
             /* 尝试清空数据队列 */
             TryClearDataQueue();
+
+            /* 清空压差数据 */
+            lock(m_presureList)
+            {
+                m_presureList.Clear();
+            }
 
             /* 清除 */
             m_flowValidator.Clear();
@@ -393,6 +452,18 @@ namespace Spirometer
             /* 刷新曲线显示 */
             plotViewFT.InvalidatePlot(true);
             plotViewFV.InvalidatePlot(true);
+
+            /* 清空结果 */
+            m_sampleCount = 0;
+            m_passCount = 0;
+            m_errorRateMaxP = 0.0;
+            m_errorRateMaxN = 0.0;
+            m_errorRateAbsSum = 0.0;
+            toolStripStatusLabelSampleCount.Text = "0";
+            toolStripStatusLabelPassRate.Text = "0.00%";
+            toolStripStatusLabelErrRateMaxP.Text = "0.00%";
+            toolStripStatusLabelErrRateMaxN.Text = "0.00%";
+            toolStripStatusLabelErrRateAbsAvg.Text = "0.00%";
         }
 
         /* 异步加载CSV文件 */
@@ -429,11 +500,7 @@ namespace Spirometer
 
                         double presure = Convert.ToDouble(strVal); // 压差
 
-                        /* 压差转流量 */
-                        double flow = m_flowSensor.PresureToFlow(presure); // 流量
-
-                        /* 流量数据存入队列,将在刷新定时器中读取 */
-                        m_dataQueue.Enqueue(flow);
+                        OnPresureRecved(0, presure);
 
                         /* 模拟采样率 */
                         //Thread.Sleep((int)m_flowSensor.SAMPLE_TIME);
@@ -458,6 +525,78 @@ namespace Spirometer
 
                 /* 清除完成对象 */
                 m_dataPlotTaskComp = null;
+            }
+        }
+
+        /* 显示保存对话框,保存Presure数据为CSV文件 */
+        private void ShowSaveCSVDialog()
+        {
+            /* 弹出文件保存对话框 */
+            SaveFileDialog saveCSVDialog = new SaveFileDialog();
+            saveCSVDialog.Filter = "CSV File (*.csv;)|*.csv";
+            //saveCSVDialog.Multiselect = false;
+            saveCSVDialog.FileName = $"verification_{DateTime.Now.ToString("yyyyMMdd_hhmmss")}.csv";
+
+            if (saveCSVDialog.ShowDialog() == DialogResult.OK)
+            {
+                if (String.IsNullOrEmpty(saveCSVDialog.FileName))
+                {
+                    return;
+                }
+
+                /* 保存过程中暂时不允许点击工具按钮 */
+                bool toolStripButtonStartEnabled = toolStripButtonStart.Enabled;
+                toolStripButtonStart.Enabled = false;
+
+                bool toolStripButtonSavePresureEnabled = toolStripButtonSavePresure.Enabled;
+                toolStripButtonSavePresure.Enabled = false;
+
+                bool toolStripButtonLoadPresureEnabled = toolStripButtonLoadPresure.Enabled;
+                toolStripButtonLoadPresure.Enabled = false;
+
+                bool toolStripButtonClearEnabled = toolStripButtonClear.Enabled;
+                toolStripButtonClear.Enabled = false;
+
+                /* 启动任务执行异步保存(防止阻塞UI线程) */
+                Task.Factory.StartNew(() =>
+                {
+                    try
+                    {
+                        /* 在内存中将Presure数据组装称CSV格式字符串 */
+                        StringBuilder strData = new StringBuilder();
+                        lock(m_presureList)
+                        {
+                            foreach (var presure in m_presureList)
+                            {
+                                strData.Append(presure);
+                                strData.Append(",");
+                            }
+                        }
+
+                        /* 保存为CSV文件 */
+                        using (StreamWriter writer = new StreamWriter(saveCSVDialog.FileName, false, Encoding.UTF8))
+                        {
+                            writer.Write(strData);
+                            writer.Close();
+
+                            MessageBox.Show("保存成功.");
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        MessageBox.Show($"保存失败！{e.ToString()}");
+                    }
+                    finally
+                    {
+                        /* 恢复工具按钮使能状态(确保在UI线程执行) */
+                        this.BeginInvoke(new Action<FormVerification>((obj) => {
+                            toolStripButtonStart.Enabled = toolStripButtonStartEnabled;
+                            toolStripButtonSavePresure.Enabled = toolStripButtonSavePresureEnabled;
+                            toolStripButtonLoadPresure.Enabled = toolStripButtonLoadPresureEnabled;
+                            toolStripButtonClear.Enabled = toolStripButtonClearEnabled;
+                        }), this);
+                    }
+                });
             }
         }
 
@@ -542,6 +681,11 @@ namespace Spirometer
                     TryClearDataQueue();
                 }
             }
+        }
+
+        private void toolStripButtonSavePresure_Click(object sender, EventArgs e)
+        {
+            ShowSaveCSVDialog();
         }
 
         private void toolStripButtonLoadPresure_Click(object sender, EventArgs e)

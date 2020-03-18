@@ -1,14 +1,4 @@
-﻿using MathNet.Numerics;
-using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.LinearAlgebra.Double.Solvers;
-using MathNet.Numerics.LinearAlgebra.Solvers;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
 
 namespace PulmonaryFunctionLib
 {
@@ -155,6 +145,20 @@ namespace PulmonaryFunctionLib
         public double SampleFlowVariance(uint sampleIndex)
         {
             return m_waveAnalyzer.SampleDataVariance(sampleIndex);
+        }
+
+        /* 样本是否有效(自动判断样本有效性) */
+        public bool SampleIsValid(uint sampleIndex)
+        {
+            if (!m_waveAnalyzer.SampleIsValid(sampleIndex))
+            {
+                return false;
+            }
+
+            var sampleVolume = SampleVolume(sampleIndex);
+
+            /* 滤除没有推拉满的样本 */
+            return (Math.Abs(sampleVolume) >= (0.9 * CalVolume));
         }
 
         /* 样本容积误差(L) */

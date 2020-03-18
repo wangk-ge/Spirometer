@@ -33,7 +33,6 @@ namespace PulmonaryFunctionLib
         /* 样本信息类型(一个样本为一起起始和结束之间的所有数据) */
         private struct WaveSampleInfo
         {
-            public WaveSampleDirection direction; // 样本方向
             public double sum; // 和值
             public uint startIndex; // 起始点索引
             public uint endIndex; // 结束点索引
@@ -151,10 +150,22 @@ namespace PulmonaryFunctionLib
         {
             if (sampleIndex >= m_sampleInfoList.Count)
             {
-                return 0.0;
+                return WaveSampleDirection.None;
             }
+
             var info = m_sampleInfoList[(int)sampleIndex];
-            return info.direction;
+
+            WaveSampleDirection direction = WaveSampleDirection.None;
+            if (info.sum > 0)
+            {
+                direction = WaveSampleDirection.PositiveSample;
+            }
+            else if (info.sum < 0)
+            {
+                direction = WaveSampleDirection.NegativeSample;
+            }
+
+            return direction;
         }
 
         /* 样本的数据求和值(通过样本索引) */
@@ -398,7 +409,6 @@ namespace PulmonaryFunctionLib
 
                             /* 记录当前样本信息 */
                             WaveSampleInfo info = new WaveSampleInfo() {
-                                direction = direction,
                                 startIndex = m_startIndex, 
                                 endIndex = m_endIndex, 
                                 minIndex = m_minDataIndex, 
