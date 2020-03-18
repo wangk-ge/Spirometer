@@ -32,13 +32,14 @@
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.plotViewPS = new OxyPlot.WindowsForms.PlotView();
-            this.plotViewKFP = new OxyPlot.WindowsForms.PlotView();
+            this.plotViewFP = new OxyPlot.WindowsForms.PlotView();
             this.plotViewPT = new OxyPlot.WindowsForms.PlotView();
             this.panel1 = new System.Windows.Forms.Panel();
             this.dataGridViewSampleInfo = new System.Windows.Forms.DataGridView();
             this.dataGridViewResult = new System.Windows.Forms.DataGridView();
             this.Column7 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.Column8 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Column10 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.toolStripButtonStart = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
@@ -108,7 +109,7 @@
             // 
             // splitContainer2.Panel2
             // 
-            this.splitContainer2.Panel2.Controls.Add(this.plotViewKFP);
+            this.splitContainer2.Panel2.Controls.Add(this.plotViewFP);
             this.splitContainer2.Size = new System.Drawing.Size(1372, 229);
             this.splitContainer2.SplitterDistance = 698;
             this.splitContainer2.SplitterWidth = 1;
@@ -127,18 +128,18 @@
             this.plotViewPS.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
             this.plotViewPS.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
             // 
-            // plotViewKFP
+            // plotViewFP
             // 
-            this.plotViewKFP.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.plotViewKFP.Location = new System.Drawing.Point(0, 0);
-            this.plotViewKFP.Name = "plotViewKFP";
-            this.plotViewKFP.PanCursor = System.Windows.Forms.Cursors.Hand;
-            this.plotViewKFP.Size = new System.Drawing.Size(669, 225);
-            this.plotViewKFP.TabIndex = 0;
-            this.plotViewKFP.Text = "plotView1";
-            this.plotViewKFP.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
-            this.plotViewKFP.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
-            this.plotViewKFP.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
+            this.plotViewFP.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.plotViewFP.Location = new System.Drawing.Point(0, 0);
+            this.plotViewFP.Name = "plotViewFP";
+            this.plotViewFP.PanCursor = System.Windows.Forms.Cursors.Hand;
+            this.plotViewFP.Size = new System.Drawing.Size(669, 225);
+            this.plotViewFP.TabIndex = 0;
+            this.plotViewFP.Text = "plotView1";
+            this.plotViewFP.ZoomHorizontalCursor = System.Windows.Forms.Cursors.SizeWE;
+            this.plotViewFP.ZoomRectangleCursor = System.Windows.Forms.Cursors.SizeNWSE;
+            this.plotViewFP.ZoomVerticalCursor = System.Windows.Forms.Cursors.SizeNS;
             // 
             // plotViewPT
             // 
@@ -195,7 +196,8 @@
             this.dataGridViewResult.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridViewResult.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.Column7,
-            this.Column8});
+            this.Column8,
+            this.Column10});
             this.dataGridViewResult.Dock = System.Windows.Forms.DockStyle.Right;
             this.dataGridViewResult.Location = new System.Drawing.Point(865, 0);
             this.dataGridViewResult.MultiSelect = false;
@@ -208,16 +210,23 @@
             // Column7
             // 
             this.Column7.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.Column7.HeaderText = "压差";
+            this.Column7.HeaderText = "全局系数";
             this.Column7.Name = "Column7";
             this.Column7.ReadOnly = true;
             // 
             // Column8
             // 
             this.Column8.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.Column8.HeaderText = "系数";
+            this.Column8.HeaderText = "正方向系数";
             this.Column8.Name = "Column8";
             this.Column8.ReadOnly = true;
+            // 
+            // Column10
+            // 
+            this.Column10.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.Column10.HeaderText = "负方向系数";
+            this.Column10.Name = "Column10";
+            this.Column10.ReadOnly = true;
             // 
             // toolStrip1
             // 
@@ -437,16 +446,17 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripButton toolStripButtonClear;
         private System.Windows.Forms.DataGridView dataGridViewResult;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Column7;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Column8;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelSampleCount;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel2;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabelParamCount;
         private System.Windows.Forms.SplitContainer splitContainer2;
-        private OxyPlot.WindowsForms.PlotView plotViewKFP;
+        private OxyPlot.WindowsForms.PlotView plotViewFP;
         private System.Windows.Forms.ToolStripButton toolStripButtonSavePresure;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column7;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column8;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Column10;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column0;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column1;
         private System.Windows.Forms.DataGridViewTextBoxColumn Column9;

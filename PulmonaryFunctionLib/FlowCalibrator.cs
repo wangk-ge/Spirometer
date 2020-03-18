@@ -1,14 +1,6 @@
 ﻿using MathNet.Numerics;
-using MathNet.Numerics.LinearAlgebra;
-using MathNet.Numerics.LinearAlgebra.Double.Solvers;
-using MathNet.Numerics.LinearAlgebra.Solvers;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PulmonaryFunctionLib
 {
@@ -44,8 +36,9 @@ namespace PulmonaryFunctionLib
         /* 参数 */
         private readonly double SAMPLE_TIME = 3.03; // 采样时间(ms)
         private readonly double SAMPLE_RATE = 330; // 采样率
-        private readonly double SECTION_STEP = 0.02; // 参数分段的步长
-        private readonly double SECTION_STEP_STEP = 0.001; // 参数分段的步长增长步长
+        private readonly int POLYNOMIAL_ORDER = 17; // 全局拟合多项式阶数
+        private readonly int POLYNOMIAL_P_ORDER = 3; // 正方向拟合多项式阶数
+        private readonly int POLYNOMIAL_N_ORDER = 3; // 负方向拟合多项式阶数
 
         /* 阈值(用于检测采样启动和停止条件) */
         private readonly int START_SAMPLE_COUNT = 2; // 启动检测,波动统计采样次数
@@ -229,96 +222,9 @@ namespace PulmonaryFunctionLib
             return m_waveAnalyzer.GetTime(presureIendex);
         }
 
-        /* 自动对Presure进行分段 */
-        private uint AutoDividePresureSections(double minPresure, double maxPresure, List<double> presureSectionList)
+        /* 统计压差范围[min,max] */
+        private void PresureRange(out double minPresure, out double maxPresure, List<uint> sampleIndexList)
         {
-            /* 先清空 */
-            presureSectionList.Clear();
-
-#if true
-            /* 分段步进长度 */
-            double sectionStep = SECTION_STEP;
-            double stepStep = SECTION_STEP_STEP;
-
-            /* 进行负方向分段 */
-            sectionStep = SECTION_STEP;
-            double sectionPos = 0.0; // [0,minPresure)
-            for (; sectionPos > (minPresure + sectionStep); sectionPos -= sectionStep)
-            {
-                presureSectionList.Add(sectionPos);
-                sectionStep += stepStep;
-            }
-            /* 进行正方向分段 */
-            sectionStep = SECTION_STEP;
-            sectionPos = sectionStep; // (0,maxPresure)
-            for (; sectionPos < (maxPresure - sectionStep); sectionPos += sectionStep)
-            {
-                presureSectionList.Add(sectionPos);
-                sectionStep += stepStep;
-            }
-            presureSectionList.Add(maxPresure);
-#else
-            /* 分段步进长度 */
-            double sectionStep1 = 0.1;
-            double sectionStep2 = 0.15;
-
-            /* 进行负方向分段 */
-            double sectionPos = 0.0; // [0,-0.5)
-            for (; sectionPos > Math.Max(minPresure + sectionStep1, -0.5); sectionPos -= sectionStep1)
-            {
-                presureSectionList.Add(sectionPos);
-            }
-            if (sectionPos > (minPresure + sectionStep1))
-            {
-                sectionPos = -0.5; // [-0.5, min)
-                for (; sectionPos > (minPresure + sectionStep2); sectionPos -= sectionStep2)
-                {
-                    presureSectionList.Add(sectionPos);
-                }
-            }
-            /* 进行正方向分段 */
-            sectionPos = sectionStep1; // (0,0.5)
-            for (; sectionPos < Math.Min(maxPresure - sectionStep1, 0.5); sectionPos += sectionStep1)
-            {
-                presureSectionList.Add(sectionPos);
-            }
-            if (sectionPos < (maxPresure - sectionStep1))
-            {
-                sectionPos = 0.5; // [0.5,max)
-                for (; sectionPos < (maxPresure - sectionStep2); sectionPos += sectionStep2)
-                {
-                    presureSectionList.Add(sectionPos);
-                }
-            }
-            presureSectionList.Add(maxPresure);
-#endif
-
-            /* 分段Key按升序排序 */
-            presureSectionList.Sort();
-
-            return (uint)presureSectionList.Count;
-        }
-
-        /* 计算校准参数(校准参数列表通过函数参数返回) */
-        public bool CalcCalibrationParams(List<double> sectionKeyList, List<double> paramValList, List<uint> sampleIndexList = null)
-        {
-            /* 是否指定了样本列表 */
-            if (sampleIndexList == null)
-            {
-                /* 自动选择样本进行计算 */
-                sampleIndexList = new List<uint>();
-                for (uint i = 0; i < m_waveAnalyzer.SampleCount; ++i)
-                {
-                    /* 只选择有效的样本 */
-                    if (m_waveAnalyzer.SampleIsValid(i))
-                    {
-                        /* 加入选择列表 */
-                        sampleIndexList.Add(i);
-                    }
-                }
-            }
-            // else /* 用已选择的的样本进行计算 */
-
             /* 全局Presure最大/最小值(所有已选样本范围内) */
             double minPresureInAll = double.MaxValue;
             double maxPresureInAll = double.MinValue;
@@ -338,68 +244,127 @@ namespace PulmonaryFunctionLib
                 }
             }
 
+            minPresure = minPresureInAll;
+            maxPresure = maxPresureInAll;
+        }
+
+        /* 计算多项式拟合参数(校准参数列表通过函数参数返回) */
+        private bool CalcPolynomialParams(List<double> paramList, List<double> paramListP, List<double> paramListN, List<uint> sampleIndexList)
+        {
+            /* 确保结果列表清空状态 */
+            paramList.Clear();
+            paramListP.Clear();
+            paramListN.Clear();
+
             /* 样本数量 */
             uint sampleNum = (uint)sampleIndexList.Count;
 
-            /* 确保结果列表清空状态 */
-            sectionKeyList.Clear();
-            paramValList.Clear();
-
-            /* 自动对Presure进行分段 */
-            uint sectionNum = AutoDividePresureSections(minPresureInAll, maxPresureInAll, sectionKeyList);
-            /* 样本数必须大于参数个数(分段个数) */
-            if (sampleNum <= sectionNum)
-            {
-                return false;
-            }
-
             /* 构造方程组参数矩阵 */
-            double[][] matrixA = new double[sampleNum][];
-            double[] vectorB = new double[sampleNum];
-            for (int index = 0; index < sampleNum; ++index)
+            List<double[]> matrixAList = new List<double[]>(); // 全局matrixA
+            List<double> vectorBList = new List<double>(); // 全局vectorB
+            List<double[]> matrixAListP = new List<double[]>(); // 正方向matrixA
+            List<double> vectorBListP = new List<double>(); // 正方向vectorB
+            List<double[]> matrixAListN = new List<double[]>(); // 负方向matrixA
+            List<double> vectorBListN = new List<double>(); // 负方向vectorB
+            for (int i = 0; i < sampleNum; ++i)
             {
-                var sampleIndex = sampleIndexList[index];
-                var sampleDataSum = m_waveAnalyzer.SampleDataSum(sampleIndex);
-                /* 遍历处理样本所有数据 */
-                var sampleDataIterator = m_waveAnalyzer.SampleDataIterator(sampleIndex);
-                foreach(double presure in sampleDataIterator)
-                {
-                    /* 找到所属分段Index */
-                    int sectionIndex = sectionKeyList.BinarySearch(presure);
-                    if (sectionIndex < 0)
-                    {
-                        sectionIndex = ~sectionIndex;
-                    }
+                var sampleIndex = sampleIndexList[i];
 
-                    /* 按正负方向分别处理 */
-                    if (sampleDataSum > 0)
-                    { // 正方向
-                        vectorB[index] = CalVolume * SAMPLE_RATE;
-                    }
-                    else
-                    { // 负方向
-                        vectorB[index] = -CalVolume * SAMPLE_RATE;
-                    }
-
-                    if (null == matrixA[index])
+                /*
+                 * 拟合多项式参数
+                 * F=a*P^0+b*P^1+c*P^2+...
+                 * V/t=V*sampleRate=a*(P1^0+P2^0+...+Pn^0)+b*(P1^1+P2^1+...+Pn^1)+c*(P1^2+P2^2+...+Pn^2)+... 
+                 * 求参数:a b c ...
+                 */
+                var samplePresureAvg = SamplePresureAvg(sampleIndex); // 压差均值
+                if (samplePresureAvg > 0)
+                { // 正方向
+                    double[] matrixAi = new double[POLYNOMIAL_ORDER + 1];
+                    double[] matrixAiP = new double[POLYNOMIAL_P_ORDER + 1];
+                    var sampleDataIterator = m_waveAnalyzer.SampleDataIterator(sampleIndex);
+                    foreach (double presure in sampleDataIterator)
                     {
-                        matrixA[index] = new double[sectionNum];
+                        double pn = 1.0; // P^0
+                        for (int n = 0; n < Math.Max(POLYNOMIAL_P_ORDER, POLYNOMIAL_ORDER) + 1; n++)
+                        {
+                            if (n <= POLYNOMIAL_ORDER)
+                            {
+                                matrixAi[n] += pn;
+                            }
+
+                            if (n <= POLYNOMIAL_P_ORDER)
+                            {
+                                matrixAiP[n] += pn;
+                            }
+
+                            pn *= presure; // P^n
+                        }
                     }
-                    matrixA[index][sectionIndex] += presure; // 累加到对应分段
+                    double y = CalVolume * SAMPLE_RATE;
+
+                    matrixAListP.Add(matrixAiP);
+                    vectorBListP.Add(y);
+
+                    matrixAList.Add(matrixAi);
+                    vectorBList.Add(y);
+                }
+                else //if (samplePresureAvg <= 0)
+                { // 负方向
+                    double[] matrixAi = new double[POLYNOMIAL_ORDER + 1];
+                    double[] matrixAiN = new double[POLYNOMIAL_N_ORDER + 1];
+                    var sampleDataIterator = m_waveAnalyzer.SampleDataIterator(sampleIndex);
+                    foreach (double presure in sampleDataIterator)
+                    {
+                        double pn = 1.0; // P^0
+                        for (int n = 0; n < Math.Max(POLYNOMIAL_N_ORDER, POLYNOMIAL_ORDER) + 1; n++)
+                        {
+                            if (n <= POLYNOMIAL_ORDER)
+                            {
+                                matrixAi[n] += pn;
+                            }
+
+                            if (n <= POLYNOMIAL_N_ORDER)
+                            {
+                                matrixAiN[n] += pn;
+                            }
+
+                            pn *= presure; // P^n
+                        }
+                    }
+                    double y = -CalVolume * SAMPLE_RATE;
+
+                    matrixAListN.Add(matrixAiN);
+                    vectorBListN.Add(y);
+
+                    matrixAList.Add(matrixAi);
+                    vectorBList.Add(y);
                 }
             }
-
             bool bRet = false;
             try
             {
                 /* 使用多元线性最小二乘法（linear least squares）拟合最优参数集 */
-                double[] result = Fit.MultiDim(matrixA, vectorB, false, MathNet.Numerics.LinearRegression.DirectRegressionMethod.Svd);
 
-                paramValList.AddRange(result);
-                //for (int i = 0; i < paramValList.Count; ++i)
-                //{
-                //    Console.WriteLine($"{sectionKeyList[i]}, {paramValList[i]}");
-                //}
+                /* 全局 */
+                double[][] matrixA = matrixAList.ToArray();
+                double[] vectorB = vectorBList.ToArray() ;
+                double[] result = Fit.MultiDim(matrixA, vectorB, false,
+                    MathNet.Numerics.LinearRegression.DirectRegressionMethod.Svd);
+                paramList.AddRange(result);
+
+                /* 正方向 */
+                double[][] matrixAP = matrixAListP.ToArray();
+                double[] vectorBP = vectorBListP.ToArray();
+                double[] resultP = Fit.MultiDim(matrixAP, vectorBP, false,
+                    MathNet.Numerics.LinearRegression.DirectRegressionMethod.Svd);
+                paramListP.AddRange(resultP);
+
+                /* 负方向 */
+                double[][] matrixAN = matrixAListN.ToArray();
+                double[] vectorBN = vectorBListN.ToArray();
+                double[] resultN = Fit.MultiDim(matrixAN, vectorBN, false,
+                    MathNet.Numerics.LinearRegression.DirectRegressionMethod.Svd);
+                paramListN.AddRange(resultN);
 
                 bRet = true;
             }
@@ -407,16 +372,15 @@ namespace PulmonaryFunctionLib
             {
                 Console.WriteLine($"Exception: {e.Message}");
 
-                sectionKeyList.Clear();
-                paramValList.Clear();
                 bRet = false;
             }
 
             return bRet;
         }
 
-        /* 计算Flow-Presure多项式拟合参数(通过函数参数返回) */
-        public bool CalcPolynomialParams(List<double> polynomialParamList, List<uint> sampleIndexList = null)
+        /* 计算校准参数(校准参数列表通过函数参数返回) */
+        public bool CalcCalibrationParams(List<double> paramList, List<double> paramListP, List<double> paramListN,
+            out double minPresure, out double maxPresure, List<uint> sampleIndexList = null)
         {
             /* 是否指定了样本列表 */
             if (sampleIndexList == null)
@@ -435,73 +399,58 @@ namespace PulmonaryFunctionLib
             }
             // else /* 用已选择的的样本进行计算 */
 
+            /* 统计压差范围 */
+            PresureRange(out minPresure, out maxPresure, sampleIndexList);
+
             /* 确保结果列表清空状态 */
-            polynomialParamList.Clear();
+            paramList.Clear();
+            paramListP.Clear();
+            paramListN.Clear();
 
-            /* 样本数量 */
-            uint sampleNum = (uint)sampleIndexList.Count;
-            /* 多项式阶数 */
-            int orderNum = 7;
-
-            /* 构造方程组参数矩阵 */
-            double[][] matrixA = new double[sampleNum][];
-            double[] vectorB = new double[sampleNum];
-            for (int i = 0; i < sampleNum; ++i)
-            {
-                if (null == matrixA[i])
-                {
-                    matrixA[i] = new double[orderNum + 1];
-                }
-
-                var sampleIndex = sampleIndexList[i];
-                var sampleDataSum = m_waveAnalyzer.SampleDataSum(sampleIndex);
-
-                /* 遍历处理样本所有数据 */
-                var sampleDataIterator = m_waveAnalyzer.SampleDataIterator(sampleIndex);
-                foreach (double presure in sampleDataIterator)
-                {
-                    double xn = 1.0;
-                    for (int j = 0; j < (orderNum + 1); j++)
-                    {
-                        matrixA[i][j] += xn;
-                        xn *= presure;
-                    }
-                }
-
-                /* 按正负方向分别处理 */
-                if (sampleDataSum > 0)
-                { // 正方向
-                    vectorB[i] = CalVolume * SAMPLE_RATE;
-                }
-                else
-                { // 负方向
-                    vectorB[i] = -CalVolume * SAMPLE_RATE;
-                }
-            }
-
-            bool bRet = false;
-            try
-            {
-                /* 使用多元线性最小二乘法（linear least squares）拟合最优参数集 */
-                double[] result = Fit.MultiDim(matrixA, vectorB, false, MathNet.Numerics.LinearRegression.DirectRegressionMethod.Svd);
-
-                for (int i = 0; i < result.Length; ++i)
-                {
-                    Console.WriteLine($"{result[i]}");
-                }
-
-                polynomialParamList.AddRange(result);
-
-                bRet = true;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Exception: {e.Message}");
-
-                bRet = false;
-            }
+            /* 计算多项式拟合参数 */
+            bool bRet = CalcPolynomialParams(paramList, paramListP, paramListN, sampleIndexList);
 
             return bRet;
+        }
+
+        /* 根据指定校准参数列表,执行压差转流量(单位:L/S) */
+        public static double PresureToFlow(double presure, List<double> paramList)
+        {
+            if (paramList.Count <= 0)
+            {
+                return presure;
+            }
+
+            // y = k0 * x^0 + k1 * x^1 + ...
+            double x = presure;
+            double y = 0.0;
+            double xn = 1.0; // x^n
+            for (int i = 0; i < paramList.Count; ++i)
+            {
+                double k = paramList[i];
+                y += k * xn;
+                xn *= x;
+            }
+
+            return y;
+        }
+
+        /* 根据指定校准参数列表,执行压差转流量(单位:L/S) */
+        public static double PresureToFlow(double presure, List<double> paramList,
+            List<double> paramListP, List<double> paramListN,
+            double minPresure, double maxPresure)
+        {
+            if (presure > 0.3)
+            {
+                paramList = paramListP;
+            }
+
+            if (presure < -0.3)
+            {
+                paramList = paramListN;
+            }
+
+            return PresureToFlow(presure, paramList);
         }
     }
 }

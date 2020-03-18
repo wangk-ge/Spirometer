@@ -26,18 +26,6 @@ namespace Spirometer.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("")]
-        public string caliKeyList {
-            get {
-                return ((string)(this["caliKeyList"]));
-            }
-            set {
-                this["caliKeyList"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string caliValList {
             get {
                 return ((string)(this["caliValList"]));
@@ -56,6 +44,54 @@ namespace Spirometer.Properties {
             }
             set {
                 this["filePath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string caliValListP {
+            get {
+                return ((string)(this["caliValListP"]));
+            }
+            set {
+                this["caliValListP"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string minPresure {
+            get {
+                return ((string)(this["minPresure"]));
+            }
+            set {
+                this["minPresure"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string maxPresure {
+            get {
+                return ((string)(this["maxPresure"]));
+            }
+            set {
+                this["maxPresure"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string caliValListN {
+            get {
+                return ((string)(this["caliValListN"]));
+            }
+            set {
+                this["caliValListN"] = value;
             }
         }
     }

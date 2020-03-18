@@ -20,24 +20,28 @@ namespace Spirometer
         private FlowSensor m_flowSensor; // 流量传感器
         private FlowCalibrator m_flowCalibrator; // 流量校准器
         private PlotModel m_plotModelPS; // 压差(Presure)-和值(Sum)图Model
-        private PlotModel m_plotModelKFP; // K值/Flow-压差(Presure)图Model
+        private PlotModel m_plotModelFP; // 流量(Flow)-压差(Presure)图Model
         private PlotModel m_plotModelPT; // 压差(Presure)-时间(Time)图Model
 
         private System.Windows.Forms.Timer m_refreshTimer = new System.Windows.Forms.Timer(); // 波形刷新定时器
         private readonly int PLOT_REFRESH_FPS = 24; // 帧率
 
         private List<DataPoint> m_pointsPS; // 压差(Presure)-和值(Sum)数据
-        private List<DataPoint> m_pointsKP; // K值-压差(Presure)数据
         private List<DataPoint> m_pointsFP; // 流量(Flow)-压差(Presure)数据
-        private List<DataPoint> m_pointsFPResult; // 流量(Flow)-压差(Presure)数据(校准结果)
+        private List<DataPoint> m_pointsFPResult; // 流量(Flow)-压差(Presure)数据(校准结果全局)
+        private List<DataPoint> m_pointsFPResultP; // 流量(Flow)-压差(Presure)数据(校准结果正方向)
+        private List<DataPoint> m_pointsFPResultN; // 流量(Flow)-压差(Presure)数据(校准结果负方向)
         private List<DataPoint> m_pointsPT; // 压差(Presure)-时间(Time)数据
 
         private TaskCompletionSource<bool> m_dataPlotTaskComp; // 用于监控数据输出到Plot数据完成事件
 
         private bool m_calParamAviable = false; // 是否已计算得到校准参数
 
-        private List<double> m_calParamSectionKeyList = new List<double>();
-        private List<double> m_calParamValList = new List<double>();
+        private List<double> m_calParamValList = new List<double>(); // 全局拟合参数
+        private List<double> m_calParamValListP = new List<double>(); // 正方向拟合参数
+        private List<double> m_calParamValListN = new List<double>(); // 负方向拟合参数
+        private double m_minPresure = 0.0; // 最小压差
+        private double m_maxPresure = 0.0; // 最大压差
 
         public FormCalibration(FlowSensor flowSensor, double calVolume = 1.0)
         {
@@ -154,10 +158,10 @@ namespace Spirometer
             // 保存数据点列表引用
             m_pointsPS = seriesPS.Points;
 
-            /* K值/Flow-压差(Presure)图 */
-            m_plotModelKFP = new PlotModel()
+            /* 流量(Flow)-压差(Presure)图 */
+            m_plotModelFP = new PlotModel()
             {
-                Title = "K值/Flow-压差(Presure)",
+                Title = "流量(Flow)-压差(Presure)",
                 LegendTitle = "图例",
                 LegendOrientation = LegendOrientation.Horizontal,
                 LegendPlacement = LegendPlacement.Inside,
@@ -168,7 +172,7 @@ namespace Spirometer
             };
 
             //X轴,Presure
-            var xAxisKFP = new LinearAxis()
+            var xAxisFP = new LinearAxis()
             {
                 MajorGridlineStyle = LineStyle.Dot,
                 MinorGridlineStyle = LineStyle.Dot,
@@ -179,61 +183,33 @@ namespace Spirometer
                 //Maximum = 55 * m_flowCalibrator.CalVolume,
                 Title = "Presure(inH2O)"
             };
-            m_plotModelKFP.Axes.Add(xAxisKFP);
+            m_plotModelFP.Axes.Add(xAxisFP);
 
-            //左侧Y轴,K值
-            var yAxisKFPLeft = new LinearAxis()
+            //Y轴,Flow
+            var yAxisFP = new LinearAxis()
             {
                 MajorGridlineStyle = LineStyle.Dot,
                 MinorGridlineStyle = LineStyle.Dot,
                 IsZoomEnabled = true,
                 IsPanEnabled = true,
                 Position = AxisPosition.Left,
-                Title = "K值",
-                Key = "yAxisKFPLeft"
+                Title = "Flow(L/S)"
             };
-            m_plotModelKFP.Axes.Add(yAxisKFPLeft);
+            m_plotModelFP.Axes.Add(yAxisFP);
 
-            //右侧Y轴,Flow
-            var yAxisKFPRight = new LinearAxis()
-            {
-                //MajorGridlineStyle = LineStyle.Dot,
-                //MinorGridlineStyle = LineStyle.Dot,
-                IsZoomEnabled = true,
-                IsPanEnabled = true,
-                Position = AxisPosition.Right,
-                Title = "Flow(L/S)",
-                Key = "yAxisKFPRight"
-            };
-            m_plotModelKFP.Axes.Add(yAxisKFPRight);
-
-            // K-Presure数据
-            var seriesKP = new LineSeries()
-            {
-                Color = OxyColors.DimGray,
-                StrokeThickness = 1,
-                //MarkerSize = 1,
-                //MarkerStroke = OxyColors.DarkBlue,
-                //MarkerType = MarkerType.Circle,
-                YAxisKey = yAxisKFPLeft.Key,
-                Title = "K-Presure"
-            };
-            m_plotModelKFP.Series.Add(seriesKP);
-
-            // Flow-Presure数据
+            // 数据
             var seriesFP = new LineSeries()
             {
-                Color = OxyColors.Gray,
+                Color = OxyColors.DimGray,
                 StrokeThickness = 0,
                 MarkerSize = 1,
-                MarkerStroke = OxyColors.Gray,
+                MarkerStroke = OxyColors.DimGray,
                 MarkerType = MarkerType.Circle,
-                YAxisKey = yAxisKFPRight.Key,
-                Title = "Flow-Presure"
+                Title = "Data"
             };
-            m_plotModelKFP.Series.Add(seriesFP);
+            m_plotModelFP.Series.Add(seriesFP);
 
-            // 校准结果
+            // 校准结果(全局)
             var seriesFPResult = new LineSeries()
             {
                 Color = OxyColors.Red,
@@ -241,17 +217,41 @@ namespace Spirometer
                 //MarkerSize = 1,
                 //MarkerStroke = OxyColors.DarkRed,
                 //MarkerType = MarkerType.Circle,
-                YAxisKey = yAxisKFPRight.Key,
                 Title = "Result"
             };
-            m_plotModelKFP.Series.Add(seriesFPResult);
+            m_plotModelFP.Series.Add(seriesFPResult);
+
+            // 校准结果(正方向)
+            var seriesFPResultP = new LineSeries()
+            {
+                Color = OxyColors.Blue,
+                StrokeThickness = 1,
+                //MarkerSize = 1,
+                //MarkerStroke = OxyColors.DarkRed,
+                //MarkerType = MarkerType.Circle,
+                Title = "ResultP"
+            };
+            m_plotModelFP.Series.Add(seriesFPResultP);
+
+            // 校准结果(负方向)
+            var seriesFPResultN = new LineSeries()
+            {
+                Color = OxyColors.Green,
+                StrokeThickness = 1,
+                //MarkerSize = 1,
+                //MarkerStroke = OxyColors.DarkRed,
+                //MarkerType = MarkerType.Circle,
+                Title = "ResultN"
+            };
+            m_plotModelFP.Series.Add(seriesFPResultN);
 
             // 设置View对应的Model
-            plotViewKFP.Model = m_plotModelKFP;
+            plotViewFP.Model = m_plotModelFP;
             // 保存数据点列表引用
-            m_pointsKP = seriesKP.Points;
             m_pointsFP = seriesFP.Points;
             m_pointsFPResult = seriesFPResult.Points;
+            m_pointsFPResultP = seriesFPResultP.Points;
+            m_pointsFPResultN = seriesFPResultN.Points;
 
             /* 压差(Presure)-时间(Time)图 */
             m_plotModelPT = new PlotModel()
@@ -391,16 +391,24 @@ namespace Spirometer
         }
 
         /* 设置校准参数到列表显示 */
-        private void SetCaliParamToDataGridView(List<double> calParamSectionKeyList, List<double> calParamValList)
+        private void SetCaliParamToDataGridView(List<double> calParamValList, List<double> calParamValListP, List<double> calParamValListN)
         {
             dataGridViewResult.Rows.Clear();
-            for (int i = 0; i < calParamSectionKeyList.Count; ++i)
+            for (int i = 0; i < calParamValList.Count; ++i)
             {
-                var presure = calParamSectionKeyList[i];
                 var param = calParamValList[i];
                 int index = dataGridViewResult.Rows.Add();
-                dataGridViewResult.Rows[index].Cells[0].Value = presure;
-                dataGridViewResult.Rows[index].Cells[1].Value = param;
+                dataGridViewResult.Rows[index].Cells[0].Value = param;
+                if (i < calParamValListP.Count)
+                {
+                    var paramP = calParamValListP[i];
+                    dataGridViewResult.Rows[index].Cells[1].Value = paramP;
+                }
+                if (i < calParamValListN.Count)
+                {
+                    var paramN = calParamValListN[i];
+                    dataGridViewResult.Rows[index].Cells[2].Value = paramN;
+                }
             }
         }
 
@@ -439,24 +447,30 @@ namespace Spirometer
             if (m_calParamAviable)
             {
                 m_pointsFPResult.Clear();
+                m_pointsFPResultP.Clear();
+                m_pointsFPResultN.Clear();
 
-#if false
-                for (i = 0; i < m_calParamSectionKeyList.Count; ++i)
+                for (double p = m_minPresure - 1; p <= m_maxPresure + 1; p += 0.001)
                 {
-                    x = m_calParamSectionKeyList[i];
-                    y = FlowSensor.PresureToFlow(x, m_calParamSectionKeyList, m_calParamValList);
-                    m_pointsFPResult.Add(new DataPoint(x, y));
-                }
-#else
-                for (double p = -5.0; p < 5.0; p += 0.001)
-                {
-                    double f = FlowSensor.PresureToFlow(p, m_calParamSectionKeyList, m_calParamValList);
+#if true
+                    double f = FlowCalibrator.PresureToFlow(p, m_calParamValList, 
+                        m_calParamValListP, m_calParamValListN, 
+                        m_minPresure, m_maxPresure);
                     m_pointsFPResult.Add(new DataPoint(p, f));
-                }
+#else
+                    double f = FlowCalibrator.PresureToFlow(p, m_calParamValList);
+                    m_pointsFPResult.Add(new DataPoint(p, f));
+
+                    f = FlowCalibrator.PresureToFlow(p, m_calParamValListP);
+                    m_pointsFPResultP.Add(new DataPoint(p, f));
+
+                    f = FlowCalibrator.PresureToFlow(p, m_calParamValListN);
+                    m_pointsFPResultN.Add(new DataPoint(p, f));
 #endif
+                }
             }
 
-            plotViewKFP.InvalidatePlot(true);
+            plotViewFP.InvalidatePlot(true);
         }
 
         /* 尝试计算校准参数并更新显示 */
@@ -483,36 +497,15 @@ namespace Spirometer
             }
 
             /* 尝试计算校准参数 */
-            bool bRet = m_flowCalibrator.CalcCalibrationParams(m_calParamSectionKeyList, m_calParamValList, sampleList);
+            bool bRet = m_flowCalibrator.CalcCalibrationParams(m_calParamValList, m_calParamValListP, m_calParamValListN,
+                out m_minPresure, out m_maxPresure, sampleList);
             if (bRet)
             {
                 /* 设置校准参数到列表 */
-                SetCaliParamToDataGridView(m_calParamSectionKeyList, m_calParamValList);
-
-                /* 更新K值-压差(Presure)图并显示分段标记 */
-                m_pointsKP.Clear();
-                m_plotModelPS.Annotations.Clear();
-                for (int i = 0; i < m_calParamSectionKeyList.Count; ++i)
-                {
-                    var presure = m_calParamSectionKeyList[i];
-                    var k = m_calParamValList[i];
-                    m_pointsKP.Add(new DataPoint(presure, k));
-
-                    var annotation = new LineAnnotation()
-                    {
-                        Color = OxyColors.Red,
-                        Y = presure,
-                        LineStyle = LineStyle.Dash,
-                        Type = LineAnnotationType.Horizontal,
-                        Text = $"{presure.ToString("f3")}"
-                    };
-                    m_plotModelPS.Annotations.Add(annotation);
-                }
-                m_plotModelKFP.InvalidatePlot(true);
-                m_plotModelPS.InvalidatePlot(false);
+                SetCaliParamToDataGridView(m_calParamValList, m_calParamValListP, m_calParamValListN);
 
                 /* 更新状态栏(参数个数) */
-                toolStripStatusLabelParamCount.Text = m_calParamSectionKeyList.Count.ToString();
+                toolStripStatusLabelParamCount.Text = m_calParamValList.Count.ToString();
             }
 
             return bRet;
@@ -541,14 +534,14 @@ namespace Spirometer
             dataGridViewSampleInfo.Rows[index].Cells[6].Value = presureVariance;
             dataGridViewSampleInfo.Rows[index].Cells[7].Value = bIsSampleValid;
 
+            /* 尝试计算校准参数并更新显示 */
+            m_calParamAviable = TryCalcAndUpdateCaliParam();
+
             /* 数据加入Flow-Presure Plot并更新显示 */
             if (bIsSampleValid)
             {
                 UpdateFPPlot(presureAvg, flowAvg);
             }
-
-            /* 尝试计算校准参数并更新显示 */
-            m_calParamAviable = TryCalcAndUpdateCaliParam();
 
             /* 重置校准器,开始检测下一次校准启动 */
             m_flowCalibrator.Reset();
@@ -632,15 +625,16 @@ namespace Spirometer
             var yAxisPT = m_plotModelPT.Axes[1];
             yAxisPT.Reset();
 
-            /* Clear K-Presure Plot */
-            m_pointsKP.Clear();
+            /* Clear Flow-Presure Plot */
             m_pointsFP.Clear();
             m_pointsFPResult.Clear();
-            m_plotModelKFP.Annotations.Clear();
-            var xAxisKFP = m_plotModelKFP.Axes[0];
-            xAxisKFP.Reset();
-            var yAxisKFP = m_plotModelKFP.Axes[1];
-            yAxisKFP.Reset();
+            m_pointsFPResultP.Clear();
+            m_pointsFPResultN.Clear();
+            m_plotModelFP.Annotations.Clear();
+            var xAxisFP = m_plotModelFP.Axes[0];
+            xAxisFP.Reset();
+            var yAxisFP = m_plotModelFP.Axes[1];
+            yAxisFP.Reset();
 
             /* Clear Presure-Sum Plot */
             m_pointsPS.Clear();
@@ -652,7 +646,7 @@ namespace Spirometer
 
             /* 刷新曲线显示 */
             plotViewPT.InvalidatePlot(true);
-            plotViewKFP.InvalidatePlot(true);
+            plotViewFP.InvalidatePlot(true);
             plotViewPS.InvalidatePlot(true);
         }
 
@@ -894,12 +888,15 @@ namespace Spirometer
 
             if (m_calParamAviable)
             {
-                if (m_calParamSectionKeyList.Count > 0)
+                if (m_calParamValList.Count > 0)
                 {
-                    m_flowSensor.SetCalibrationParamList(m_calParamSectionKeyList, m_calParamValList);
+                    m_flowSensor.SetCalibrationParamList(m_calParamValList, m_calParamValListP, m_calParamValListN, m_minPresure, m_maxPresure);
                     /* 保存校准参数 */
-                    Properties.Settings.Default.caliKeyList = string.Join(",", m_calParamSectionKeyList.ToArray());
                     Properties.Settings.Default.caliValList = string.Join(",", m_calParamValList.ToArray());
+                    Properties.Settings.Default.caliValListP = string.Join(",", m_calParamValListP.ToArray());
+                    Properties.Settings.Default.caliValListN = string.Join(",", m_calParamValListN.ToArray());
+                    Properties.Settings.Default.minPresure = m_minPresure.ToString();
+                    Properties.Settings.Default.maxPresure = m_maxPresure.ToString();
                     Properties.Settings.Default.Save();
                     MessageBox.Show("应用校准参数【成功】!");
                 }

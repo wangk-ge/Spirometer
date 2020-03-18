@@ -27,8 +27,11 @@ namespace PulmonaryFunctionLib
         public event PresureRecvHandler PresureRecved; // 压差收取事件
 
         /* 校准参数列表 */
-        private List<double> m_calParamSectionKeyList = new List<double>();
-        private List<double> m_calParamValList = new List<double>();
+        private List<double> m_calParamValList = new List<double>(); // 全局
+        private List<double> m_calParamValListP = new List<double>(); // 正方向
+        private List<double> m_calParamValListN = new List<double>(); // 负方向
+        private double m_minPresure = 0.0; // 最小压差
+        private double m_maxPresure = 0.0; // 最大压差
 
         public FlowSensor()
         {
@@ -54,82 +57,28 @@ namespace PulmonaryFunctionLib
             });
         }
 
-        public void SetCalibrationParamList(List<double> sectionKeyList, List<double> paramValList)
+        public void SetCalibrationParamList(List<double> paramValList, List<double> paramValListP, List<double> paramValListN, double minPresure, double maxPresure)
         {
-            m_calParamSectionKeyList.Clear();
             m_calParamValList.Clear();
-            m_calParamSectionKeyList.AddRange(sectionKeyList);
             m_calParamValList.AddRange(paramValList);
-        }
 
-        /* 根据指定校准参数列表,获取压差对应的压差转流量比例系数 */
-        private static double GetPresureFlowScale(double presure, List<double> calParamSectionKeyList, List<double> calParamValList)
-        {
-            if (calParamSectionKeyList.Count <= 0)
-            {
-                return 1.0;
-            }
+            m_calParamValListP.Clear();
+            m_calParamValListP.AddRange(paramValListP);
 
-            /* 找到所属分段Index */
-            int sectionIndex = calParamSectionKeyList.BinarySearch(presure);
-            if (sectionIndex < 0)
-            {
-                /*
-                 如果找到 item，则为已排序的 List<T> 中 item 的从零开始的索引；
-                 否则为一个负数，该负数是大于 item 的下一个元素的索引的按位求补。
-                 如果没有更大的元素，则为 Count 的按位求补。
-                 */
-                sectionIndex = ~sectionIndex;
-            }
-            if (sectionIndex >= calParamSectionKeyList.Count)
-            {
-                sectionIndex = (calParamSectionKeyList.Count - 1);
-            }
+            m_calParamValListN.Clear();
+            m_calParamValListN.AddRange(paramValListN);
 
-#if false
-            double k = calParamValList[sectionIndex];
-#else
-            double k = 1.0;
-            if ((0 == sectionIndex) 
-                || ((calParamSectionKeyList.Count - 1) == sectionIndex))
-            {
-                k = calParamValList[sectionIndex];
-            }
-            else
-            {
-                double x0 = calParamSectionKeyList[sectionIndex - 1];
-                double y0 = calParamValList[sectionIndex - 1];
-                double x1 = calParamSectionKeyList[sectionIndex];
-                double y1 = calParamValList[sectionIndex];
-
-                if ((x1 - x0) < 0.000001)
-                {
-                    k = y1;
-                }
-                else
-                {
-                    k = ((y1 - y0) * (presure - x0)) / (x1 - x0) + y0;
-                }
-            }
-#endif
-            return k;
-        }
-
-        /* 根据指定校准参数列表,执行压差转流量(单位:L/S) */
-        public static double PresureToFlow(double presure, List<double> calParamSectionKeyList, List<double> calParamValList)
-        {
-            /* 压差转流量 */
-            double presureFlowScale = GetPresureFlowScale(presure, calParamSectionKeyList, calParamValList);
-            double flow = presureFlowScale * presure;
-            return flow;
+            m_minPresure = minPresure;
+            m_maxPresure = maxPresure;
         }
 
         /* 执行压差转流量(单位:L/S) */
         public double PresureToFlow(double presure)
         {
             /* 压差转流量 */
-            double presureFlowScale = GetPresureFlowScale(presure, m_calParamSectionKeyList, m_calParamValList);
-            double flow = presureFlowScale * presure;
+            double flow = FlowCalibrator.PresureToFlow(presure, m_calParamValList, 
+                m_calParamValListP, m_calParamValListN,
+                m_minPresure, m_maxPresure);
             return flow;
         }
 

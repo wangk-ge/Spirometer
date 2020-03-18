@@ -133,19 +133,24 @@ namespace Spirometer
         /* 加载校准参数 */
         private void LoadCaliParam()
         {
-            Console.WriteLine(Properties.Settings.Default.caliKeyList);
             Console.WriteLine(Properties.Settings.Default.caliValList);
 
-            if ((Properties.Settings.Default.caliKeyList != string.Empty) &&
-                    (Properties.Settings.Default.caliValList != string.Empty))
+            if ((Properties.Settings.Default.caliValList != string.Empty) 
+                && (Properties.Settings.Default.caliValListP != string.Empty)
+                && (Properties.Settings.Default.caliValListN != string.Empty)
+                && (Properties.Settings.Default.minPresure != string.Empty)
+                && (Properties.Settings.Default.maxPresure != string.Empty))
             {
-                string[] strCaliKeys = Properties.Settings.Default.caliKeyList.Split(new char[] { ',' });
-                var calParamSectionKeyList = strCaliKeys.Select(x => Convert.ToDouble(x)).ToList();
-
                 string[] strCaliVals = Properties.Settings.Default.caliValList.Split(new char[] { ',' });
                 var calParamValList = strCaliVals.Select(x => Convert.ToDouble(x)).ToList();
+                string[] strCaliValsP = Properties.Settings.Default.caliValListP.Split(new char[] { ',' });
+                var calParamValListP = strCaliValsP.Select(x => Convert.ToDouble(x)).ToList();
+                string[] strCaliValsN = Properties.Settings.Default.caliValListN.Split(new char[] { ',' });
+                var calParamValListN = strCaliValsN.Select(x => Convert.ToDouble(x)).ToList();
+                double minPresure = Convert.ToDouble(Properties.Settings.Default.minPresure);
+                double maxPresure = Convert.ToDouble(Properties.Settings.Default.maxPresure);
 
-                m_flowSensor.SetCalibrationParamList(calParamSectionKeyList, calParamValList);
+                m_flowSensor.SetCalibrationParamList(calParamValList, calParamValListP, calParamValListN, minPresure, maxPresure);
             }
         }
 
