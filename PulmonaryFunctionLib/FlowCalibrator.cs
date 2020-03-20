@@ -277,6 +277,70 @@ namespace PulmonaryFunctionLib
                  * 求参数:a b c ...
                  */
                 var samplePresureAvg = SamplePresureAvg(sampleIndex); // 压差均值
+#if false
+                if (samplePresureAvg > 0)
+                { // 正方向
+                    double[] matrixAi = new double[POLYNOMIAL_ORDER];
+                    double[] matrixAiP = new double[POLYNOMIAL_P_ORDER];
+                    var sampleDataIterator = m_waveAnalyzer.SampleDataIterator(sampleIndex);
+                    foreach (double presure in sampleDataIterator)
+                    {
+                        double pn = 1.0; // P^0
+                        for (int n = 0; n < Math.Max(POLYNOMIAL_P_ORDER, POLYNOMIAL_ORDER); n++)
+                        {
+                            pn *= presure; // P^n
+
+                            if (n < matrixAi.Length)
+                            {
+                                matrixAi[n] += pn;
+                            }
+
+                            if (n < matrixAiP.Length)
+                            {
+                                matrixAiP[n] += pn;
+                            }
+                        }
+                    }
+                    double y = CalVolume * SAMPLE_RATE;
+
+                    matrixAListP.Add(matrixAiP);
+                    vectorBListP.Add(y);
+
+                    matrixAList.Add(matrixAi);
+                    vectorBList.Add(y);
+                }
+                else //if (samplePresureAvg <= 0)
+                { // 负方向
+                    double[] matrixAi = new double[POLYNOMIAL_ORDER];
+                    double[] matrixAiN = new double[POLYNOMIAL_N_ORDER];
+                    var sampleDataIterator = m_waveAnalyzer.SampleDataIterator(sampleIndex);
+                    foreach (double presure in sampleDataIterator)
+                    {
+                        double pn = 1.0; // P^0
+                        for (int n = 0; n < Math.Max(POLYNOMIAL_N_ORDER, POLYNOMIAL_ORDER); n++)
+                        {
+                            pn *= presure; // P^n
+
+                            if (n < matrixAi.Length)
+                            {
+                                matrixAi[n] += pn;
+                            }
+
+                            if (n < matrixAiN.Length)
+                            {
+                                matrixAiN[n] += pn;
+                            }
+                        }
+                    }
+                    double y = -CalVolume * SAMPLE_RATE;
+
+                    matrixAListN.Add(matrixAiN);
+                    vectorBListN.Add(y);
+
+                    matrixAList.Add(matrixAi);
+                    vectorBList.Add(y);
+                }
+#else
                 if (samplePresureAvg > 0)
                 { // 正方向
                     double[] matrixAi = new double[POLYNOMIAL_ORDER + 1];
@@ -339,6 +403,7 @@ namespace PulmonaryFunctionLib
                     matrixAList.Add(matrixAi);
                     vectorBList.Add(y);
                 }
+#endif
             }
             bool bRet = false;
             try
@@ -421,6 +486,18 @@ namespace PulmonaryFunctionLib
                 return presure;
             }
 
+#if false
+            // y = k1 * x^1 + k2 * x^2 + ...
+            double x = presure;
+            double y = 0.0;
+            double xn = 1.0; // x^n
+            for (int i = 0; i < paramList.Count; ++i)
+            {
+                xn *= x;
+                double k = paramList[i];
+                y += k * xn;
+            }
+#else
             // y = k0 * x^0 + k1 * x^1 + ...
             double x = presure;
             double y = 0.0;
@@ -431,6 +508,7 @@ namespace PulmonaryFunctionLib
                 y += k * xn;
                 xn *= x;
             }
+#endif
 
             return y;
         }
