@@ -97,50 +97,6 @@ namespace Spirometer
             };
             m_plotModelPS.Axes.Add(yAxisPS);
 
-            //标记线+10%
-            var annotationPS1 = new LineAnnotation()
-            {
-                Color = OxyColors.Red,
-                X = -44 * m_flowCalibrator.CalVolume - 10,
-                LineStyle = LineStyle.Dash,
-                Type = LineAnnotationType.Vertical,
-                Text = "+10%"
-            };
-            m_plotModelPS.Annotations.Add(annotationPS1);
-
-            //标记线-10%
-            var annotationPS2 = new LineAnnotation()
-            {
-                Color = OxyColors.Red,
-                X = -44 * m_flowCalibrator.CalVolume + 10,
-                LineStyle = LineStyle.Dash,
-                Type = LineAnnotationType.Vertical,
-                Text = "-10%"
-            };
-            m_plotModelPS.Annotations.Add(annotationPS2);
-
-            //标记线-10%
-            var annotationPS3 = new LineAnnotation()
-            {
-                Color = OxyColors.Red,
-                X = 44 * m_flowCalibrator.CalVolume - 10,
-                LineStyle = LineStyle.Dash,
-                Type = LineAnnotationType.Vertical,
-                Text = "-10%"
-            };
-            m_plotModelPS.Annotations.Add(annotationPS3);
-
-            //标记线+10%
-            var annotationPS4 = new LineAnnotation()
-            {
-                Color = OxyColors.Red,
-                X = 44 * m_flowCalibrator.CalVolume + 10,
-                LineStyle = LineStyle.Dash,
-                Type = LineAnnotationType.Vertical,
-                Text = "+10%"
-            };
-            m_plotModelPS.Annotations.Add(annotationPS4);
-
             // 数据
             var seriesPS = new LineSeries()
             {
@@ -601,6 +557,16 @@ namespace Spirometer
             return bRet;
         }
 
+        /* 清除状态栏 */
+        private void ClearStatusBar()
+        {
+            /* 确保更新UI的操作在UI线程执行 */
+            this.BeginInvoke(new Action<FormCalibration>((obj) => {
+                toolStripStatusLabelSampleCount.Text = "0";
+                toolStripStatusLabelParamCount.Text = "0";
+            }), this);
+        }
+
         /* 清空所有图表数据和缓存数据,并刷新显示 */
         private void ClearAll()
         {
@@ -620,10 +586,7 @@ namespace Spirometer
             /* Clear Presure-Time Plot */
             m_pointsPT.Clear();
             m_plotModelPT.Annotations.Clear();
-            var xAxisPT = m_plotModelPT.Axes[0];
-            xAxisPT.Reset();
-            var yAxisPT = m_plotModelPT.Axes[1];
-            yAxisPT.Reset();
+            m_plotModelPT.ResetAllAxes();
 
             /* Clear Flow-Presure Plot */
             m_pointsFP.Clear();
@@ -631,23 +594,20 @@ namespace Spirometer
             m_pointsFPResultP.Clear();
             m_pointsFPResultN.Clear();
             m_plotModelFP.Annotations.Clear();
-            var xAxisFP = m_plotModelFP.Axes[0];
-            xAxisFP.Reset();
-            var yAxisFP = m_plotModelFP.Axes[1];
-            yAxisFP.Reset();
+            m_plotModelFP.ResetAllAxes();
 
             /* Clear Presure-Sum Plot */
             m_pointsPS.Clear();
             m_plotModelPS.Annotations.Clear();
-            var xAxisPS = m_plotModelPS.Axes[0];
-            xAxisPS.Reset();
-            var yAxisPS = m_plotModelPS.Axes[1];
-            yAxisPS.Reset();
+            m_plotModelPS.ResetAllAxes();
 
             /* 刷新曲线显示 */
             plotViewPT.InvalidatePlot(true);
             plotViewFP.InvalidatePlot(true);
             plotViewPS.InvalidatePlot(true);
+
+            /* 清除状态栏 */
+            ClearStatusBar();
         }
 
         private async Task LoadCSVFileAsync(string filePath)
@@ -672,17 +632,15 @@ namespace Spirometer
                     string[] strDataArray = strData.Split(new char[] { ',' });
                     foreach (var strVal in strDataArray)
                     {
-                        if (string.Empty == strVal)
+                        if (!String.IsNullOrEmpty(strVal))
                         {
-                            continue;
+                            double presure = Convert.ToDouble(strVal); // 压差
+
+                            OnPresureRecved(0, presure);
+
+                            /* 模拟采样率 */
+                            //Thread.Sleep((int)m_flowSensor.SAMPLE_TIME);
                         }
-
-                        double presure = Convert.ToDouble(strVal); // 压差
-
-                        OnPresureRecved(0, presure);
-
-                        /* 模拟采样率 */
-                        //Thread.Sleep((int)m_flowSensor.SAMPLE_TIME);
                     }
 
                     /* 数据已加载完毕 */
@@ -698,6 +656,7 @@ namespace Spirometer
 
             /* 异步等待完成对象被触发(数据加载完毕并且已全部输出到Plot) */
             await loadTask; // 先确保数据已加载完毕(只有此时m_dataPlotTaskComp才非空)
+
             if (null != m_dataPlotTaskComp)
             {
                 await m_dataPlotTaskComp.Task; // 然后确保数据已全部输出到Plot

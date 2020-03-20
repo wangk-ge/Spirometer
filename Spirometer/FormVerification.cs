@@ -419,6 +419,19 @@ namespace Spirometer
             return bRet;
         }
 
+        /* 清除状态栏 */
+        private void ClearStatusBar()
+        {
+            /* 确保更新UI的操作在UI线程执行 */
+            this.BeginInvoke(new Action<FormVerification>((obj) => {
+                toolStripStatusLabelSampleCount.Text = "0";
+                toolStripStatusLabelPassRate.Text = "0.00%";
+                toolStripStatusLabelErrRateMaxP.Text = "0.00%";
+                toolStripStatusLabelErrRateMaxN.Text = "0.00%";
+                toolStripStatusLabelErrRateAbsAvg.Text = "0.00%";
+            }), this);
+        }
+
         /* 清空所有图表数据和缓存数据,并刷新显示 */
         private void ClearAll()
         {
@@ -440,14 +453,12 @@ namespace Spirometer
             /* Clear Flow-Time Plot */
             m_pointsFT.Clear();
             m_plotModelFT.Annotations.Clear();
-            var xAxisFV = m_plotModelFT.Axes[0];
-            xAxisFV.Reset();
+            m_plotModelFT.ResetAllAxes();
 
             /* Clear Flow-Volume Plot */
             m_pointsFV.Clear();
             //m_plotModelFV.Annotations.Clear();
-            var xAxisVT = m_plotModelFV.Axes[0];
-            xAxisVT.Reset();
+            m_plotModelFV.ResetAllAxes();
 
             /* 刷新曲线显示 */
             plotViewFT.InvalidatePlot(true);
@@ -459,11 +470,9 @@ namespace Spirometer
             m_errorRateMaxP = 0.0;
             m_errorRateMaxN = 0.0;
             m_errorRateAbsSum = 0.0;
-            toolStripStatusLabelSampleCount.Text = "0";
-            toolStripStatusLabelPassRate.Text = "0.00%";
-            toolStripStatusLabelErrRateMaxP.Text = "0.00%";
-            toolStripStatusLabelErrRateMaxN.Text = "0.00%";
-            toolStripStatusLabelErrRateAbsAvg.Text = "0.00%";
+
+            /* 清除状态栏 */
+            ClearStatusBar();
         }
 
         /* 异步加载CSV文件 */

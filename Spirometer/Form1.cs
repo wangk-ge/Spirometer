@@ -682,27 +682,20 @@ namespace Spirometer
             m_6SecAnnotation = null;
 
             /* Clear Flow-Volume Plot */
-            var serieFV = m_plotModelFV.Series[0] as LineSeries;
-            serieFV.Points.Clear();
+            m_pointsFV.Clear();
             m_plotModelFV.Annotations.Clear();
-            var xAxisFV = m_plotModelFV.Axes[0];
-            xAxisFV.Reset();
+            m_plotModelFV.ResetAllAxes();
 
             /* Clear Volume-Time Plot */
-            var serieVT = m_plotModelVT.Series[0] as LineSeries;
-            serieVT.Points.Clear();
+            m_pointsVT.Clear();
             m_plotModelVT.Annotations.Clear();
-            var xAxisVT = m_plotModelVT.Axes[0];
-            xAxisVT.Reset();
+            m_plotModelVT.ResetAllAxes();
 
             /* Clear Volume/Flow-Time Plot */
-            var serieVFTVolume = m_plotModelVFT.Series[0] as LineSeries;
-            serieVFTVolume.Points.Clear();
-            var serieVFTFlow = m_plotModelVFT.Series[1] as LineSeries;
-            serieVFTFlow.Points.Clear();
+            m_pointsVFTFlow.Clear();
+            m_pointsVFTVolume.Clear();
             m_plotModelVFT.Annotations.Clear();
-            var xAxisVFT = m_plotModelVFT.Axes[0];
-            xAxisVFT.Reset();
+            m_plotModelVFT.ResetAllAxes();
 
             /* 刷新曲线显示 */
             plotViewVFT.InvalidatePlot(true);
