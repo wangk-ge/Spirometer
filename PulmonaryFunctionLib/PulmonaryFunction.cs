@@ -472,7 +472,7 @@ namespace PulmonaryFunctionLib
                         else
                         {
                             ++m_peekVolumeKeepCount;
-                            /* 极值点是否保持稳定 */
+                            /* 容积极值点是否保持稳定 */
                             if (m_peekVolumeKeepCount >= PEEK_VOLUME_KEEP_COUNT)
                             {
                                 /* 过极值点后是否变化明显 */
@@ -486,9 +486,6 @@ namespace PulmonaryFunctionLib
                                     {
                                         m_maxFlowIndex = m_peekFlowIndex;
                                     }
-
-                                    /* 进入正在呼气状态 */
-                                    SetState(State.Expiration);
 
                                     /* Volume极大值点存入列表 */
                                     m_peekMaxVolumeIndexList.Add(m_peekVolumeIndex);
@@ -522,6 +519,9 @@ namespace PulmonaryFunctionLib
                                         }
                                     }
 
+                                    /* 进入正在呼气状态 */
+                                    SetState(State.Expiration);
+
                                     /* 呼气流量是否达到用力呼气阈值 */
                                     double exFlow = -flow;
                                     if (exFlow >= FORCE_EXPIRATION_FLOW)
@@ -535,7 +535,17 @@ namespace PulmonaryFunctionLib
                                         ExpirationStarted?.Invoke(m_peekVolumeIndex, m_peekFlowIndex);
                                     }
 
-                                    /* 重新初始化 */
+                                    /* 初始化呼气流量极值点 */
+                                    m_peekFlowIndex = m_peekVolumeIndex;
+                                    for (uint i = m_peekVolumeIndex; i < m_listFV.Count; ++i)
+                                    {
+                                        if (m_listFV[(int)i].inFlow < m_listFV[(int)m_peekFlowIndex].inFlow)
+                                        {
+                                            m_peekFlowIndex = i;
+                                        }
+                                    }
+
+                                    /* 初始化容积极值点 */
                                     m_peekVolumeIndex = sampleIndex;
                                     m_peekVolumeKeepCount = 1;
                                 }
@@ -560,7 +570,7 @@ namespace PulmonaryFunctionLib
                         else
                         {
                             ++m_peekVolumeKeepCount;
-                            /* 极值点是否保持稳定 */
+                            /* 容积极值点是否保持稳定 */
                             if (m_peekVolumeKeepCount >= PEEK_VOLUME_KEEP_COUNT)
                             {
                                 /* 过极值点后是否变化明显 */
@@ -574,9 +584,6 @@ namespace PulmonaryFunctionLib
                                     {
                                         m_minFlowIndex = m_peekFlowIndex;
                                     }
-
-                                    /* 进入正在吸气状态 */
-                                    SetState(State.Inspiration);
 
                                     /* Volume极小值点存入列表 */
                                     m_peekMinVolumeIndexList.Add(m_peekVolumeIndex);
@@ -621,10 +628,23 @@ namespace PulmonaryFunctionLib
                                         }
                                     }
 
+                                    /* 进入正在吸气状态 */
+                                    SetState(State.Inspiration);
+
                                     /* 触发吸气开始事件 */
                                     InspirationStarted?.Invoke(m_peekVolumeIndex, m_peekFlowIndex);
 
-                                    /* 重新初始化 */
+                                    /* 初始化吸气流量极值点 */
+                                    m_peekFlowIndex = m_peekVolumeIndex;
+                                    for (uint i = m_peekVolumeIndex; i < m_listFV.Count; ++i)
+                                    {
+                                        if (m_listFV[(int)i].inFlow > m_listFV[(int)m_peekFlowIndex].inFlow)
+                                        {
+                                            m_peekFlowIndex = i;
+                                        }
+                                    }
+
+                                    /* 初始化容积极值点 */
                                     m_peekVolumeIndex = sampleIndex;
                                     m_peekVolumeKeepCount = 1;
                                 }

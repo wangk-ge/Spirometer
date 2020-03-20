@@ -542,7 +542,7 @@ namespace Spirometer
             UpdatePulmonaryFunctionParam();
 
             /* 重置状态,继续等待输入 */
-            m_pulmonaryFunc.Reset();
+            //m_pulmonaryFunc.Reset();
         }
 
         /* 已接收到一个流量采集数据 */
