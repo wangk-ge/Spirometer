@@ -728,9 +728,6 @@ namespace Spirometer
 
         private async Task LoadCSVFileAsync(string filePath, bool isFlow)
         {
-            /* 先清空所有图表数据和缓存数据,并刷新显示 */
-            ClearAll();
-
             /* 启动刷新定时器 */
             m_refreshTimer.Start();
 
@@ -788,7 +785,7 @@ namespace Spirometer
                             m_dataQueue.Enqueue(flow);
 
                             /* 模拟采样率 */
-                            Thread.Sleep((int)m_flowSensor.SAMPLE_TIME);
+                            //Thread.Sleep((int)m_flowSensor.SAMPLE_TIME);
                         }
                     }
                     /* 数据已加载完毕 */
@@ -811,6 +808,9 @@ namespace Spirometer
                 /* 清除完成对象 */
                 m_dataPlotTaskComp = null;
 
+                /*停止刷新定时器 */
+                m_refreshTimer.Stop();
+
                 /* 处理在数据中未检测到停止条件的情况 */
                 if (!m_pulmonaryFunc.IsStoped)
                 {
@@ -826,11 +826,11 @@ namespace Spirometer
             /* 弹出文件打开对话框 */
             OpenFileDialog openCSVDialog = new OpenFileDialog();
             openCSVDialog.Filter = "CSV File (*.csv;)|*.csv";
-            openCSVDialog.Multiselect = false;
+            openCSVDialog.Multiselect = true;
 
             if (openCSVDialog.ShowDialog() == DialogResult.OK)
             {
-                if (String.IsNullOrEmpty(openCSVDialog.FileName))
+                if (openCSVDialog.FileNames.Length <= 0)
                 {
                     return;
                 }
@@ -869,8 +869,14 @@ namespace Spirometer
                 bool toolStripButtonFirmwareUpdateEnabled = toolStripButtonFirmwareUpdate.Enabled;
                 toolStripButtonFirmwareUpdate.Enabled = false;
 
-                /* 加载CSV文件中的数据 */
-                await LoadCSVFileAsync(openCSVDialog.FileName, isFlow);
+                /* 先清空所有图表数据和缓存数据,并刷新显示 */
+                ClearAll();
+
+                foreach (var fileName in openCSVDialog.FileNames)
+                {
+                    /* 加载CSV文件中的数据 */
+                    await LoadCSVFileAsync(fileName, isFlow);
+                }
 
                 /* 加载完毕恢复工具按钮使能状态 */
                 toolStripButtonLoadPresure.Enabled = toolStripButtonLoadPresureEnabled; 

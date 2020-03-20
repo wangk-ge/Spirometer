@@ -469,9 +469,6 @@ namespace Spirometer
         /* 异步加载CSV文件 */
         private async Task LoadCSVFileAsync(string filePath)
         {
-            /* 先清空所有图表数据和缓存数据,并刷新显示 */
-            ClearAll();
-
             /* 启动刷新定时器 */
             m_refreshTimer.Start();
 
@@ -525,6 +522,9 @@ namespace Spirometer
 
                 /* 清除完成对象 */
                 m_dataPlotTaskComp = null;
+
+                /* 停止刷新定时器 */
+                m_refreshTimer.Stop();
             }
         }
 
@@ -606,11 +606,11 @@ namespace Spirometer
             /* 弹出文件打开对话框 */
             OpenFileDialog openCSVDialog = new OpenFileDialog();
             openCSVDialog.Filter = "CSV File (*.csv;)|*.csv";
-            openCSVDialog.Multiselect = false;
+            openCSVDialog.Multiselect = true;
 
             if (openCSVDialog.ShowDialog() == DialogResult.OK)
             {
-                if (String.IsNullOrEmpty(openCSVDialog.FileName))
+                if (openCSVDialog.FileNames.Length <= 0)
                 {
                     return;
                 }
@@ -625,8 +625,14 @@ namespace Spirometer
                 bool toolStripButtonClearEnabled = toolStripButtonClear.Enabled;
                 toolStripButtonClear.Enabled = false;
 
-                /* 加载CSV文件中的数据 */
-                await LoadCSVFileAsync(openCSVDialog.FileName);
+                /* 先清空所有图表数据和缓存数据,并刷新显示 */
+                ClearAll();
+
+                foreach (var fileName in openCSVDialog.FileNames)
+                {
+                    /* 加载CSV文件中的数据 */
+                    await LoadCSVFileAsync(fileName);
+                }
 
                 /* 加载完毕恢复工具按钮使能状态 */
                 toolStripButtonStart.Enabled = toolStripButtonStartEnabled;
