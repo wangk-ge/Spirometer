@@ -13,7 +13,8 @@ namespace PulmonaryFunctionLib
         private SerialPort m_serialPort = null;
         private ConcurrentQueue<TaskCompletionSource<string>> m_cmdRespTaskCompQue = new ConcurrentQueue<TaskCompletionSource<string>>();
         private FrameDecoder m_frameDecoder = new FrameDecoder(); // 串口数据帧解码器
-        private KalmanFilter m_kalmanFilter = new KalmanFilter(0.01f/*Q*/, 0.1f/*R*/, 10.0f/*P*/, 0); // 卡尔曼滤波器
+        //private KalmanFilter m_kalmanFilter = new KalmanFilter(0.01f/*Q*/, 0.1f/*R*/, 10.0f/*P*/, 0); // 卡尔曼滤波器
+        private RollingAverageFilter m_avgFilter; // 滑动平均滤波器
 
         /* 采样率,单位:HZ */
         public readonly double SAMPLE_RATE = 330;
@@ -35,6 +36,8 @@ namespace PulmonaryFunctionLib
 
         public FlowSensor()
         {
+            m_avgFilter = new RollingAverageFilter((int)(16.0 / SAMPLE_TIME)); // 滑动平均滤波器(16ms)
+
             //FrameDecoder.Test();
 
             m_frameDecoder.CmdRespRecved += new FrameDecoder.CmdRespRecvHandler((string cmdResp) => {
@@ -51,7 +54,8 @@ namespace PulmonaryFunctionLib
             m_frameDecoder.WaveDataRecved += new FrameDecoder.WaveDataRecvHandler((byte channel, double presure) => {
                 //Console.WriteLine($"WaveDataRespRecved: {channel} {presure}");
 
-                presure = m_kalmanFilter.Input((float)presure); // 执行滤波
+                //presure = m_kalmanFilter.Input((float)presure); // 执行滤波
+                presure = m_avgFilter.Input((float)presure); // 执行滤波
 
                 PresureRecved?.Invoke(channel, presure); // 触发压差收取事件
             });

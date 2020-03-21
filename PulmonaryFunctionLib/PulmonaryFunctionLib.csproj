@@ -57,6 +57,7 @@
     <Compile Include="KalmanFilter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PulmonaryFunction.cs" />
+    <Compile Include="RollingAverageFilter.cs" />
     <Compile Include="WaveAnalyzer.cs" />
     <Compile Include="WaveStatistician.cs" />
   </ItemGroup>
