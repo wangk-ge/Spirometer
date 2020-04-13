@@ -7,7 +7,6 @@ namespace PulmonaryFunctionLib
     class RollingAverageFilter
     {
         private readonly int WINDOW_SIZE; // 滑动窗口大小
-        //private Queue<double> m_filterWindowQue;
         private double[] m_filterWindowQue; // 滑动窗口队列
         private int m_queHead = 0; // 队列头
         private int m_queTail = 0; // 队列尾
@@ -18,7 +17,6 @@ namespace PulmonaryFunctionLib
         public RollingAverageFilter(int windowSize)
         {
 			WINDOW_SIZE = windowSize;
-            //m_filterWindowQue = new Queue<double>(WINDOW_SIZE);
             m_filterWindowQue = new double[WINDOW_SIZE];
             ClearQue();
             m_dataSum = 0.0;
